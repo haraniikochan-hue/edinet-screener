@@ -9,3 +9,6 @@ dist/
 build/
 data/fetch_progress.json
 .DS_Store
+
+# EDINET PDF cache (re-downloaded by scripts/kioxia_shareholding.py)
+data/kioxia/edinet_pdf/
