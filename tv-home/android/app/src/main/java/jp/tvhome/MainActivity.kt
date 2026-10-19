@@ -51,13 +51,7 @@ private val PINNED = listOf(
 )
 // Opens the Android TV settings, which the stock home screen used to provide.
 private const val TV_SETTINGS = "android.settings"
-// The TV's built-in receivers. They always listen; their tiles open the receivers' own screens.
-private val RECEIVERS = linkedMapOf(
-    "cast.googlecast" to ("Google Cast" to Intent("com.google.android.settings.CAST_RECEIVER_SETTINGS")),
-    "cast.airplay" to ("AirPlay" to Intent(Intent.ACTION_MAIN).setComponent(
-        ComponentName("com.mediatek.partner.airplay_sys", "com.mediatek.partner.airplay_sys.AirPlayAwarenessActivity"))),
-)
-private const val MAX_APPS = 18
+private const val MAX_APPS = 16
 // Left out of the dock: the terrestrial TV shortcut the user removed, and Xiaomi's system tools.
 private val HIDDEN = Regex("^(com\\.mitv\\.livetv|com\\.xiaomi\\.mitv\\..*)$")
 
@@ -102,10 +96,19 @@ class MainActivity : Activity() {
         super.onCreate(savedInstanceState)
         // Chrome DevTools over ADB, for checking the page on the TV; never in the installed release build.
         WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG)
-        val assets = WebViewAssetLoader.Builder()
+        assets = WebViewAssetLoader.Builder()
             .setDomain(HOST)
             .addPathHandler("/", WwwHandler(WebViewAssetLoader.AssetsPathHandler(this)))
             .build()
+        root = FrameLayout(this)
+        setContentView(root)
+        showDashboard()
+    }
+
+    private lateinit var assets: WebViewAssetLoader
+
+    @SuppressLint("SetJavaScriptEnabled")
+    private fun showDashboard() {
         web = WebView(this).apply {
             setBackgroundColor(0xFF05070C.toInt())
             settings.javaScriptEnabled = true
@@ -134,18 +137,45 @@ class MainActivity : Activity() {
             isFocusable = true
             isFocusableInTouchMode = true
         }
-        root = FrameLayout(this).apply { addView(web, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT) }
-        setContentView(root)
+        root.addView(web, 0, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
         web.loadUrl(HOME_URL)
         web.requestFocus(View.FOCUS_DOWN)
     }
 
+    // The TV has 1.8 GB of RAM and Android keeps the home app in memory as if it were in front, so
+    // TV Home frees its own share for the app or cast in front: it stops its timers at once and, after
+    // 30 s away (or as soon as memory runs low), destroys the WebView: about 180 MB is freed (WebView
+    // keeps its renderer process). The dashboard is rebuilt on return and shows its saved data at once.
+    private var unloaded = false
+    private val unload = Runnable {
+        if (!unloaded) {
+            unloaded = true
+            closeLogin()
+            root.removeView(web)
+            web.destroy()
+        }
+    }
+    override fun onStart() {
+        super.onStart()
+        root.removeCallbacks(unload)
+        if (unloaded) { unloaded = false; showDashboard() }
+        web.resumeTimers()
+    }
+    override fun onStop() {
+        web.pauseTimers()
+        root.postDelayed(unload, 30_000)
+        super.onStop()
+    }
+    override fun onTrimMemory(level: Int) {
+        super.onTrimMemory(level)
+        if (level >= TRIM_MEMORY_RUNNING_LOW && !hasWindowFocus()) { root.removeCallbacks(unload); unload.run() }
+    }
     override fun onResume() { super.onResume(); web.onResume(); watchMedia() }
     override fun onPause() { web.onPause(); super.onPause() }
     override fun onDestroy() {
         sessions?.removeOnActiveSessionsChangedListener(sessionsChanged)
         spotify?.unregisterCallback(mediaCallback)
-        closeLogin(); web.destroy(); super.onDestroy()
+        closeLogin(); if (!unloaded) web.destroy(); super.onDestroy()
     }
 
     /** Follows the Spotify app's media session once notification access has been granted. */
@@ -354,7 +384,7 @@ class MainActivity : Activity() {
         mapOf("Cache-Control" to "no-store"), ByteArrayInputStream(body.toString().toByteArray()),
     )
 
-    /** Installed TV apps: the pinned dock, the cast receivers, TV settings, then the rest by name. */
+    /** Installed TV apps: the pinned dock first, then TV settings, then the rest by name. */
     private fun installedApps(): List<Pair<String, String>> {
         val pm = packageManager
         val launchable = launchableActivities()
@@ -362,8 +392,7 @@ class MainActivity : Activity() {
         val pinned = PINNED.filter { it.first in launchable }
         val others = launchable.filterKeys { key -> PINNED.none { it.first == key } }
             .toList().sortedBy { it.second }
-        val receivers = RECEIVERS.filter { (_, entry) -> entry.second.resolveActivity(pm) != null }.map { (key, entry) -> key to entry.first }
-        return (pinned + receivers + (TV_SETTINGS to "テレビの設定") + others).take(MAX_APPS)
+        return (pinned + (TV_SETTINGS to "テレビの設定") + others).take(MAX_APPS)
     }
 
     private fun launchableActivities() = packageManager.queryIntentActivities(
@@ -371,7 +400,7 @@ class MainActivity : Activity() {
     ).filter { it.activityInfo.packageName != packageName && !HIDDEN.matches(it.activityInfo.packageName) }
 
     /** The app's own icon as a PNG data URL; the page shows it for apps without bundled artwork. */
-    private fun icon(pkg: String): String? = if (pkg in RECEIVERS) null else icons[pkg] ?: try {
+    private fun icon(pkg: String): String? = icons[pkg] ?: try {
         val drawable = if (pkg == TV_SETTINGS) packageManager.getApplicationIcon("com.android.tv.settings")
         else launchableActivities().first { it.activityInfo.packageName == pkg }.loadIcon(packageManager)
         pngDataUrl(drawable).also { icons[pkg] = it }
@@ -399,7 +428,6 @@ class MainActivity : Activity() {
             if (installedApps().none { it.first == packageName }) return
             runOnUiThread {
                 val intent = if (packageName == TV_SETTINGS) Intent(Settings.ACTION_SETTINGS)
-                else if (packageName in RECEIVERS) Intent(RECEIVERS.getValue(packageName).second)
                 else packageManager.getLeanbackLaunchIntentForPackage(packageName)
                     ?: packageManager.getLaunchIntentForPackage(packageName)
                 // A system screen may refuse other apps; the tile then simply does nothing.

@@ -567,7 +567,7 @@ function initializeBridge() {
   try{
     if(!window.Android || typeof window.Android.getApps!=='function')return;
     const apps=JSON.parse(window.Android.getApps());if(!Array.isArray(apps))return;
-    const valid=apps.filter(a=>typeof a.name==='string' && /^[a-zA-Z0-9_]+(?:\.[a-zA-Z0-9_]+)+$/.test(a.packageName)).slice(0,18);
+    const valid=apps.filter(a=>typeof a.name==='string' && /^[a-zA-Z0-9_]+(?:\.[a-zA-Z0-9_]+)+$/.test(a.packageName)).slice(0,16);
     if(!valid.length)return;
     const settings=$('apps').querySelector('[data-open-settings]');$('apps').replaceChildren();
     for(const app of valid)$('apps').append(nativeAppTile(app));
