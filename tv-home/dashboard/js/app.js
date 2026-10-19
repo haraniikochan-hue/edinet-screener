@@ -48,7 +48,10 @@ const errorText = error => error.message || 'データを取得できません';
 const IN_APP = location.hostname==='appassets.androidplatform.net';
 const appText = async url => (await fetchJSON(`/api/upstream?url=${encodeURIComponent(url)}`)).text;
 async function appApi(path) {
-  if(path==='config')return {backend:true,market:false,unsplash:false,spotifyClientId:''};
+  if(path==='config'){
+    const spotifyClientId=typeof window.Android?.spotifyClientId==='function' ? String(window.Android.spotifyClientId()) : '';
+    return {backend:true,market:false,unsplash:false,spotifyClientId:/^[a-f0-9]{32}$/.test(spotifyClientId)?spotifyClientId:''};
+  }
   const data = path==='news' ? await loadNews(appText) : path==='calendar' ? await loadCalendar(appText,await fetchJSON('data/economic-calendar.json')) : null;
   if(!data)throw new Error('TV版では使えません');
   return {data,fetchedAt:Date.now(),stale:path==='calendar' && data.sources.some(s=>s.status==='stale')};
@@ -247,6 +250,15 @@ function showNews() {
   $('next-news').setAttribute('aria-label',`次のニュース（${newsIndex+1} / ${news.length}）`);
   $('news-dots').replaceChildren(...news.map((_,i)=>el('i',i===newsIndex?'active':'')));
 }
+// In the TV app, the Spotify TV app's own now playing (read from its media session) needs no Spotify login.
+// Null when the app cannot read it (no notification access), so the web login is used instead.
+function tvNowPlaying() {
+  try{const raw=typeof window.Android?.nowPlaying==='function' ? window.Android.nowPlaying() : '';return raw ? JSON.parse(raw) : null;}catch{return null;}
+}
+// Album art from the media session arrives as a JPEG data URL; nothing else is accepted from it.
+const tvArtwork = url => typeof url==='string' && /^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(url) ? url : '';
+// The app calls this whenever the track or play state changes, so the card follows without waiting for the poll.
+window.tvHomeMedia = () => {const data=tvNowPlaying();if(data)renderMusic(data);};
 function renderMusic(data) {
   music=data;$('spotify-connect').hidden=Boolean(data.connected);$('music-progress').hidden=!data.item;
   if(!data.connected){$('track-name').textContent='音楽を、この画面に。';$('artist-name').textContent='再生中の曲を表示';$('music-state').dataset.state='idle';$('track-name').removeAttribute('href');resetAlbum();return;}
@@ -254,7 +266,7 @@ function renderMusic(data) {
   $('track-name').textContent=data.item.name || 'タイトルなし';const url=safeUrl(data.item.external_urls?.spotify);if(url)$('track-name').href=url;else $('track-name').removeAttribute('href');
   $('artist-name').textContent=data.item.artists?.map(a=>a.name).join(' / ') || data.item.show?.publisher || '';
   $('music-state').dataset.state=data.is_playing?'playing':'paused';
-  const imageUrl=safeUrl(data.item.album?.images?.at(-2)?.url || data.item.album?.images?.[0]?.url || data.item.images?.[0]?.url);
+  const imageUrl=data.source==='tv' ? tvArtwork(data.item.album?.images?.[0]?.url) : safeUrl(data.item.album?.images?.at(-2)?.url || data.item.album?.images?.[0]?.url || data.item.images?.[0]?.url);
   if(imageUrl){
     let img=$('album').querySelector('img');if(!img){img=el('img');img.alt='アルバムジャケット';img.onload=()=>paintWash(img);$('album').replaceChildren(img);}if(img.getAttribute('src')!==imageUrl)img.src=imageUrl;
   }
@@ -399,7 +411,7 @@ function restartJobs() {
     $('news-title').textContent='ニュースはサーバー接続後に表示';$('news-source').textContent='設定でデータサーバーを指定できます';
     if(config.photoMode==='unsplash')toast('Unsplashの自動取得にはAPIサーバーが必要です');
   }
-  jobs.push(makeJob('spotify',30000,async current=>{const data=await spotify.currentlyPlaying();if(current())renderMusic(data);},error=>{$('artist-name').textContent=errorText(error);$('music-state').dataset.state='error';music=null;$('music-progress').hidden=true;$('spotify-connect').hidden=false;}));
+  jobs.push(makeJob('spotify',30000,async current=>{const data=tvNowPlaying() ?? await spotify.currentlyPlaying();if(current())renderMusic(data);},error=>{$('artist-name').textContent=errorText(error);$('music-state').dataset.state='error';music=null;$('music-progress').hidden=true;$('spotify-connect').hidden=false;}));
 }
 function configureMarket() {
   // A legacy Android JavascriptInterface is injected into every frame, even

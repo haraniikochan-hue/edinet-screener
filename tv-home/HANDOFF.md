@@ -1,4 +1,4 @@
-# TV Home 引き継ぎ書 — v0.10.0
+# TV Home 引き継ぎ書 — v0.11.0
 
 引き継ぎ日：2026-10-19。対象：Xiaomi TV用ホーム画面のフェーズ2・Webダッシュボード。
 
@@ -207,7 +207,10 @@ Xiaomi TVのGPU・CPUで滑らかに動くよう最適化した。見た目はv0
 - **リモコン**：戻るはページへ `Escape` として届く。ホームのときはアプリを閉じない。TV Homeの表示中にホームを押すと `Escape` を送り、シートを閉じてドックへ戻る。外部サイトへの移動は無視する。
 - **デバッグ**：デバッグビルド（`assembleDebug`）だけ、WebViewのDevToolsをADB経由で開ける（`adb forward tcp:9333 localabstract:webview_devtools_remote_<pid>`）。テレビに入っているのはリリースビルド（開発用の鍵で署名）。
 - **BLSの取得**：BLS（`www.bls.gov`）は接続方式（TLSやHTTP/2の特徴）でクライアントを判定している。AndroidのHttpURLConnection、Android 14内蔵のHttpEngine（Cronet）、Macのcurlは403になり、PCのNodeとテレビのWebView（Chrome 155）は200になる（ヘッダーを変えても結果は同じだった）。このためアプリは、配信元が403を返したときだけ、画面に出さないWebViewで取得し直す。そのWebViewは、空のページを配信元のオリジンで開き、同一オリジンの `fetch` で読む（最大20秒）。2026-10-19に、テレビで「BLS・BEA 自動更新」になり「一部更新待ち」が消えたことを確認した。HttpEngineを試した際は `ACCESS_NETWORK_STATE` がないためにクラッシュを繰り返したので、HttpEngineは外した。
-- **未対応**：Unsplash・Spotify認証はアプリでは未対応（`/api/config` は無効を返す）。広告ブロックの切り替え（`setPrivateDns`）も未実装。ただしテレビのプライベートDNSは、すでに `dns.adguard-dns.com`（hostname）に設定されていた。
+- **Spotifyカード（v0.11.0）**：ユーザーの選択で、**テレビのSpotifyアプリ（`com.spotify.tv.android`）の再生情報**を使う。ログインは不要。アプリはこのMediaSessionを `MediaSessionManager` で読み、Web APIの currently-playing と同じ形（`source:"tv"`、ジャケットは300pxのJPEGのdata URL）で `window.Android.nowPlaying()` から返す。曲や再生状態が変わると、アプリが `window.tvHomeMedia()` を呼ぶので、すぐ反映される（30秒ごとの取得も続ける）。表示はテレビで再生している曲だけで、スマホでの再生は出ない。2026-10-19に、テレビで再生中の曲名・アーティスト・ジャケット・再生中の表示・進行バーが出ることを確認した。
+  - 読むには「通知へのアクセス」が必要。ユーザーの確認を得て `adb shell cmd notification allow_listener jp.tvhome.launcher/jp.tvhome.MediaListener` で許可した（`MediaListener` は許可のためだけのサービスで、通知は読まない）。戻すなら `disallow_listener`、またはテレビの設定 → アプリ → 特別なアプリアクセス → 通知へのアクセス。許可がない場合、`nowPlaying()` は空文字を返し、カードはWebログインの方式に戻る。
+  - **Webログイン（未完了）**：Spotifyのログイン画面は、ブリッジのない別のWebViewで開き、`https://appassets.androidplatform.net/index.html` へ戻ったらダッシュボードがPKCEを完了する。テレビ版では、ログイン情報をlocalStorageに保存して再起動後も残す。Client ID（ユーザーが作成）は `android/local.properties` の `spotify.clientId`（コミットしない）から `BuildConfig` に入れる。ログイン画面までは表示できたが、メールのリンクをスマホで開くと「別のブラウザでログインしています」となり、ログインは完了していない。テレビの再生情報を使う方式に切り替えたため、今は使っていない。
+- **未対応**：Unsplashはアプリでは未対応（`/api/config` は無効を返す）。広告ブロックの切り替え（`setPrivateDns`）も未実装。ただしテレビのプライベートDNSは、すでに `dns.adguard-dns.com`（hostname）に設定されていた。
 
 ビルドと入れ替え：
 

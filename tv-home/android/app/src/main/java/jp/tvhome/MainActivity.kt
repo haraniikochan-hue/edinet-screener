@@ -2,17 +2,25 @@ package jp.tvhome
 
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.content.ComponentName
 import android.content.Intent
 import android.net.Uri
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.drawable.AdaptiveIconDrawable
 import android.graphics.drawable.Drawable
+import android.media.MediaMetadata
+import android.media.session.MediaController
+import android.media.session.MediaSessionManager
+import android.media.session.PlaybackState
 import android.os.Bundle
+import android.os.SystemClock
 import android.util.Base64
 import android.provider.Settings
 import android.view.KeyEvent
 import android.view.View
+import android.view.ViewGroup
+import android.widget.FrameLayout
 import android.webkit.JavascriptInterface
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
@@ -54,8 +62,27 @@ private val UPSTREAM = setOf(
     "https://www.bea.gov/news/schedule/ics/online-calendar-subscription.ics",
 )
 
+// The Spotify TV app, whose media session feeds the Spotify card without a Spotify login.
+private const val SPOTIFY_TV = "com.spotify.tv.android"
+
+// Sites the Spotify login may pass through. Only the login view opens them; the dashboard never leaves its page.
+private val LOGIN_HOSTS = Regex("^(accounts\\.spotify\\.com|([a-z0-9-]+\\.)*spotify\\.com|accounts\\.google\\.com|appleid\\.apple\\.com|([a-z0-9-]+\\.)*facebook\\.com)$")
+
 class MainActivity : Activity() {
     private lateinit var web: WebView
+    private lateinit var root: FrameLayout
+    private var login: WebView? = null
+    // Null until the user grants TV Home notification access (HANDOFF 3.4).
+    private var sessions: MediaSessionManager? = null
+    @Volatile private var spotify: MediaController? = null
+    private var artKey = ""
+    private var artUrl = ""
+    private val mediaCallback = object : MediaController.Callback() {
+        override fun onMetadataChanged(metadata: MediaMetadata?) = notifyMedia()
+        override fun onPlaybackStateChanged(state: PlaybackState?) = notifyMedia()
+        override fun onSessionDestroyed() { attach(null); notifyMedia() }
+    }
+    private val sessionsChanged = MediaSessionManager.OnActiveSessionsChangedListener { attach(it) }
     private val icons = HashMap<String, String>()
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -80,34 +107,143 @@ class MainActivity : Activity() {
                     if (url.host == HOST && url.path == "/api/upstream") return upstream(url)
                     return assets.shouldInterceptRequest(url)
                 }
-                // The launcher never leaves its own page: links to other sites are ignored.
-                override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest) =
-                    request.url.host != HOST
+                // The launcher never leaves its own page: links to other sites are ignored,
+                // except the Spotify sign-in, which opens in its own view without the bridge.
+                override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
+                    val url = request.url
+                    if (url.host == HOST) return false
+                    if (url.scheme == "https" && url.host == "accounts.spotify.com" && url.path == "/authorize") openLogin(url.toString())
+                    return true
+                }
             }
             // Exposed only to this app's own page; the dashboard disables the TradingView iframe when it sees the bridge.
             addJavascriptInterface(Bridge(), "Android")
             isFocusable = true
             isFocusableInTouchMode = true
         }
-        setContentView(web)
+        root = FrameLayout(this).apply { addView(web, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT) }
+        setContentView(root)
         web.loadUrl(HOME_URL)
         web.requestFocus(View.FOCUS_DOWN)
     }
 
-    override fun onResume() { super.onResume(); web.onResume() }
+    override fun onResume() { super.onResume(); web.onResume(); watchMedia() }
     override fun onPause() { web.onPause(); super.onPause() }
-    override fun onDestroy() { web.destroy(); super.onDestroy() }
+    override fun onDestroy() {
+        sessions?.removeOnActiveSessionsChangedListener(sessionsChanged)
+        spotify?.unregisterCallback(mediaCallback)
+        closeLogin(); web.destroy(); super.onDestroy()
+    }
+
+    /** Follows the Spotify app's media session once notification access has been granted. */
+    private fun watchMedia() {
+        if (sessions != null) return
+        val manager = getSystemService(MediaSessionManager::class.java) ?: return
+        val listener = ComponentName(this, MediaListener::class.java)
+        try {
+            val active = manager.getActiveSessions(listener)
+            manager.addOnActiveSessionsChangedListener(sessionsChanged, listener)
+            sessions = manager
+            attach(active)
+            notifyMedia()
+        } catch (e: SecurityException) { /* notification access not granted: the card keeps the web login */ }
+    }
+
+    private fun attach(controllers: List<MediaController>?) {
+        val next = controllers?.firstOrNull { it.packageName == SPOTIFY_TV }
+        if (next?.sessionToken == spotify?.sessionToken) return
+        spotify?.unregisterCallback(mediaCallback)
+        spotify = next
+        next?.registerCallback(mediaCallback)
+        notifyMedia()
+    }
+
+    private fun notifyMedia() = runOnUiThread {
+        web.evaluateJavascript("window.tvHomeMedia&&window.tvHomeMedia()", null)
+    }
+
+    /** What the Spotify TV app is playing, shaped like the Web API's currently-playing response. */
+    private fun nowPlaying(): String {
+        if (sessions == null) return ""
+        val result = JSONObject().put("connected", true).put("source", "tv").put("fetchedAt", System.currentTimeMillis())
+        val controller = spotify
+        val state = controller?.playbackState
+        val metadata = controller?.metadata
+        val active = state?.state in setOf(PlaybackState.STATE_PLAYING, PlaybackState.STATE_PAUSED, PlaybackState.STATE_BUFFERING)
+        if (state == null || metadata == null || !active) return result.put("item", JSONObject.NULL).toString()
+        var position = state.position
+        if (state.state == PlaybackState.STATE_PLAYING) {
+            position += ((SystemClock.elapsedRealtime() - state.lastPositionUpdateTime) * state.playbackSpeed).toLong()
+        }
+        val title = metadata.getString(MediaMetadata.METADATA_KEY_TITLE) ?: ""
+        val album = metadata.getString(MediaMetadata.METADATA_KEY_ALBUM) ?: ""
+        val artist = metadata.getString(MediaMetadata.METADATA_KEY_ARTIST) ?: ""
+        val key = "$title\u0000$album"
+        if (key != artKey) {
+            artKey = key
+            artUrl = (metadata.getBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART)
+                ?: metadata.getBitmap(MediaMetadata.METADATA_KEY_ART))?.let { jpegDataUrl(it) } ?: ""
+        }
+        val images = JSONArray().apply { if (artUrl.isNotEmpty()) put(JSONObject().put("url", artUrl)) }
+        return result
+            .put("is_playing", state.state != PlaybackState.STATE_PAUSED)
+            .put("progress_ms", position.coerceAtLeast(0))
+            .put("item", JSONObject()
+                .put("name", title)
+                .put("artists", JSONArray().apply { if (artist.isNotEmpty()) put(JSONObject().put("name", artist)) })
+                .put("album", JSONObject().put("name", album).put("images", images))
+                .put("duration_ms", metadata.getLong(MediaMetadata.METADATA_KEY_DURATION)))
+            .toString()
+    }
+
+    /**
+     * Shows Spotify's sign-in full screen. When Spotify redirects back to this app's page, the
+     * dashboard loads that URL and completes the PKCE exchange itself.
+     */
+    @SuppressLint("SetJavaScriptEnabled")
+    private fun openLogin(url: String) {
+        closeLogin()
+        login = WebView(this).apply {
+            setBackgroundColor(0xFF121212.toInt())
+            settings.javaScriptEnabled = true
+            settings.domStorageEnabled = true
+            settings.allowFileAccess = false
+            settings.allowContentAccess = false
+            webViewClient = object : WebViewClient() {
+                override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
+                    val next = request.url
+                    if (next.host == HOST) { closeLogin(); web.loadUrl(next.toString()); return true }
+                    return next.scheme != "https" || !LOGIN_HOSTS.matches(next.host ?: "")
+                }
+            }
+            loadUrl(url)
+        }
+        root.addView(login, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+        login?.requestFocus(View.FOCUS_DOWN)
+    }
+
+    private fun closeLogin() {
+        val view = login ?: return
+        login = null
+        root.removeView(view)
+        view.destroy()
+        web.requestFocus(View.FOCUS_DOWN)
+    }
 
     // Home pressed while the dashboard is showing: close any sheet and return to the dock.
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        if (Intent.ACTION_MAIN == intent.action) sendEscape()
+        if (Intent.ACTION_MAIN == intent.action) { closeLogin(); sendEscape() }
     }
 
     // BACK reaches the page as Escape (HANDOFF 3.2); a home screen never closes itself.
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         if (event.keyCode == KeyEvent.KEYCODE_BACK) {
-            if (event.action == KeyEvent.ACTION_UP) sendEscape()
+            // In the Spotify sign-in, BACK steps back a page and finally cancels the sign-in.
+            val view = login
+            if (event.action == KeyEvent.ACTION_UP) {
+                if (view == null) sendEscape() else if (view.canGoBack()) view.goBack() else closeLogin()
+            }
             return true
         }
         return super.dispatchKeyEvent(event)
@@ -204,6 +340,13 @@ class MainActivity : Activity() {
 
     inner class Bridge {
         @JavascriptInterface
+        fun spotifyClientId(): String = BuildConfig.SPOTIFY_CLIENT_ID
+
+        /** Empty until notification access is granted; then the Spotify TV app's now playing as JSON. */
+        @JavascriptInterface
+        fun nowPlaying(): String = this@MainActivity.nowPlaying()
+
+        @JavascriptInterface
         fun getApps(): String = JSONArray(installedApps().map { (pkg, name) ->
             JSONObject().put("name", name).put("packageName", pkg).put("icon", icon(pkg) ?: JSONObject.NULL)
         }).toString()
@@ -238,6 +381,14 @@ private fun pngDataUrl(drawable: Drawable, size: Int = 192): String {
     val out = ByteArrayOutputStream()
     bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
     return "data:image/png;base64," + Base64.encodeToString(out.toByteArray(), Base64.NO_WRAP)
+}
+
+// Album art for the card: 300px is plenty for the 120px artwork and the 24px colour wash.
+private fun jpegDataUrl(art: Bitmap): String {
+    val scaled = Bitmap.createScaledBitmap(art, 300, 300 * art.height / art.width.coerceAtLeast(1), true)
+    val out = ByteArrayOutputStream()
+    scaled.compress(Bitmap.CompressFormat.JPEG, 85, out)
+    return "data:image/jpeg;base64," + Base64.encodeToString(out.toByteArray(), Base64.NO_WRAP)
 }
 
 /** Serves dashboard/ (copied to assets/www) at the site root. */

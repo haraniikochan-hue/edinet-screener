@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -12,6 +14,13 @@ val copyDashboard by tasks.registering(Sync::class) {
     into(webAssets.map { it.dir("www") })
 }
 
+// The Spotify Client ID is read from local.properties (not committed): spotify.clientId=<32 hex>.
+val localProperties = Properties().apply {
+    rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) }
+}
+val spotifyClientId = localProperties.getProperty("spotify.clientId", "")
+    .takeIf { it.matches(Regex("^[a-f0-9]{32}$")) } ?: ""
+
 android {
     namespace = "jp.tvhome"
     compileSdk = 35
@@ -19,8 +28,9 @@ android {
         applicationId = "jp.tvhome.launcher"
         minSdk = 28
         targetSdk = 35
-        versionCode = 1
-        versionName = "0.10.0"
+        versionCode = 2
+        versionName = "0.11.0"
+        buildConfigField("String", "SPOTIFY_CLIENT_ID", "\"$spotifyClientId\"")
     }
     sourceSets["main"].assets.srcDir(webAssets)
     buildTypes {
