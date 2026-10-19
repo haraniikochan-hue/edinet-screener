@@ -48,7 +48,7 @@ async function api(pathname) {
     backend: true,
   };
   if (pathname === '/api/news') return memo('news', 900000, () => loadNews(url => upstream(url, { json:false })));
-  if (pathname === '/api/earnings') return memo('earnings', 6*3600000, () => loadEarnings(url => upstream(url, { json:false })));
+  if (pathname === '/api/earnings') return memo('earnings', 12*3600000, () => loadEarnings(url => upstream(url, { json:false })));
   if (pathname === '/api/calendar') {
     const result=await memo('calendar',6*3600000,async()=>loadCalendar(url=>upstream(url,{json:false}),JSON.parse(await readFile(resolve(root,'data/economic-calendar.json'),'utf8'))));
     return {...result,stale:result.stale || result.data.sources.some(s=>s.status==='stale')};

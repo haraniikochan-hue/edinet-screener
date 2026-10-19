@@ -1,27 +1,19 @@
-// Earnings dates of major US companies for the calendar card's later pages. Source: Nasdaq's
-// public earnings calendar (one request per US trading day, no key). It lists every company that
-// reports; only the companies below are kept. The list is US companies near the top of the S&P 500
-// by size — edit it to follow other names (Nasdaq symbol → name shown on the TV).
+// Earnings dates of the companies that move the US market, for the calendar card's later pages.
+// Source: Nasdaq's public earnings calendar (one request per US trading day, no key). It lists every
+// company that reports; only these are kept: the index heavyweights (the Magnificent Seven, Eli Lilly,
+// Walmart, JPMorgan, which opens each season), the semiconductors behind the SOX index — including
+// the US-listed TSMC, ASML and Arm, which move it as much as any US name — and the AI and software
+// bellwethers. Edit the list to follow other names (Nasdaq symbol → name shown on the TV).
 export const MAJOR_US = Object.freeze({
-  AAPL:'アップル', MSFT:'マイクロソフト', NVDA:'エヌビディア', GOOGL:'アルファベット', AMZN:'アマゾン', META:'メタ',
-  AVGO:'ブロードコム', TSLA:'テスラ', ORCL:'オラクル', CRM:'セールスフォース', ADBE:'アドビ', AMD:'AMD', INTC:'インテル',
-  CSCO:'シスコ', IBM:'IBM', QCOM:'クアルコム', TXN:'テキサス・インスツルメンツ', NOW:'サービスナウ', INTU:'インテュイット',
-  AMAT:'アプライド・マテリアルズ', LRCX:'ラムリサーチ', MU:'マイクロン', KLAC:'KLA', ADI:'アナログ・デバイセズ',
-  PLTR:'パランティア', NFLX:'ネットフリックス', UBER:'ウーバー', PANW:'パロアルト', ANET:'アリスタ',
-  JPM:'JPモルガン', V:'ビザ', MA:'マスターカード', BAC:'バンク・オブ・アメリカ', WFC:'ウェルズ・ファーゴ',
-  GS:'ゴールドマン・サックス', MS:'モルガン・スタンレー', C:'シティグループ', AXP:'アメックス', BLK:'ブラックロック',
-  SCHW:'チャールズ・シュワブ', SPGI:'S&Pグローバル', CME:'CMEグループ', COF:'キャピタル・ワン', 'BRK.B':'バークシャー',
-  LLY:'イーライリリー', UNH:'ユナイテッドヘルス', JNJ:'J&J', ABBV:'アッヴィ', MRK:'メルク', PFE:'ファイザー',
-  TMO:'サーモフィッシャー', ABT:'アボット', DHR:'ダナハー', AMGN:'アムジェン', ISRG:'インテュイティブ', GILD:'ギリアド',
-  BMY:'ブリストル・マイヤーズ', CVS:'CVSヘルス',
-  WMT:'ウォルマート', COST:'コストコ', HD:'ホーム・デポ', LOW:'ロウズ', PG:'P&G', KO:'コカ・コーラ', PEP:'ペプシコ',
-  MCD:'マクドナルド', NKE:'ナイキ', SBUX:'スターバックス', DIS:'ディズニー', TJX:'TJX', PM:'フィリップ・モリス',
-  CMCSA:'コムキャスト', T:'AT&T', VZ:'ベライゾン', TMUS:'Tモバイル', BKNG:'ブッキング',
-  XOM:'エクソンモービル', CVX:'シェブロン', CAT:'キャタピラー', GE:'GEエアロスペース', BA:'ボーイング', RTX:'RTX',
-  HON:'ハネウェル', UNP:'ユニオン・パシフィック', LMT:'ロッキード', DE:'ディア', UPS:'UPS', NEE:'ネクステラ',
+  AAPL:'アップル', MSFT:'マイクロソフト', NVDA:'エヌビディア', GOOGL:'アルファベット', AMZN:'アマゾン', META:'メタ', TSLA:'テスラ',
+  AVGO:'ブロードコム', AMD:'AMD', MU:'マイクロン', QCOM:'クアルコム', INTC:'インテル', TXN:'テキサス・インスツルメンツ',
+  AMAT:'アプライド・マテリアルズ', LRCX:'ラムリサーチ', KLAC:'KLA', TSM:'TSMC', ASML:'ASML', ARM:'アーム',
+  ORCL:'オラクル', PLTR:'パランティア', NFLX:'ネットフリックス',
+  JPM:'JPモルガン', LLY:'イーライリリー', WMT:'ウォルマート',
 });
 
-export const EARNINGS_DAYS = 21;
+// Eight weeks covers a whole reporting season.
+export const EARNINGS_DAYS = 56;
 export const earningsUrl = date => `https://api.nasdaq.com/api/calendar/earnings?date=${date}`;
 export const EARNINGS_URL = /^https:\/\/api\.nasdaq\.com\/api\/calendar\/earnings\?date=\d{4}-\d{2}-\d{2}$/;
 

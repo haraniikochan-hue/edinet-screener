@@ -341,12 +341,12 @@ function restoreCalendarFocus(focusedId,focusedPage){
 // New York open (that evening in Japan) or after the close (the next morning in Japan).
 const TIMING_LABEL={pre:'寄り前',after:'引け後',unknown:'時刻未定'};
 function showEarnings(rows,focusedId,focusedPage){
-  setText($('calendar-title'),'米国企業の決算');
+  setText($('calendar-title'),'主要企業の決算');
   const info=earningsInfo.data,stale=earningsInfo.stale || info.missing>0;
-  $('calendar-source').textContent=`Nasdaq · 主要${info.companies}社${stale?' · 一部更新待ち':''}`;
-  $('calendar-source').title=`Nasdaqの決算カレンダー（${info.from}〜${info.through}、米国の日付）から主要${info.companies}社を表示。日付は日本時間。発表日は変更される場合があります。`;
+  $('calendar-source').textContent=`Nasdaq · ${info.companies}社${stale?' · 一部更新待ち':''}`;
+  $('calendar-source').title=`Nasdaqの決算カレンダー（${info.from}〜${info.through}、米国の日付）から市況への影響が大きい${info.companies}社を表示。日付は日本時間。発表日は変更される場合があります。`;
   $('calendar-events').replaceChildren();
-  if(!rows.length)$('calendar-events').append(el('p','calendar-empty','今後3週間、主要企業の決算予定はありません'));
+  if(!rows.length)$('calendar-events').append(el('p','calendar-empty','今後8週間、主要企業の決算予定はありません'));
   const today=jstDay(Date.now()),tomorrow=jstDay(Date.now()+86400000);let previousDay='';
   rows.forEach((event,index)=>{
     const row=el('a','calendar-event earnings-event');row.href=`https://www.nasdaq.com/market-activity/stocks/${event.symbol.toLowerCase().replace('.','-')}/earnings`;row.target='_blank';row.rel='noopener noreferrer';
@@ -447,7 +447,7 @@ function restartJobs() {
   }
   if(backend.backend || config.apiBase){
     jobs.push(makeJob('calendar',6*3600000,cachedTask('economic-calendar',()=>apiForJob('calendar'),renderCalendar,{server:true,maxAge:7*86400000}),()=>{if(calendarInfo)renderCalendar({...calendarInfo,stale:true});else void loadCalendarSnapshot();}));
-    jobs.push(makeJob('earnings',6*3600000,cachedTask('earnings',()=>apiForJob('earnings'),renderEarnings,{server:true,maxAge:3*86400000}),()=>{if(earningsInfo)renderEarnings({...earningsInfo,stale:true});}));
+    jobs.push(makeJob('earnings',12*3600000,cachedTask('earnings',()=>apiForJob('earnings'),renderEarnings,{server:true,maxAge:3*86400000}),()=>{if(earningsInfo)renderEarnings({...earningsInfo,stale:true});}));
     jobs.push(makeJob('news',15*60000,cachedTask('news',()=>apiForJob('news'),renderNews,{server:true}),()=>{news=[];$('news-title').textContent='ニュースを取得できません';$('news-title').removeAttribute('href');$('news-source').textContent='NHK · しばらくして再取得します';$('next-news').setAttribute('aria-label','次のニュース');$('news-dots').replaceChildren();}));
     if(config.photoMode==='unsplash')jobs.push(makeJob('photos',3600000,cachedTask('photos',()=>apiForJob('photos'),result=>{setPhotos(result.data);setFeed('photos',result.stale?'stale':'ok');},{server:true,maxAge:7*86400000}),()=>{toast('Unsplashを取得できません。同梱写真を表示しています。');}));
   }else{
@@ -694,7 +694,7 @@ function openNewsDetail(){
   const item=news[newsIndex];if(!item)return;
   openDetail({eyebrow:item.source,title:item.title,body:item.summary||'',facts:[['配信',`${stamp(Date.parse(item.publishedAt))} JST`]],link:{href:item.url,label:'NHKで続きを読む'}});
 }
-const FEEDS={connection:'ネットワーク',weather:'天気',air:'空気の状態',markets:'相場（12銘柄）','market:':'Hyperliquid','market:xyz':'trade.xyz','market:para':'para',charts:'チャート',crypto:'CoinGecko',calendar:'米国経済指標',earnings:'米国企業の決算',news:'ニュース',spotify:'Spotify',photos:'背景写真'};
+const FEEDS={connection:'ネットワーク',weather:'天気',air:'空気の状態',markets:'相場（12銘柄）','market:':'Hyperliquid','market:xyz':'trade.xyz','market:para':'para',charts:'チャート',crypto:'CoinGecko',calendar:'米国経済指標',earnings:'主要企業の決算',news:'ニュース',spotify:'Spotify',photos:'背景写真'};
 const FEED_STATES={ok:'最新',stale:'更新待ち（保存済みの値を表示）',error:'取得できません'};
 function openStatusDetail(){
   const rows=Object.entries(FEEDS).filter(([key])=>feedState.has(key)).map(([key,label])=>[label,FEED_STATES[feedState.get(key)]||feedState.get(key),feedState.get(key)==='ok'?'':'warn']);
