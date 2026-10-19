@@ -6,7 +6,8 @@ import { CALENDAR_FEEDS, parseEconomicICS, mergeCalendar } from './economic-cale
 // NHK ONE (news.web.nhk) replaced the www3.nhk.or.jp feeds, which stopped updating in August 2026.
 export const NHK_RSS = 'https://news.web.nhk/n-data/conf/na/rss/cat5.xml';
 const NHK_LINK = /^https:\/\/(?:(?:[a-z0-9-]+\.)*nhk\.(?:or\.jp|jp)|news\.web\.nhk)\//;
-// The only upstream addresses the TV app's native proxy may fetch.
+// The only upstream addresses the TV app's native proxy may fetch, besides Nasdaq's earnings calendar
+// by date (js/earnings.js EARNINGS_URL).
 export const UPSTREAM_FEEDS = [NHK_RSS, ...Object.values(CALENDAR_FEEDS)];
 
 export function decodeXML(value) {

@@ -31,10 +31,12 @@ try{
   const firstCalendar=await page.locator('.calendar-event').first().getAttribute('aria-label');
   await page.locator('#calendar-next').click();
   assert.notEqual(await page.locator('.calendar-event').first().getAttribute('aria-label'),firstCalendar);
-  assert.match(await page.locator('#calendar-page').textContent(),/^7–12 \//);
+  // v0.24.0: the second page is the earnings of major US companies (live Nasdaq calendar)
+  assert.match(await page.locator('#calendar-page').textContent(),/^2 \/ \d+$/);
+  assert.equal(await page.locator('#calendar-title').textContent(),'米国企業の決算');
   await page.locator('#calendar-prev').click();
   assert.equal(await page.locator('.calendar-event').first().getAttribute('aria-label'),firstCalendar);
-  assert.match(await page.locator('#calendar-page').textContent(),/^1–6 \//);
+  assert.match(await page.locator('#calendar-page').textContent(),/^1 \/ \d+$/);
   await page.locator('[data-app=smarttube]').focus();
   await page.locator('#stock-source').filter({hasText:'12 / 12'}).waitFor({state:'attached',timeout:20000});
   await page.locator('#crypto-feed').filter({hasText:'LIVE'}).waitFor({state:'attached',timeout:20000});

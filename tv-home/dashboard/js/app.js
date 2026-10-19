@@ -1,5 +1,6 @@
 import { DEFAULT_CONFIG, normalizeConfig, readStorage, writeStorage, fetchJSON, cachedLoad, money, signed, tone, isNumber, safeUrl, weatherLabel, airLabel, getWeather, getAir, getCrypto } from './data.js';
 import { eventPage, jstDay } from './calendar.js';
+import { loadEarnings, upcomingEarnings } from './earnings.js';
 import { installNavigation } from './navigation.js';
 import { nativeAppTile, pressApp } from './launcher.js';
 import { DOCK_KEY, arrangeDock, moveInDock, setOnDock, normalizeDock } from './dock.js';
@@ -20,7 +21,7 @@ const storage = { getItem:key => { try{return localStorage.getItem(key);}catch{r
 let config = normalizeConfig(readStorage(storage,'tv-home-config',DEFAULT_CONFIG));
 let backend = {backend:false,market:false,unsplash:false};
 let generation=0, jobs=[], news=[], newsIndex=0, music=null, toastTimer, returnFocus, selectedLocation=config.location;
-let calendarInfo=null, calendarIndex=0, calendarNextTime=0;
+let calendarInfo=null, calendarIndex=0, calendarNextTime=0, earningsInfo=null, calendarSource={text:'',title:''};
 let weatherResult=null, airResult=null, nextForecastHour=0, weatherWasStale=false;
 let cryptoStream=null, streamStatus='connecting', chartVersion=0, chartQueue=Promise.resolve();
 let stageScale=1, lastMinute='', frost=null;
@@ -55,7 +56,7 @@ async function appApi(path) {
     return {backend:true,market:false,unsplash,spotifyClientId:/^[a-f0-9]{32}$/.test(spotifyClientId)?spotifyClientId:''};
   }
   // The app adds the Unsplash Access Key itself; the page never sees it.
-  const data = path==='news' ? await loadNews(appText) : path==='calendar' ? await loadCalendar(appText,await fetchJSON('data/economic-calendar.json')) : path==='photos' ? await loadPhotos(query=>fetchJSON(`/api/unsplash?query=${encodeURIComponent(query)}`)) : null;
+  const data = path==='news' ? await loadNews(appText) : path==='calendar' ? await loadCalendar(appText,await fetchJSON('data/economic-calendar.json')) : path==='earnings' ? await loadEarnings(appText) : path==='photos' ? await loadPhotos(query=>fetchJSON(`/api/unsplash?query=${encodeURIComponent(query)}`)) : null;
   if(!data)throw new Error('TV版では使えません');
   return {data,fetchedAt:Date.now(),stale:path==='calendar' && data.sources.some(s=>s.status==='stale')};
 }
@@ -289,20 +290,30 @@ function paintWash(image) {
   }catch{delete musicCard.dataset.art;}
 }
 function renderCalendar(result) {
-  calendarInfo=result;showCalendar();
+  calendarInfo=result;
   const sources=result.data.sources||[],expired=sources.some(source=>Date.parse(source.coverageThrough)<Date.now());
   const stale=result.stale || expired;
   const live=sources.filter(source=>source.status==='live').map(source=>source.source);
   const frb=sources.find(source=>source.source==='FRB');
-  $('calendar-source').textContent=stale?'保存済み日程 · 一部更新待ち':`${live.join('・')} 自動更新 / FRB ${frb?.verifiedAt?.slice(5,10).replace('-','/')||'—'}確認`;
-  $('calendar-source').title=sources.map(source=>`${source.source}: ${source.status==='live'?'自動取得':'保存済み'} / ${source.verifiedAt}確認 / ${source.coverageThrough}まで収録`).join('\n')+'\n予定は変更される場合があります。';
-  setFeed('calendar',stale?'stale':'ok');
+  calendarSource.text=stale?'保存済み日程 · 一部更新待ち':`${live.join('・')} 自動更新 / FRB ${frb?.verifiedAt?.slice(5,10).replace('-','/')||'—'}確認`;
+  calendarSource.title=sources.map(source=>`${source.source}: ${source.status==='live'?'自動取得':'保存済み'} / ${source.verifiedAt}確認 / ${source.coverageThrough}まで収録`).join('\n')+'\n予定は変更される場合があります。';
+  showCalendar();setFeed('calendar',stale?'stale':'ok');
 }
+function renderEarnings(result){earningsInfo=result;showCalendar();setFeed('earnings',result.stale || result.data.missing?'stale':'ok');}
+// The card's first page is the next six US releases; turning it shows the coming weeks' earnings of
+// major US companies, six at a time (js/earnings.js), since releases further out matter little.
 function showCalendar() {
-  if(!calendarInfo)return;
+  if(!calendarInfo && !earningsInfo)return;
   const focusedId=document.activeElement?.dataset.eventId,focusedPage=document.activeElement?.id;
-  const data=eventPage(calendarInfo.data.events,calendarIndex,CALENDAR_PAGE_SIZE);calendarIndex=data.index;
+  const earnings=upcomingEarnings(earningsInfo?.data.events),earningPages=earningsInfo?Math.max(1,Math.ceil(earnings.length/CALENDAR_PAGE_SIZE)):0;
+  const pages=1+earningPages;calendarIndex=Math.min(Math.max(0,calendarIndex),pages-1);
+  $('calendar-page').textContent=pages>1?`${calendarIndex+1} / ${pages}`:'';
+  $('calendar-prev').disabled=calendarIndex===0;$('calendar-next').disabled=calendarIndex>=pages-1;
+  if(calendarIndex>0){showEarnings(earnings.slice((calendarIndex-1)*CALENDAR_PAGE_SIZE,calendarIndex*CALENDAR_PAGE_SIZE),focusedId,focusedPage);return;}
+  setText($('calendar-title'),'米国経済指標');$('calendar-source').textContent=calendarSource.text;$('calendar-source').title=calendarSource.title;
   $('calendar-events').replaceChildren();
+  if(!calendarInfo){$('calendar-events').append(el('p','calendar-empty','公式日程を確認しています'));return;}
+  const data=eventPage(calendarInfo.data.events,0,CALENDAR_PAGE_SIZE);
   if(!data.events.length)$('calendar-events').append(el('p','calendar-empty','今後の予定を確認できません。公式日程の更新をお待ちください。'));
   const today=jstDay(Date.now()),tomorrow=jstDay(Date.now()+86400000);let previousDay='';
   data.events.forEach((event,index)=>{
@@ -315,15 +326,41 @@ function showCalendar() {
     const at=el('time','calendar-time number',time(date));at.dateTime=date.toISOString();
     row.append(day,detail,at);row.title=`${event.originalTitle} / ${event.source} / ${date.toISOString()}${event.note?' / '+event.note:''}`;
     row.setAttribute('aria-label',`${dated(date)} ${time(date)} 日本時間 ${event.title} ${event.source}の公式日程を開く`);
-    if(index===0 && calendarIndex===0)row.classList.add('next-event');
+    if(index===0)row.classList.add('next-event');
     $('calendar-events').append(row);
   });
-  $('calendar-page').textContent=data.total?`${calendarIndex*CALENDAR_PAGE_SIZE+1}–${Math.min((calendarIndex+1)*CALENDAR_PAGE_SIZE,data.total)} / ${data.total} 件`:'日程未取得';
-  $('calendar-prev').disabled=calendarIndex===0;$('calendar-next').disabled=calendarIndex>=data.pages-1;
-  if(focusedId){const links=[...$('calendar-events').children];(links.find(link=>link.dataset.eventId===focusedId)||links[0])?.focus({preventScroll:true});}
-  if(['calendar-prev','calendar-next'].includes(focusedPage) && $(focusedPage).disabled){const alternate=$(focusedPage==='calendar-prev'?'calendar-next':'calendar-prev');if(!alternate.disabled)alternate.focus({preventScroll:true});}
+  restoreCalendarFocus(focusedId,focusedPage);
   // Only advance automatically when the first upcoming release passes.
   calendarNextTime=eventPage(calendarInfo.data.events,0,1).events[0]?.timestamp||0;
+}
+function restoreCalendarFocus(focusedId,focusedPage){
+  if(focusedId){const links=[...$('calendar-events').children];(links.find(link=>link.dataset.eventId===focusedId)||links[0])?.focus({preventScroll:true});}
+  if(['calendar-prev','calendar-next'].includes(focusedPage) && $(focusedPage).disabled){const alternate=$(focusedPage==='calendar-prev'?'calendar-next':'calendar-prev');if(!alternate.disabled)alternate.focus({preventScroll:true});}
+}
+// An earnings row: the Japan-time date of the report, the company, and whether it comes before the
+// New York open (that evening in Japan) or after the close (the next morning in Japan).
+const TIMING_LABEL={pre:'寄り前',after:'引け後',unknown:'時刻未定'};
+function showEarnings(rows,focusedId,focusedPage){
+  setText($('calendar-title'),'米国企業の決算');
+  const info=earningsInfo.data,stale=earningsInfo.stale || info.missing>0;
+  $('calendar-source').textContent=`Nasdaq · 主要${info.companies}社${stale?' · 一部更新待ち':''}`;
+  $('calendar-source').title=`Nasdaqの決算カレンダー（${info.from}〜${info.through}、米国の日付）から主要${info.companies}社を表示。日付は日本時間。発表日は変更される場合があります。`;
+  $('calendar-events').replaceChildren();
+  if(!rows.length)$('calendar-events').append(el('p','calendar-empty','今後3週間、主要企業の決算予定はありません'));
+  const today=jstDay(Date.now()),tomorrow=jstDay(Date.now()+86400000);let previousDay='';
+  rows.forEach((event,index)=>{
+    const row=el('a','calendar-event earnings-event');row.href=`https://www.nasdaq.com/market-activity/stocks/${event.symbol.toLowerCase().replace('.','-')}/earnings`;row.target='_blank';row.rel='noopener noreferrer';
+    row.dataset.indicator=`EARNINGS-${event.timing}`;row.dataset.eventId=event.id;row.dataset.earnings='';
+    const date=new Date(event.timestamp),eventDay=jstDay(event.timestamp),day=el('div','calendar-day number');
+    day.append(el('strong','',MONTH_DAY.format(date)),el('span','',eventDay===today?'今日':eventDay===tomorrow?'明日':WEEKDAY_SHORT.format(date)));
+    if(eventDay===previousDay)row.classList.add('same-day');previousDay=eventDay;
+    const detail=el('div','calendar-detail'),title=el('span','calendar-title',event.name);title.append(el('small','calendar-ticker',event.symbol));detail.append(title);
+    row.append(day,detail,el('span','calendar-time calendar-timing',TIMING_LABEL[event.timing]));
+    row.setAttribute('aria-label',`${dated(date)} 日本時間 ${event.name} ${event.symbol} 決算 ${TIMING_LABEL[event.timing]}`);
+    if(index===0 && calendarIndex===1)row.classList.add('next-event');
+    $('calendar-events').append(row);
+  });
+  restoreCalendarFocus(focusedId,focusedPage);
 }
 async function loadCalendarSnapshot() {
   try{const data=await fetchJSON('data/economic-calendar.json');if(!calendarInfo)renderCalendar({data,stale:true});}catch{$('calendar-source').textContent='公式日程を取得できません';}
@@ -410,6 +447,7 @@ function restartJobs() {
   }
   if(backend.backend || config.apiBase){
     jobs.push(makeJob('calendar',6*3600000,cachedTask('economic-calendar',()=>apiForJob('calendar'),renderCalendar,{server:true,maxAge:7*86400000}),()=>{if(calendarInfo)renderCalendar({...calendarInfo,stale:true});else void loadCalendarSnapshot();}));
+    jobs.push(makeJob('earnings',6*3600000,cachedTask('earnings',()=>apiForJob('earnings'),renderEarnings,{server:true,maxAge:3*86400000}),()=>{if(earningsInfo)renderEarnings({...earningsInfo,stale:true});}));
     jobs.push(makeJob('news',15*60000,cachedTask('news',()=>apiForJob('news'),renderNews,{server:true}),()=>{news=[];$('news-title').textContent='ニュースを取得できません';$('news-title').removeAttribute('href');$('news-source').textContent='NHK · しばらくして再取得します';$('next-news').setAttribute('aria-label','次のニュース');$('news-dots').replaceChildren();}));
     if(config.photoMode==='unsplash')jobs.push(makeJob('photos',3600000,cachedTask('photos',()=>apiForJob('photos'),result=>{setPhotos(result.data);setFeed('photos',result.stale?'stale':'ok');},{server:true,maxAge:7*86400000}),()=>{toast('Unsplashを取得できません。同梱写真を表示しています。');}));
   }else{
@@ -627,6 +665,22 @@ function openWeatherDetail(){
   body.replaceChildren(block('24時間（2時間ごと）',hours),columns,
     el('p','weather-source',`Open-Meteo（CC BY 4.0）· ${Number.isFinite(observed)?stamp(observed):'時刻不明'} JSTのモデル予測${weatherWasStale?' · 更新待ち':''}${aqi?' · 空気はCAMSのモデル予測':''}`));
 }
+// OK on an earnings row: when (New York and Japan), which quarter, and what analysts expect.
+function openEarningsDetail(row){
+  const event=earningsInfo?.data.events.find(item=>item.id===row.dataset.eventId);if(!event)return;
+  const date=new Date(event.timestamp),days=Math.round((Date.parse(jstDay(event.timestamp))-Date.parse(jstDay(Date.now())))/86400000);
+  const when=days===0?'今日':days===1?'明日':days>1?`あと${days}日`:'';
+  const usd=v=>isNumber(v)?`${v<0?'−':''}$${Math.abs(v).toFixed(2)}`:'';
+  const cap=v=>!isNumber(v)?'':v>=1e12?`約${(v/1e12).toFixed(1)}兆ドル`:`約${Math.round(v/1e8).toLocaleString('ja-JP')}億ドル`;
+  const us=`${event.date.slice(5).replace('-','/')}（米国）`;
+  const japan=event.timing==='pre'?`${dated(date)}（${WEEKDAY_SHORT.format(date)}）の夜（およそ20〜23時）`:event.timing==='after'?`${dated(date)}（${WEEKDAY_SHORT.format(date)}）の朝（およそ5〜7時）`:'未定';
+  openDetail({eyebrow:'決算発表 · Nasdaq',title:`${event.name}（${event.symbol}）`,subtitle:[when,`${dated(date)}（${WEEKDAY_SHORT.format(date)}）${TIMING_LABEL[event.timing]}`].filter(Boolean).join(' · '),
+    facts:[['発表',`${us} ${event.timing==='pre'?'寄り前（取引開始前）':event.timing==='after'?'引け後（取引終了後）':'時刻未定'}`],['日本時間の目安',japan],['対象',event.quarter],
+      ['予想EPS',event.epsForecast===null?'':`${usd(event.epsForecast)}${event.estimates?`（アナリスト${event.estimates}人の平均）`:''}`],
+      ['前年同期のEPS',event.lastYearEps===null?'':`${usd(event.lastYearEps)}${event.lastYearDate?`（${event.lastYearDate}発表）`:''}`],
+      ['時価総額',cap(event.marketCap)],['会社名',event.company],['注記','Nasdaqの決算カレンダー。発表日や時刻は会社の都合で変わることがあります。']],
+    link:{href:row.href,label:'Nasdaqで見る'},accent:getComputedStyle(row).getPropertyValue('--cat').trim()});
+}
 const RELEASE_SOURCES={BLS:'米労働統計局（BLS）',BEA:'米経済分析局（BEA）',FRB:'米連邦準備制度理事会（FRB）'};
 function openEventDetail(row){
   const event=calendarInfo?.data.events.find(item=>item.id===row.dataset.eventId);if(!event)return;
@@ -640,7 +694,7 @@ function openNewsDetail(){
   const item=news[newsIndex];if(!item)return;
   openDetail({eyebrow:item.source,title:item.title,body:item.summary||'',facts:[['配信',`${stamp(Date.parse(item.publishedAt))} JST`]],link:{href:item.url,label:'NHKで続きを読む'}});
 }
-const FEEDS={connection:'ネットワーク',weather:'天気',air:'空気の状態',markets:'相場（12銘柄）','market:':'Hyperliquid','market:xyz':'trade.xyz','market:para':'para',charts:'チャート',crypto:'CoinGecko',calendar:'米国経済指標',news:'ニュース',spotify:'Spotify',photos:'背景写真'};
+const FEEDS={connection:'ネットワーク',weather:'天気',air:'空気の状態',markets:'相場（12銘柄）','market:':'Hyperliquid','market:xyz':'trade.xyz','market:para':'para',charts:'チャート',crypto:'CoinGecko',calendar:'米国経済指標',earnings:'米国企業の決算',news:'ニュース',spotify:'Spotify',photos:'背景写真'};
 const FEED_STATES={ok:'最新',stale:'更新待ち（保存済みの値を表示）',error:'取得できません'};
 function openStatusDetail(){
   const rows=Object.entries(FEEDS).filter(([key])=>feedState.has(key)).map(([key,label])=>[label,FEED_STATES[feedState.get(key)]||feedState.get(key),feedState.get(key)==='ok'?'':'warn']);
@@ -822,7 +876,7 @@ document.addEventListener('click',event=>{
   // OK on a row or headline shows details in place: following a link would leave the launcher.
   const row=event.target.closest('#stage .stock-row');if(row){openMarketDetail(row.dataset.symbol);return;}
   if(event.target.closest('#stage .weather-section')){openWeatherDetail();return;}
-  const release=event.target.closest('#stage .calendar-event');if(release){event.preventDefault();openEventDetail(release);return;}
+  const release=event.target.closest('#stage .calendar-event');if(release){event.preventDefault();if(release.dataset.earnings!==undefined)openEarningsDetail(release);else openEventDetail(release);return;}
   if(event.target.closest('#news-title') && news.length){event.preventDefault();openNewsDetail();return;}
   if(event.target.closest('#connection-status')){openStatusDetail();return;}
   const app=event.target.closest('[data-app],[data-package]');if(!app)return;

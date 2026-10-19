@@ -17,6 +17,9 @@ async function fixturePage({ clock = false, viewport = { width:1920, height:1080
   await page.route('https://api.open-meteo.com/**', route => route.abort());
   await page.route('https://air-quality-api.open-meteo.com/**', route => route.abort());
   await page.route('**/api/news', route => route.fulfill({ json:{ fetchedAt:now, stale:false, data:[1,2].map(i => ({ title:`テスト見出し${i}`, summary:`テスト要約${i}。`, url:`https://news.web.nhk/newsweb/na/test${i}`, publishedAt:new Date(now - i * 3600000).toUTCString(), source:'NHK 経済' })) } }));
+  // v0.24.0: the calendar card's later pages are earnings; seven reports make two pages
+  await page.route('**/api/earnings', route => route.fulfill({ json:{ fetchedAt:now, stale:false, data:{ from:'2026-10-19', through:'2026-11-06', missing:0, companies:88,
+    events:Array.from({length:7},(_,i)=>({ id:`T${i}:2026-10-2${i}`, symbol:`T${i}`, name:`テスト社${i}`, company:`Test ${i} Inc.`, date:'2026-10-21', timing:i%2?'after':'pre', timestamp:now+(i+1)*86400000, quarter:'2026年9月までの四半期', epsForecast:1, estimates:3, lastYearEps:.9, lastYearDate:'10/21/2025', marketCap:2e11 })) } } }));
   await page.routeWebSocket('wss://api.hyperliquid.xyz/ws', socket => socket.close());
   await page.route('https://api.hyperliquid.xyz/info', route => {
     const request = JSON.parse(route.request().postData());
@@ -48,7 +51,7 @@ try {
   await page.keyboard.press('ArrowDown'); assert.equal(await focused(page), 'netflix', 'down returns to the app you came from');
   await page.locator('[data-app="smarttube"]').focus(); await page.keyboard.press('ArrowUp'); assert.equal(await focused(page), 'cal5', 'SmartTube sits under the calendar');
   await page.keyboard.press('ArrowDown'); assert.equal(await focused(page), 'smarttube', 'the opposite arrow undoes a move instead of paging the calendar');
-  assert.match(await page.locator('#calendar-page').textContent(), /^1–6 \//);
+  assert.match(await page.locator('#calendar-page').textContent(), /^1 \/ 3$/);
   await page.locator('#refresh').focus(); await page.keyboard.press('ArrowDown');
   assert.equal(await page.evaluate(() => document.activeElement.classList.contains('stock-row')), true, 'top buttons lead down into the market');
   // Weather is offline in this fixture, so the waiting badge is shown and is the leftmost top control.
@@ -65,8 +68,9 @@ try {
   await page.keyboard.press('Escape');
   assert.equal(await page.evaluate(() => document.activeElement.classList.contains('weather-section')), true, 'Back returns to the weather card');
   await page.locator('.calendar-event').last().focus(); await page.keyboard.press('ArrowDown');
-  assert.equal(await focused(page), 'cal0'); assert.match(await page.locator('#calendar-page').textContent(), /^7–12 \//, 'moving past the last release turns the page');
-  await page.keyboard.press('ArrowUp'); assert.equal(await focused(page), 'cal5'); assert.match(await page.locator('#calendar-page').textContent(), /^1–6 \//);
+  assert.equal(await focused(page), 'cal0'); assert.match(await page.locator('#calendar-page').textContent(), /^2 \/ 3$/, 'moving past the last release turns to the earnings');
+  assert.equal(await page.locator('#calendar-title').textContent(), '米国企業の決算');
+  await page.keyboard.press('ArrowUp'); assert.equal(await focused(page), 'cal5'); assert.match(await page.locator('#calendar-page').textContent(), /^1 \/ 3$/);
   await page.keyboard.press('Escape'); assert.equal(await focused(page), 'smarttube', 'Back returns to the last app on the dock');
   await page.locator('[data-brand="settings"]').focus(); await page.keyboard.press('ArrowRight');
   assert.equal(await page.evaluate(() => document.activeElement.dataset.brand), 'settings', 'credits and the hidden photo switch are not focus stops');

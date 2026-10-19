@@ -62,6 +62,8 @@ private val UPSTREAM = setOf(
     "https://www.bls.gov/schedule/news_release/bls.ics",
     "https://www.bea.gov/news/schedule/ics/online-calendar-subscription.ics",
 )
+// Nasdaq's earnings calendar, one US date per request (dashboard/js/earnings.js EARNINGS_URL).
+private val EARNINGS = Regex("^https://api\\.nasdaq\\.com/api/calendar/earnings\\?date=\\d{4}-\\d{2}-\\d{2}$")
 
 // The city searches the page may ask Unsplash for (dashboard/js/feeds.js PHOTO_CITIES).
 private val PHOTO_QUERIES = setOf(
@@ -307,7 +309,7 @@ class MainActivity : Activity() {
 
     private fun upstream(url: Uri): WebResourceResponse {
         val target = url.getQueryParameter("url")
-        if (target !in UPSTREAM) return json(403, JSONObject().put("error", "許可されていない配信元です"))
+        if (target == null || (target !in UPSTREAM && !EARNINGS.matches(target))) return json(403, JSONObject().put("error", "許可されていない配信元です"))
         return try {
             val connection = URL(target).openConnection() as HttpURLConnection
             connection.connectTimeout = 10000

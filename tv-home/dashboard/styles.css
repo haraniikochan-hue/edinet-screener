@@ -197,6 +197,12 @@ html,body { height: 100%; overflow: hidden; }
 .calendar-event:is([data-indicator=CPI],[data-indicator=PPI],[data-indicator=PCE]) { --cat: #ff9f0a; }
 .calendar-event:is([data-indicator=NFP],[data-indicator=JOLTS]) { --cat: #409cff; }
 .calendar-event[data-indicator=GDP] { --cat: #63e6be; }
+/* Earnings pages: indigo before the New York open (that evening in Japan), yellow after the close
+   (the next morning in Japan) */
+.calendar-event[data-indicator=EARNINGS-pre] { --cat: #7d7aff; }
+.calendar-event[data-indicator=EARNINGS-after] { --cat: #ffd60a; }
+.calendar-ticker { margin-left: 8px; color: var(--label-3); font-size: 13px; font-weight: 500; letter-spacing: .02em; }
+.calendar-timing { color: var(--label-2); font-size: 15px; }
 .calendar-event { cursor: pointer; }
 .calendar-event:hover { background: rgba(255,255,255,.07); }
 .calendar-day { display: flex; align-items: baseline; gap: 6px; white-space: nowrap; }
