@@ -9,9 +9,9 @@ const FILTER = 'blur(6px) saturate(1.5)';
 // off smoothly towards CAP, scaling red, green and blue together so the photo keeps its colours. A bright
 // daytime sky becomes dim, tinted glass under white text and the up/down colours; a night photo, mostly
 // below the knee, stays clear.
-const KNEE = 36, CAP = 64;
+const KNEE = 34, CAP = 60;
 // Used instead when the photo cannot be read (a host without CORS): a flat ceiling, which greys colours.
-const CEILING = 'rgb(96,100,112)';
+const CEILING = 'rgb(70,74,84)';
 
 export const frostSupported = () => typeof CSS !== 'undefined' && CSS.supports('clip-path','path("M0 0H1V1Z")')
   && Boolean(document.createElement('canvas').getContext);

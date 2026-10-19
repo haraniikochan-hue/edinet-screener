@@ -9,19 +9,19 @@
   color-scheme: dark;
   --font: 'Inter','Noto Sans JP',-apple-system,BlinkMacSystemFont,'Hiragino Sans','Hiragino Kaku Gothic ProN',system-ui,sans-serif;
   --label: #fff;
-  --label-2: rgba(235,240,255,.76);
-  --label-3: rgba(235,240,255,.6);
+  --label-2: rgba(235,240,255,.8);
+  --label-3: rgba(235,240,255,.66);
   --label-4: rgba(235,240,255,.3);
   --separator: rgba(255,255,255,.1);
   --fill: rgba(120,124,140,.26);
   --fill-2: rgba(255,255,255,.09);
-  --up: #30d158;
-  --down: #ff6961;
+  --up: #4ade80;
+  --down: #ff7b72;
   --rain: #64d2ff;
   --warn: #ffb340;
   --spotify: #1ed760;
   --accent: #0a84ff;
-  --glass: linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.018) 40%,rgba(255,255,255,.01)),rgba(10,13,22,.16);
+  --glass: linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.018) 40%,rgba(255,255,255,.01)),rgba(200,210,230,.06);
   --glass-blur: blur(24px) saturate(150%) brightness(.8);
   --glass-shadow: 0 30px 60px -30px rgba(0,0,0,.55),0 0 0 .5px rgba(0,0,0,.16),0 1px 2px rgba(0,0,0,.1);
   --rim: linear-gradient(162deg,rgba(255,255,255,.42),rgba(255,255,255,.1) 20%,rgba(255,255,255,.035) 48%,rgba(255,255,255,.07) 80%,rgba(255,255,255,.2));
@@ -51,7 +51,7 @@ h2,h3,p { margin: 0; }
 .icon { width: 1em; height: 1em; flex-shrink: 0; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; overflow: visible; }
 
 /* Background photograph */
-.background,.shade { position: fixed; inset: 0; pointer-events: none; }
+.background { position: fixed; inset: 0; pointer-events: none; }
 .background { overflow: hidden; background: #0d1626; }
 .photo-layer,.frost-layer { position: absolute; left: -2%; top: -2%; width: 104%; height: 104%; opacity: 0; transition: opacity 2.4s var(--ease); transform: scale(1.015); }
 .photo-layer { background-size: cover; background-position: 50% 48%; }
@@ -65,7 +65,9 @@ h2,h3,p { margin: 0; }
 .frost-layer { display: block; object-fit: cover; object-position: 50% 48%; }
 /* No blanket darkening: the photo is shown as it is. Only the text that sits on the bare photo (clock,
    photo credit) gets a soft shade, as dark as the photo behind it needs: js/frost.js measures each photo
-   and sets --clock-shade / --caption-shade (none on a night sky, up to .55 on a bright one). */
+   and sets --clock-shade / --caption-shade (none on a night sky, up to .55 on a bright one). The shade lies on
+   the photo under the frosted copy, so the cards' glass stays the same everywhere. */
+.shade { position: absolute; inset: 0; }
 .shade::before,.shade::after { content: ''; position: absolute; inset: 0; transition: opacity 2.4s var(--ease); }
 .shade::before { background: radial-gradient(38% 36% at 24% 16%,rgb(4,8,20),rgba(4,8,20,.9) 30%,rgba(4,8,20,.45) 62%,transparent); opacity: var(--clock-shade,.35); }
 .shade::after { background: radial-gradient(20% 17% at 81% 91%,rgb(3,6,14),rgba(3,6,14,.8) 40%,transparent); opacity: var(--caption-shade,.35); }
