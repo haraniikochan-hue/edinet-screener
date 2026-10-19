@@ -15,7 +15,7 @@ v0.5.5はユーザーに「ほぼ完成形」と評価されたが、ユーザ�
 - 配置・余白・透明感はv0.5.5で評価済み。v0.6.0の文字・素材・動きはこのセッションで実装し、ユーザーの評価待ち。
 - APK、TVへのインストール、ADB設定変更、公開ホスティングは未実施。
 - Spotifyの実認証、Unsplashの実Access Keyは未接続。設定画面と接続処理は実装済み。
-- 作業ディレクトリにGit履歴はない。引き継ぎZIPがソース一式となる。
+- ソースはGitHubの `haraniikochan-hue/edinet-screener`、ブランチ `ccr-123aaf7c-88ru7c` の `tv-home/` フォルダ（v0.5.5の基準から全履歴あり）。引き継ぎZIPも同じ内容。プルリクエストは未作成で、ユーザーの依頼があるまで作らない。作業は同じブランチで続ける。
 - 前セッションの開発サーバーは終了済み。新しい環境で起動する。前の環境やURLが存続するとは限らない。
 
 再開時の順序：
@@ -26,6 +26,39 @@ v0.5.5はユーザーに「ほぼ完成形」と評価されたが、ユーザ�
 4. ユーザーの次の依頼に沿って作業する。確定済みの地域・銘柄・アプリ・朝晩の表示を聞き直す必要はない。
 
 実行時npm依存はなく、`npm install` は不要。検証環境はNode.js 24.19.0。
+
+## 1.1 PC上のセッションへの移行（2026-10-19）
+
+v0.6.0〜v0.9.0はクラウドのセッションで作った。ユーザーが「デスクトップからWi-Fi見れる？」と聞いたが、クラウドのセッションからはユーザーのPCにも、家のWi-Fi（同じWi-Fiにつながっているテレビを含む）にも届かない。このため、**ユーザーのPC上で動くセッション**（Claude Desktopアプリ、またはPCのターミナルで `claude remote-control`）へ移った。
+
+- **Wi-Fiで何をしたいかはまだ聞けていない。** 最初にユーザーに確認する。考えられるのは、テレビで今のダッシュボードを見る、テレビの型番・WebViewを調べる、広告ブロック（AdGuard DNS）を設定する、APKを作ってテレビに入れる（フェーズ3）など。推測で始めない。
+- **PCでの準備**：Node.js 22.9以降とGit。
+  ```sh
+  git clone https://github.com/haraniikochan-hue/edinet-screener.git
+  cd edinet-screener
+  git checkout ccr-123aaf7c-88ru7c
+  cd tv-home
+  npm test
+  npm run dev
+  ```
+  PCのブラウザで `http://127.0.0.1:4173/` を開く。ZIPを使う場合は展開したフォルダで `npm run dev`。
+- **テレビを変更せずに見る**：`HOST=0.0.0.0 npm run dev` で起動し、テレビのブラウザで `http://<PCのLAN内IP>:4173/` を開く（PCのファイアウォールで4173番の受信許可が必要な場合がある）。この方法ではSpotify認証はできない（第9節）。テレビのブラウザはWebViewと違うことがあるので、実機確認の結果にはどちらで見たかを書く。
+- **ADBで読み取るだけの確認**：テレビで開発者向けオプションとUSBデバッグまたはワイヤレスデバッグを有効にするのはユーザー自身の操作。それが済んで接続を許可してもらってから、読み取りだけを行う。
+  ```sh
+  adb connect <テレビのIP>:5555      # ワイヤレスデバッグなら先に adb pair <IP>:<ポート>
+  adb devices
+  adb shell getprop ro.product.model
+  adb shell getprop ro.build.version.release
+  adb shell wm size
+  adb shell wm density
+  adb shell pm list packages | grep -i webview
+  adb shell dumpsys package com.google.android.webview | grep versionName   # パッケージ名は上の結果に合わせる
+  adb shell settings get global private_dns_mode
+  adb shell settings get global private_dns_specifier
+  ```
+  WebViewのCSS px＝`wm size` ÷（`wm density`÷160）。1920x1080で320なら960×540になり、第3.3節の想定と一致する。結果は第3.3節と第11節の表（TV型番・OS）に記録する。
+- **テレビを変更する操作**（`settings put`、アプリのインストール・削除、`pm disable-user` など）は、対象・影響・戻し方を説明し、ユーザーの確認を取ってから行う（第12節）。引き継ぎもPCへの移行も、テレビを変更する許可ではない。
+- ユーザーとのやり取りは日本語で、報告は短く。テレビ専用（モバイル版は不要）。Apple／iOSのようなデザインが好み。
 
 ## 2. ユーザーと確定した仕様
 

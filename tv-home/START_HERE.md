@@ -4,9 +4,11 @@
 
 ## 次のセッションへ渡す方法
 
-1. `tv-home-handoff-v0.9.0.zip` を新しいチャットへ添付する。
-2. [NEXT_SESSION_PROMPT.txt](NEXT_SESSION_PROMPT.txt) の文章を貼る。
-3. 続けて作業したい内容が決まっていれば、その依頼を追加する。
+次のセッションは**ユーザーのPC上**で動かす（Claude Desktopアプリ、またはPCのターミナルで `claude remote-control`）。クラウドのセッションからは家のWi-Fiとテレビに届かないため（[HANDOFF.md](HANDOFF.md) 第1.1節）。
+
+1. PCでソースを用意する。GitHubの `haraniikochan-hue/edinet-screener` をcloneしてブランチ `ccr-123aaf7c-88ru7c` に切り替え、`tv-home/` フォルダで作業する。または `tv-home-handoff-v0.9.0.zip` を展開する。
+2. そのフォルダでセッションを開き、[NEXT_SESSION_PROMPT.txt](NEXT_SESSION_PROMPT.txt) の文章を貼る。
+3. Wi-Fi／テレビで何をしたいか（テレビで表示を見る、型番を調べる、広告ブロック、APKなど）を伝える。
 
 このZIPでコード・画像・仕様・履歴を確認できます。前のチャットの全文を別途渡す必要はありません。
 
