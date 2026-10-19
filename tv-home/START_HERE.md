@@ -1,6 +1,6 @@
 # TV Home — 最初に読むファイル
 
-TV Home は、自宅の Xiaomi TV（65インチ、Google TV／Android 14）用に作った自作のホーム画面です。**v0.20.0のAndroidアプリとして、テレビのホーム画面になっています**（ソースはv0.21.0：スモークのすりガラス、テレビには未インストール。HANDOFF第1節）（2026-10-19、標準ホームは無効化済み）。中身は `dashboard/` のダッシュボード（Apple／iOS風、TV専用）を、`android/` のアプリがWebViewで表示する作りです。
+TV Home は、自宅の Xiaomi TV（65インチ、Google TV／Android 14）用に作った自作のホーム画面です。**v0.21.0のAndroidアプリとして、テレビのホーム画面になっています**（2026-10-19、標準ホームは無効化済み）。中身は `dashboard/` のダッシュボード（Apple／iOS風、TV専用）を、`android/` のアプリがWebViewで表示する作りです。
 
 ## 次のセッションへ渡す方法
 
