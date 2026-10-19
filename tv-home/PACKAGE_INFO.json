@@ -1,6 +1,6 @@
 {
   "project": "TV Home",
-  "appVersion": "0.9.0",
+  "appVersion": "0.18.0",
   "handoffRevision": "2026-10-19.7",
   "createdAt": "2026-10-19",
   "source": {
@@ -9,7 +9,7 @@
     "folder": "tv-home"
   },
   "nextSession": "Runs on the user's PC (Claude Desktop or claude remote-control) so it can reach the home Wi-Fi and TV; see HANDOFF.md section 1.1.",
-  "userStatus": "v0.9.0: design refresh, TV performance, ad blocking, remote-control UX and TV-only layout (no mobile version, per the user); awaiting the user's review on the TV.",
+  "userStatus": "v0.18.0: running on the Xiaomi TV as its home screen (Android app in android/, stock Google TV home disabled); see HANDOFF sections 1 and 3.4",
   "entryPoint": "START_HERE.md",
   "currentSpecification": "HANDOFF.md",
   "nextSessionPrompt": "NEXT_SESSION_PROMPT.txt",
@@ -44,5 +44,5 @@
   "published": false,
   "apkBuilt": false,
   "tvConnected": false,
-  "verification": "HANDOFF.md sections 3.1, 3.2, 3.3, 7 and 10 (v0.9.0)"
+  "verification": "HANDOFF.md sections 3.4 and 10 (v0.18.0, on the TV)"
 }

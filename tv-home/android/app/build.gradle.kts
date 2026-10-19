@@ -16,8 +16,11 @@ val copyDashboard by tasks.registering(Sync::class) {
 
 // Credentials are read from local.properties (not committed):
 // spotify.clientId=<32 hex>, unsplash.accessKey=<Unsplash Access Key>.
+// The user's Mac also keeps them in ~/.config/tv-home/local.properties, outside any session folder;
+// the project's own local.properties wins when both have a value.
 val localProperties = Properties().apply {
-    rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) }
+    listOf(File(System.getProperty("user.home"), ".config/tv-home/local.properties"), rootProject.file("local.properties"))
+        .filter { it.exists() }.forEach { file -> file.inputStream().use { load(it) } }
 }
 val spotifyClientId = localProperties.getProperty("spotify.clientId", "")
     .takeIf { it.matches(Regex("^[a-f0-9]{32}$")) } ?: ""

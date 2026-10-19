@@ -1,74 +1,67 @@
 # TV Home 引き継ぎ書 — v0.18.0
 
-引き継ぎ日：2026-10-19。対象：Xiaomi TV用ホーム画面のフェーズ2・Webダッシュボード。
+引き継ぎ日：2026-10-19（夜）。対象：Xiaomi TV（65インチ、MiTV-MZTU0、Google TV／Android 14）の自作ホーム画面「TV Home」。
 
-v0.5.5はユーザーに「ほぼ完成形」と評価されたが、ユーザーはさらにUIとデザインを洗練させたいと希望し、v0.6.0でApple／iOSの考え方に沿って全体のデザインを刷新した（配置・内容は維持）。あわせて、更新が止まっていたNHKのニュース配信元を新しいNHK ONEの配信へ切り替えた。フェーズ3への着手は依頼されていない。
+**テレビのホーム画面は、もうこのアプリになっている。** v0.9.0まではWebダッシュボード（フェーズ2）だったが、2026-10-19にユーザーのPC上のセッションで、Androidアプリ（`android/`）にしてテレビの標準ホームと置き換えた（フェーズ3）。以後の変更は、ダッシュボード（`dashboard/`）を直してAPKを作り直し、テレビに入れて確認する流れになる。
 
 **この文書が現在の仕様。** 実行・接続手順の詳細は [README.md](README.md)、過去の相談は [docs/HANDOFF_HISTORY.md](docs/HANDOFF_HISTORY.md)。初期モックや履歴内の未確定事項を、現在の要件と混同しないこと。
 
 ![承認済みの最新画面](artifacts/dashboard-desktop.png)
 
-## 1. 現在地と再開方法
+（この画像はv0.9.0時点のWeb版。`artifacts/` は .gitignore の対象で、GitHubにはない。今のテレビの画面は、第3.4節の機能が加わっている。）
 
-- 最新アプリは **0.9.0**。v0.6.0のデザイン刷新（第3節）とNHKニュース配信元の修正、v0.6.1のTV向け軽量化（第3.1節）、v0.7.0の広告ブロック（第7節）、v0.8.0のリモコン操作の改善（第3.2節）に、v0.9.0の**TV専用化**（第3.3節）を加えた。**ユーザーは「モバイル版は作らなくていい、テレビ専用」と明言**している。スマホ・縦画面の配置を戻さない。
-- Web版は実装済み。12銘柄の実価格・24時間チャート、渋谷の天気、米国経済指標、ニュースを表示する。
-- 配置・余白・透明感はv0.5.5で評価済み。v0.6.0の文字・素材・動きはこのセッションで実装し、ユーザーの評価待ち。
-- **v0.10.0でAPKを作り、テレビのホーム画面を置き換えた**（第3.4節）。標準ホームはユーザーの確認を得て無効化済み。公開ホスティングは未実施（アプリ単体で動くため不要）。
-- Spotifyの実認証、Unsplashの実Access Keyは未接続。設定画面と接続処理は実装済み。
-- ソースはGitHubの `haraniikochan-hue/edinet-screener`、ブランチ `ccr-123aaf7c-88ru7c` の `tv-home/` フォルダ（v0.5.5の基準から全履歴あり）。引き継ぎZIPも同じ内容。プルリクエストは未作成で、ユーザーの依頼があるまで作らない。作業は同じブランチで続ける。
-- 前セッションの開発サーバーは終了済み。新しい環境で起動する。前の環境やURLが存続するとは限らない。
+## 1. 現在地（v0.18.0、2026-10-19）
 
-再開時の順序：
+- **テレビに入っているもの**：TV Home `jp.tvhome.launcher` v0.18.0（リリースビルド、開発用の鍵で署名）。ホームボタンで開く。標準ホームは無効化済み。詳細と戻し方は第3.4節。
+- **デザイン**：v0.5.5の配置のまま、v0.6.0でApple／iOS風に刷新した（第3節）。TV専用（第3.3節）。**ユーザーは「モバイル版は作らなくていい、テレビ専用」と明言**している。スマホ・縦画面の配置を戻さない。ユーザーはApple／iOSのようなデザインが好みで、UIをさらに洗練させたいと考えている。
+- **このセッション（2026-10-19、PC上）でやったこと**（いずれもテレビで確認済み。詳細は第3.4節）：
+  1. Castでテレビに表示し、Cast受信ブラウザで画面が4倍に拡大される不具合を直した（第3.3節）。
+  2. APKを作り、標準ホームを無効化してホーム画面を置き換えた（v0.10.0）。ニュースと経済指標はアプリが自分で取得する（PC不要）。
+  3. ドックを実物のアイコンにした。SmartTubeを導入した。BLSの経済指標を取得できるようにした。
+  4. Spotifyカードに、テレビのSpotifyアプリで再生中の曲を出す（ログイン不要。通知へのアクセスを許可）。
+  5. 背景写真を、Unsplashの世界8都市のダウンタウン（昼夜）に自動で切り替える。
+  6. ドック：決定ボタンの長押しで並べ替え・ドックから外す。アプリ一覧。設定シートから「テレビの設定を開く」。
+  7. リモコンの設定ボタンで、どの画面からでもテレビの設定が開く（ユーザー補助サービス）。
+  8. ホームに戻るのを即座にし、アプリ起動前の約1.3秒の待ちをなくし、カーソル移動を滑らかにした。
+- **未確認・保留**：キャスト中の映像の重さ・音切れ（v0.17.0でメモリ解放を弱めたため、ユーザーの再確認が必要）、スリープ復帰・長時間稼働、Unsplashの本番申請、Spotifyのスマホ再生の表示（Webログインは未完了）。第11節も参照。
+- **ソース**：GitHubの `haraniikochan-hue/edinet-screener`、ブランチ `ccr-123aaf7c-88ru7c` の `tv-home/`。プルリクエストは未作成で、ユーザーの依頼があるまで作らない。**コミットしたら確認せずにこのブランチへpushする**（ユーザー指示「毎度それ聞かないで勝手にpushして」）。
 
-1. [START_HERE.md](START_HERE.md) とこの文書を読む。
-2. 上の最新画面を確認する。
-3. Node.js 22.9以降で `npm run dev`。`http://127.0.0.1:4173/` を開く。
-4. ユーザーの次の依頼に沿って作業する。確定済みの地域・銘柄・アプリ・朝晩の表示を聞き直す必要はない。
+## 1.1 次のセッションの始め方（ユーザーのPC）
 
-実行時npm依存はなく、`npm install` は不要。検証環境はNode.js 24.19.0。
+テレビに届くのは、ユーザーのMac上のセッションだけ（クラウドからは家のWi-Fiに届かない）。Claude Desktopアプリのセッションで作業する。
 
-## 1.1 PC上のセッションへの移行（2026-10-19）
+1. このリポジトリをcloneしてブランチ `ccr-123aaf7c-88ru7c` に切り替え、`tv-home/` で作業する。2026-10-19のセッションは一時フォルダだったので、そのフォルダは残っていない前提でよい。
+2. Macに入っている道具（いずれも `~/.local`。Macのシステムは変更していない）：
+   - Node.js 24.22.0：`~/.local/node/bin`（`PATH=~/.local/node/bin:$PATH npm test`）
+   - JDK 17：`JAVA_HOME=~/.local/jdk17/Contents/Home`
+   - Android SDK：`ANDROID_HOME=~/.local/android-sdk`（ライセンスはユーザーの同意を得て受諾済み）。adb は `~/.local/android-sdk/platform-tools/adb`
+   - GitHub CLI：`~/.local/gh/bin/gh`（haraniikochan-hue でログイン済み。gitのpushもこれで通る）
+   - catt（Cast送信）：`~/.local/catt-venv/bin/catt`
+   - Homebrewの node はIntel Macではソースからのビルドになり非常に遅いので使わない。
+3. **APIキー**：SpotifyのClient IDとUnsplashのAccess Keyは `~/.config/tv-home/local.properties`（権限600、Gitの外）にある。`android/app/build.gradle.kts` はこのファイルと `android/local.properties`（Gitの外）を読む。キーの値をコミット・チャット・スクリーンショットに出さない。
+4. **テレビとの接続**：テレビはWi-Fi `harannWiFi_5G`。IPアドレスはDHCPで変わる（2026-10-19の最後は `192.168.0.17`）。`adb mdns services` で今のアドレスとポートを確認し、`adb connect <IP>:5555` でつなぐ（`_adb._tcp` の5555番が使える）。つながらない場合は、ユーザーにテレビの 設定 → システム → 開発者向けオプション → ワイヤレスデバッグ を確認してもらい、必要ならペア設定（`adb pair <IP>:<ポート> <6桁コード>`）からやり直す。
+5. **ビルドと入れ替え**：
+   ```sh
+   cd android
+   ./gradlew assembleRelease    # 確認用は assembleDebug（WebViewのDevToolsがADB経由で開く）
+   adb install -r app/build/outputs/apk/release/app-release.apk
+   ```
+   `dashboard/` を直したら、そのままAPKに入る（`dist/` は使わない）。確認でデバッグ版を入れたら、最後に必ずリリース版に戻す。並び順などの保存データは入れ直しても残る。
+6. **テレビで確認するときの注意**：
+   - ユーザーがテレビを使っていることが多い。`adb shell input keyevent` でキーを送るテストはしない（2026-10-19に、長押しのつもりの操作でSmartTubeが起動して再生画面に入ってしまった）。ページ内の確認はデバッグ版のDevTools（`adb forward tcp:9333 localabstract:webview_devtools_remote_<pid>`）で行い、リモコン操作の確認はユーザーに頼む。
+   - `com.xiaomi.mitv.smartshare`（Miracastの画面ミラーリング）を開くと、テレビのWi-Fiが切り替わり、IPアドレスが変わってADBが切れる。開かない。
+   - テレビを変更する操作（アプリのインストール・削除、`pm disable-user`、`settings put` など）は、対象・影響・戻し方を説明し、ユーザーの確認を取ってから行う（第12節）。
+7. PCのブラウザで見るだけなら、今までどおり `npm run dev` で `http://127.0.0.1:4173/`。テレビへのCast表示の手順は下に残す（APKがある今は、ほぼ不要）。
 
-v0.6.0〜v0.9.0はクラウドのセッションで作った。ユーザーが「デスクトップからWi-Fi見れる？」と聞いたが、クラウドのセッションからはユーザーのPCにも、家のWi-Fi（同じWi-Fiにつながっているテレビを含む）にも届かない。このため、**ユーザーのPC上で動くセッション**（Claude Desktopアプリ、またはPCのターミナルで `claude remote-control`）へ移った。
+ユーザーとのやり取りは日本語で、報告は短く、専門用語を避ける。確定済みの地域・銘柄・アプリ・朝晩の表示・余白は聞き直さない。
 
-- **Wi-Fiで何をしたいかはまだ聞けていない。** 最初にユーザーに確認する。考えられるのは、テレビで今のダッシュボードを見る、テレビの型番・WebViewを調べる、広告ブロック（AdGuard DNS）を設定する、APKを作ってテレビに入れる（フェーズ3）など。推測で始めない。
-- **PCでの準備**：Node.js 22.9以降とGit。
-  ```sh
-  git clone https://github.com/haraniikochan-hue/edinet-screener.git
-  cd edinet-screener
-  git checkout ccr-123aaf7c-88ru7c
-  cd tv-home
-  npm test
-  npm run dev
-  ```
-  PCのブラウザで `http://127.0.0.1:4173/` を開く。ZIPを使う場合は展開したフォルダで `npm run dev`。
-- **テレビを変更せずに見る**：`HOST=0.0.0.0 npm run dev` で起動し、テレビのブラウザで `http://<PCのLAN内IP>:4173/` を開く（PCのファイアウォールで4173番の受信許可が必要な場合がある）。この方法ではSpotify認証はできない（第9節）。テレビのブラウザはWebViewと違うことがあるので、実機確認の結果にはどちらで見たかを書く。
 - **Castでテレビに出す（2026-10-19に実施・表示確認済み）**：テレビは内蔵Chromecastで、LANでは `MiTV-MZTU0`／名前「リビングルームのテレビ」（mDNSの `_googlecast._tcp`）。テレビの設定やアプリは変えずに、PCから表示できる。
   ```sh
   HOST=0.0.0.0 npm run dev
-  python3 -m venv ~/.local/catt-venv && ~/.local/catt-venv/bin/pip install catt
   ~/.local/catt-venv/bin/catt -d "リビングルームのテレビ" cast_site http://<PCのLAN内IP>:4173/
   ~/.local/catt-venv/bin/catt -d "リビングルームのテレビ" stop    # 終了。送り直す前にも一度止める
   ```
-  - `cast_site` は受信アプリDashCastを、iframeを使わずにページごと移動させる方式（force）で使う。このため `frame-ancestors 'self'` のままで表示できる。表示中はDashCastがこのページに置き換わっているので、別のURLを送るときは先に `stop` する。
-  - Cast表示ではリモコンの矢印キーがページに届かない前提で、見るだけの確認に使う。操作の確認はテレビのブラウザかAPKで行う。
-  - PCがスリープしたりサーバーを止めたりすると表示も止まる。
-- **ADBで読み取るだけの確認**：テレビで開発者向けオプションとUSBデバッグまたはワイヤレスデバッグを有効にするのはユーザー自身の操作。それが済んで接続を許可してもらってから、読み取りだけを行う。
-  ```sh
-  adb connect <テレビのIP>:5555      # ワイヤレスデバッグなら先に adb pair <IP>:<ポート>
-  adb devices
-  adb shell getprop ro.product.model
-  adb shell getprop ro.build.version.release
-  adb shell wm size
-  adb shell wm density
-  adb shell pm list packages | grep -i webview
-  adb shell dumpsys package com.google.android.webview | grep versionName   # パッケージ名は上の結果に合わせる
-  adb shell settings get global private_dns_mode
-  adb shell settings get global private_dns_specifier
-  ```
-  WebViewのCSS px＝`wm size` ÷（`wm density`÷160）。1920x1080で320なら960×540になり、第3.3節の想定と一致する。結果は第3.3節と第11節の表（TV型番・OS）に記録する。
-- **テレビを変更する操作**（`settings put`、アプリのインストール・削除、`pm disable-user` など）は、対象・影響・戻し方を説明し、ユーザーの確認を取ってから行う（第12節）。引き継ぎもPCへの移行も、テレビを変更する許可ではない。
-- ユーザーとのやり取りは日本語で、報告は短く。テレビ専用（モバイル版は不要）。Apple／iOSのようなデザインが好み。
+  `cast_site` は受信アプリDashCastを、ページごと移動させる方式（force）で使う。Cast表示ではリモコンの操作は届かない。
 
 ## 2. ユーザーと確定した仕様
 
@@ -77,14 +70,14 @@ v0.6.0〜v0.9.0はクラウドのセッションで作った。ユーザーが�
 | 時間帯 | 朝晩とも同じフル版。時間帯によるカード切り替えなし |
 | 天気 | 渋谷区。現在の気象、明日の最高・最低、日の出・日の入、空気、次の正時から6時間予報 |
 | 時間別天気 | アイコン・気温の曲線・降水確率の数値とバー。直感的に読める表示 |
-| 音楽 | Spotify。再生情報カードとアプリドックの両方を使う |
+| 音楽 | Spotify。再生情報カードとアプリドックの両方を使う。カードはテレビのSpotifyアプリで再生中の曲を出す（ログイン不要、ユーザーの選択。第3.4節） |
 | スポーツ | 当面表示しない |
 | 個人の予定 | 「今日の予定」は不要。個人カレンダーカードを追加しない |
 | 経済指標 | 米国の主要指標、日本時間、6件ずつページ送り |
 | 相場 | 暗号資産とその他のマーケットを1つの一覧に統合。BTC/HYPEの重複なし |
 | チャート | 24時間固定。小さなチャートと銘柄アイコンを付ける |
 | 背景写真 | 世界の都市のダウンタウン（昼も夜も）のかっこいい写真（2026-10-19のユーザー指示）。Unsplashから自動取得し、テレビで稼働中（第3.4節） |
-| アプリ | SmartTube / U-NEXT / Netflix / Prime Video / Disney+ / Spotify / 設定 |
+| アプリ | 既定の並びは SmartTube / U-NEXT / Netflix / Prime Video / Disney+ / Spotify、続けてテレビのほかのアプリ、最後に「アプリ」（一覧）と「設定」。並べ替え・ドックから外すはユーザーがリモコンで行い、テレビに保存される（第3.4節）。Google Cast・AirPlay・テレビの設定のタイルは、ユーザーと相談のうえ置かない |
 | SmartTube | **見た目だけYouTubeアイコン**。名前・TVでの起動対象はSmartTube |
 | 地デジ | ショートカット削除済み。TVのチューナー機能を無効化したわけではない |
 
@@ -277,7 +270,7 @@ VIX・ダウ・SILVERは表示しない。現物指数やETFの市場価格そ�
 | 米国経済指標 | BLS・BEA公式ICS | 6時間。CPI、雇用統計、PPI、JOLTS、GDP、PCE |
 | FOMC | FRB公式日程の保存JSON | 2026-10-18確認、2027年末まで。変更時は更新が必要 |
 | ニュース | NHK ONE 経済RSS（`news.web.nhk`） | 15分取得。3見出しを20秒で切り替え（詳細を開いている間は止める）。決定でRSSの要約（最大240字）を表示。48時間以上前の配信を明示。旧 `www3.nhk.or.jp` のRSSは2026-08-08で更新が止まっていたため v0.6.0で変更 |
-| Spotify | Currently Playing API | 30秒。実アカウント未接続 |
+| Spotify | テレビのSpotifyアプリのMediaSession（TVアプリ）／Currently Playing API（Web版、未接続） | TVアプリは曲や状態が変わるとすぐ反映、Web版は30秒 |
 | 写真 | 同梱CC0写真／Unsplash | Unsplashは1時間に8都市×3枚（計24枚）を取得し、既定60秒で切り替え。写真ごとにTV用のぼかし画像を1回作る |
 
 時間別天気は日本時間の次の正時から6時間。日付跨ぎ・昼夜・雨雪雷・降水確率・欠測に対応。気温の線の縦幅は最低6℃で、小変動を誇張しない。3時間超の予報は古い情報として表示。地域変更時に以前の地域の値を使い回さない。
@@ -286,7 +279,7 @@ VIX・ダウ・SILVERは表示しない。現物指数やETFの市場価格そ�
 
 ## 6. Spotify・Unsplashの接続
 
-両方とも実キー／実認証は受領していない。ZIPに秘密情報やブラウザのセッション情報は含まれない。詳しい設定と公式リンクは [README.md](README.md)。
+**2026-10-19更新**：テレビのアプリでは、Unsplashは稼働中、Spotifyカードはテレビの再生情報を使う（第3.4節）。キーはユーザーのMacの `~/.config/tv-home/local.properties` にあり、Gitには入れない。以下はPCの `npm run dev`（Web版）で使う場合の手順。詳しい設定と公式リンクは [README.md](README.md)。
 
 **Spotifyの再生情報カード**
 
@@ -314,7 +307,7 @@ Web版の順序：SmartTube（YouTubeの見た目）、U-NEXT、Netflix、Prime 
 - Web単独ではネイティブアプリを起動せず、その旨を表示する。インストール済みとは仮定しない。
 - 接続口：`window.Android.getApps()` と `window.Android.launchApp(packageName)`。広告ブロック用に任意で `getPrivateDns()` と `setPrivateDns(host)`（下記）。
 - `getApps()` は `name` と `packageName` を持つ配列のJSON文字列。実機から得た妥当なパッケージ名を使う。
-- 実一覧が返るとWebの固定ドックを置き換える。現在は **最大12アプリ＋設定**。実機の順序・ピン留め・固定ドックとの統合はフェーズ3で検討する。
+- 実一覧が返るとWebの固定ドックを置き換える。v0.15.0からは件数の上限なしで全アプリを返し、並びと表示はページ側（`dashboard/js/dock.js`）で決める（第3.4節）。実機の順序・ピン留め・固定ドックとの統合はフェーズ3で検討する。
 - 表示名に対応する既知ロゴと未知アプリの頭文字表示に対応。起動するパッケージをロゴから推測しない。SmartTubeをYouTubeの起動先にしない。
 
 フェーズ3の想定はKotlinの薄いランチャー＋WebView。`WebViewAssetLoader`等で安全なオリジンを用意する。従来の `addJavascriptInterface` はiframeにも公開されるため、現在はAndroidブリッジ検出中に外部TradingView iframeを無効化している。併用するならオリジン制限付きWebMessage API等で設計する。
@@ -450,12 +443,12 @@ PLAYWRIGHT_MODULE=/absolute/path/to/playwright/index.mjs CHROMIUM_PATH=/path/to/
 | 項目 | 現状 | 必要になったときの次の行動 |
 | --- | --- | --- |
 | TV型番・OS | 一部確認（2026-10-19、Castから） | 65インチ、Cast上の型番 `MiTV-MZTU0`、Android 14（Build UKN1.240806.017）、Cast受信ブラウザはChrome 92・960×540・密度2。Google TVかPatchWallか、WebViewの版は未確認（ADBで調べる） |
-| 作業端末と接続経路 | 未確認 | PC利用可否、スマホ/Termux、同一LAN・ADB接続を確認 |
+| 作業端末と接続経路 | ユーザーのMac（Intel）からADB接続済み | 第1.1節 |
 | APK | v0.10.0をテレビにインストール済み・ホームに設定済み（第3.4節） | （ドックのアイコン・SmartTube・BLSは2026-10-19に対応済み）アプリ内の広告ブロック切り替え、スリープ復帰・長時間稼働の確認 |
 | サーバー運用 | アプリでは不要 | ニュース・経済指標はアプリが自分で取得する。Unsplashを使う場合だけ、キーを置く場所を決める |
-| Spotify | フロー実装、実認証なし | Client ID・リダイレクト先・利用ユーザーを設定し実接続 |
-| Unsplash | フロー実装、実キーなし | サーバーにAccess Key設定、実画像切り替えとクレジット確認 |
-| TVでの認証・保存 | 未設計 | 初回ログイン・長期保存・端末間の受け渡しを設計 |
+| Spotify | TVアプリはテレビの再生情報で稼働。Webログイン（スマホ再生の表示）は未完了 | スマホの再生も出したい、と言われたら、PCでログインしてトークンをテレビに渡す方式などを検討 |
+| Unsplash | TVアプリで稼働（8都市×3枚/時） | 本番申請（上限引き上げ）、download エンドポイント、都市の変更はユーザーの希望次第 |
+| TVでの認証・保存 | 設定・並び順はWebViewのlocalStorage | アプリを消すと消える。必要ならバックアップ方法を検討 |
 | 性能と実機表示 | ブラウザで検証 | 文字サイズ、オーバースキャン、ぼかし負荷、スリープ復帰、長時間稼働を測定 |
 | 個人写真・スポーツ・予定追加 | 現在の要件にはない | 新たに希望された場合だけ検討 |
 | スクリーンセーバー | 将来の任意フェーズ | DreamService等。未着手 |

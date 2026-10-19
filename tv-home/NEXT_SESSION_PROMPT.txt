@@ -1,13 +1,9 @@
-TV Homeプロジェクトを引き継いでください。ソースはGitHubの haraniikochan-hue/edinet-screener、ブランチ ccr-123aaf7c-88ru7c の tv-home フォルダです（ZIPを展開した場合はそのフォルダ）。まず「START_HERE.md」「HANDOFF.md」「AGENTS.md」を読んでください。
+TV Homeプロジェクトを引き継いでください。ソースはGitHubの haraniikochan-hue/edinet-screener、ブランチ ccr-123aaf7c-88ru7c の tv-home フォルダです。まず「START_HERE.md」「HANDOFF.md」（特に第1節・第1.1節・第3.4節）「AGENTS.md」「CLAUDE.md」を読んでください。
 
-このセッションは私のPC上で動いています。前のクラウドのセッションからは家のWi-Fiやテレビに届かなかったので移りました（HANDOFF.md 第1.1節）。Wi-Fi／テレビで何をしたいかはこれから伝えます。テレビの設定を変える操作は、対象と影響と戻し方を説明して私の確認を取ってから実行してください。作業は同じブランチで続け、プルリクエストは頼むまで作らないでください。
+このセッションは私のMac上で動いています。TV Homeは今v0.18.0で、Xiaomi TV（Google TV）のホーム画面としてAndroidアプリで動いています（標準ホームは無効化済み）。Node.js・JDK・Android SDK・GitHub CLIは ~/.local に、SpotifyとUnsplashのキーは ~/.config/tv-home/local.properties にあります。テレビとはADBで接続できます（IPアドレスは変わるので adb mdns services で確認してください）。
 
-現在のアプリはv0.9.0です。Xiaomi TV用ホーム画面のフェーズ2・Webダッシュボードで、v0.5.5の配置のままApple／iOSの考え方でデザインを刷新し、TV向けの軽量化、広告ブロック（AdGuard DNS）、リモコン操作の改善を加えました。テレビ専用なのでモバイル版は不要です（スマホ・縦画面の配置は削除済み）。私はAppleやiOSのようなデザインが好きで、UIはさらに洗練させたいと考えています。最新の見た目は artifacts/dashboard-desktop.png と現行の dashboard/ が基準です。
+テレビの設定を変える操作は、対象と影響と戻し方を説明して私の確認を取ってから実行してください。私がテレビを使っていることが多いので、テレビにキー操作を送るテストはしないでください。作業は同じブランチで続け、コミットしたら確認せずにpushしてください。プルリクエストは頼むまで作らないでください。
 
-朝晩同じフル版、渋谷区の時間別天気、Hyperliquidの12銘柄と24時間チャート、米国経済指標、ニュース、Spotify、7つのアプリドックまで実装済みです。Disney+とSpotifyも追加済み。SmartTubeは見た目だけYouTubeです。
+私はAppleやiOSのようなデザインが好きで、UIはさらに洗練させたいと考えています。テレビ専用なのでモバイル版は不要です。確定済みの事項（HANDOFF第2節・第3節）は聞き直さないでください。やり取りは日本語で、短く分かりやすくお願いします。
 
-今の配置・余白・クリアなガラスデザイン（HANDOFF.md 第3節）を引き継ぎ、確定済みの事項は聞き直さないでください。古いmockupsやdocs/HANDOFF_HISTORY.mdは履歴で、最新仕様ではありません。
-
-Spotify実アカウント・Unsplash実キー・TV実機・APK・ホスティング公開は未接続／未実施です。残作業と検証範囲はHANDOFF.mdに記載しています。
-
-まず現状を読み取り、npm test と npm run dev で起動を確認したうえで、私の次の依頼に対応してください。引き継ぎだけを理由にUIの作り直しやTVのシステム変更を始めないでください。
+まず現状を読み取り、npm test が通ることを確認したうえで、私の次の依頼に対応してください。
