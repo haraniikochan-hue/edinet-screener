@@ -20,10 +20,13 @@ export class Slideshow {
     this.loading=true; const version=this.version;
     const next=(this.index+1)%this.photos.length, photo=this.photos[next];
     try {
-      const img=await new Promise((resolve,reject) => {
-        const img=new Image(); const timeout=setTimeout(() => reject(new Error('写真の読み込みがタイムアウトしました')),15000);
+      const load=cors => new Promise((resolve,reject) => {
+        const img=new Image(); if(cors)img.crossOrigin='anonymous'; const timeout=setTimeout(() => reject(new Error('写真の読み込みがタイムアウトしました')),15000);
         img.onload=() => {clearTimeout(timeout); resolve(img);}; img.onerror=() => {clearTimeout(timeout); reject(new Error('写真を読み込めませんでした'));}; img.src=photo.url;
       });
+      // Read with CORS (Unsplash allows it) so the frosted copy can measure the photo behind the text;
+      // a host that refuses still shows its photo, with default shading.
+      const img=await load(true).catch(() => load(false));
       if (version!==this.version) return;
       const layer=1-this.layer;
       // The frosted copy is painted before the swap so both cross-fade together.

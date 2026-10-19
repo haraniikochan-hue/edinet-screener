@@ -10,18 +10,18 @@
   --font: 'Inter','Noto Sans JP',-apple-system,BlinkMacSystemFont,'Hiragino Sans','Hiragino Kaku Gothic ProN',system-ui,sans-serif;
   --label: #fff;
   --label-2: rgba(235,240,255,.76);
-  --label-3: rgba(235,240,255,.54);
+  --label-3: rgba(235,240,255,.6);
   --label-4: rgba(235,240,255,.3);
   --separator: rgba(255,255,255,.1);
   --fill: rgba(120,124,140,.26);
   --fill-2: rgba(255,255,255,.09);
   --up: #30d158;
-  --down: #ff453a;
+  --down: #ff6961;
   --rain: #64d2ff;
   --warn: #ffb340;
   --spotify: #1ed760;
   --accent: #0a84ff;
-  --glass: linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.018) 40%,rgba(255,255,255,.01)),rgba(10,13,22,.3);
+  --glass: linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.018) 40%,rgba(255,255,255,.01)),rgba(10,13,22,.16);
   --glass-blur: blur(24px) saturate(150%) brightness(.8);
   --glass-shadow: 0 30px 60px -30px rgba(0,0,0,.55),0 0 0 .5px rgba(0,0,0,.16),0 1px 2px rgba(0,0,0,.1);
   --rim: linear-gradient(162deg,rgba(255,255,255,.42),rgba(255,255,255,.1) 20%,rgba(255,255,255,.035) 48%,rgba(255,255,255,.07) 80%,rgba(255,255,255,.2));
@@ -63,7 +63,12 @@ h2,h3,p { margin: 0; }
 .frost { display: none; position: absolute; inset: 0; }
 .frosted .frost { display: block; }
 .frost-layer { display: block; object-fit: cover; object-position: 50% 48%; }
-.shade { background: radial-gradient(34% 30% at 22% 16%,rgba(4,8,20,.26),transparent),radial-gradient(120% 90% at 50% 40%,transparent 55%,rgba(2,4,10,.4)),linear-gradient(180deg,rgba(4,8,20,.4),transparent 30%,transparent 60%,rgba(3,6,14,.68)),linear-gradient(90deg,rgba(4,10,24,.4),transparent 44%); }
+/* No blanket darkening: the photo is shown as it is. Only the text that sits on the bare photo (clock,
+   photo credit) gets a soft shade, as dark as the photo behind it needs: js/frost.js measures each photo
+   and sets --clock-shade / --caption-shade (none on a night sky, up to .55 on a bright one). */
+.shade::before,.shade::after { content: ''; position: absolute; inset: 0; transition: opacity 2.4s var(--ease); }
+.shade::before { background: radial-gradient(38% 36% at 24% 16%,rgb(4,8,20),rgba(4,8,20,.9) 30%,rgba(4,8,20,.45) 62%,transparent); opacity: var(--clock-shade,.35); }
+.shade::after { background: radial-gradient(20% 17% at 81% 91%,rgb(3,6,14),rgba(3,6,14,.8) 40%,transparent); opacity: var(--caption-shade,.35); }
 
 /* Stage */
 /* One 1920×1080 screen — dashboard, sheets and toast together — scaled to fit the TV */
@@ -80,7 +85,7 @@ html,body { height: 100%; overflow: hidden; }
 /* Fresh data needs no badge; visibility also takes it out of remote and Tab focus */
 .status-pill[data-state=ok] { opacity: 0; visibility: hidden; pointer-events: none; transition: opacity .4s var(--ease),visibility 0s linear .4s; }
 .status-pill[data-state=waiting]::before { background: var(--warn); box-shadow: 0 0 10px rgba(255,179,64,.6); }
-.glass-button { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; color: var(--label-3); font-size: 19px; background: rgba(255,255,255,.08); box-shadow: inset 0 0 0 .5px rgba(255,255,255,.16),inset 0 1px 0 rgba(255,255,255,.12); transition: transform .35s var(--spring),background .2s,color .2s; }
+.glass-button { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; color: var(--label-2); font-size: 19px; background: rgba(14,17,26,.32); box-shadow: inset 0 0 0 .5px rgba(255,255,255,.16),inset 0 1px 0 rgba(255,255,255,.12); transition: transform .35s var(--spring),background .2s,color .2s; }
 .glass-button:hover { color: #fff; background: rgba(255,255,255,.16); }
 
 /* Greeting and clock */
