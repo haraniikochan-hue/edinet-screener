@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { existsSync } from 'node:fs';
 import { MAJOR_US, EARNINGS_URL, earningsUrl, earningsDates, newYorkTime, parseEarnings, loadEarnings, upcomingEarnings } from '../dashboard/js/earnings.js';
 
 const HOUR = 3600000;
@@ -8,17 +9,18 @@ const row = (symbol, time, extra = {}) => ({ symbol, name:`${symbol} Inc.`, time
 const page = rows => JSON.stringify({ data:{ rows } });
 
 test('only the market movers are kept, with timing, quarter and numbers',()=>{
-  assert.equal(Object.keys(MAJOR_US).length,25);
-  for(const symbol of ['NVDA','AAPL','MSFT','TSM','ASML','MU','AMD','JPM'])assert.ok(Object.hasOwn(MAJOR_US,symbol),symbol);
+  assert.equal(MAJOR_US.length,25);assert.equal(new Set(MAJOR_US).size,25);
+  for(const symbol of ['NVDA','AAPL','MSFT','TSM','ASML','MU','AMD','JPM'])assert.ok(MAJOR_US.includes(symbol),symbol);
   const rows=parseEarnings(page([row('META','time-after-hours'),row('SAP','time-after-hours'),row('JPM','time-pre-market'),row('PM','time-pre-market'),row('NVDA','time-not-supplied',{epsForecast:''})]),'2026-10-21');
   assert.deepEqual(rows.map(r=>r.symbol),['META','JPM','NVDA']);
   const meta=rows[0];
-  assert.equal(meta.name,MAJOR_US.META);assert.equal(meta.timing,'after');assert.equal(meta.id,'META:2026-10-21');
+  assert.equal(meta.company,'META Inc.');assert.equal(meta.timing,'after');assert.equal(meta.id,'META:2026-10-21');
   assert.equal(meta.quarter,'2026年9月までの四半期');assert.equal(meta.epsForecast,1.23);assert.equal(meta.estimates,7);
   assert.equal(meta.lastYearEps,-0.1);assert.equal(meta.marketCap,1234567890);
   assert.equal(rows[1].timing,'pre');assert.equal(rows[2].timing,'unknown');assert.equal(rows[2].epsForecast,null);
   assert.throws(()=>parseEarnings('{}','2026-10-21'),/決算/);
-  assert.ok(!Object.hasOwn(MAJOR_US,'GOOG'),'Alphabet is listed once (GOOGL)');
+  assert.ok(!MAJOR_US.includes('GOOG'),'Alphabet is listed once (GOOGL)');
+  for(const symbol of MAJOR_US)assert.ok(existsSync(new URL(`../dashboard/assets/earnings/${symbol}.png`,import.meta.url)),`${symbol} has a logo`);
 });
 test('report times follow New York, including the end of daylight saving',()=>{
   // Before the open: 8:00 New York is 21:00 in Japan in October, 22:00 after 1 November
@@ -44,7 +46,7 @@ test('a calendar survives a few missing days, is sorted, and drops reports long 
     return page(date==='2026-10-21'?[row('META','time-after-hours',{marketCap:'$2,000,000,000,000'}),row('JPM','time-pre-market')]:date==='2026-10-19'?[row('AAPL','time-after-hours')]:[]);
   };
   const result=await loadEarnings(fetchText,now);
-  assert.equal(asked.length,40,'eight weeks of US weekdays');assert.equal(result.missing,1);assert.equal(result.companies,Object.keys(MAJOR_US).length);
+  assert.equal(asked.length,40,'eight weeks of US weekdays');assert.equal(result.missing,1);assert.equal(result.companies,MAJOR_US.length);
   assert.deepEqual(result.events.map(e=>e.symbol),['AAPL','JPM','META']);
   assert.deepEqual(upcomingEarnings(result.events,Date.parse('2026-10-21T00:00:00+09:00')).map(e=>e.symbol),['JPM','META'],'a report two hours past drops off');
   await assert.rejects(loadEarnings(async()=>{throw new Error('down');},now),/決算予定/);

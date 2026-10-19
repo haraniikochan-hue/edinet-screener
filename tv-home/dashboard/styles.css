@@ -201,7 +201,11 @@ html,body { height: 100%; overflow: hidden; }
    (the next morning in Japan) */
 .calendar-event[data-indicator=EARNINGS-pre] { --cat: #7d7aff; }
 .calendar-event[data-indicator=EARNINGS-after] { --cat: #ffd60a; }
-.calendar-ticker { margin-left: 8px; color: var(--label-3); font-size: 13px; font-weight: 500; letter-spacing: .02em; }
+.earnings-event { align-items: center; }
+.calendar-detail.calendar-company { flex-direction: row; align-items: center; gap: 10px; }
+.calendar-logo { width: 24px; height: 24px; flex-shrink: 0; border-radius: 50%; box-shadow: 0 0 0 .5px rgba(255,255,255,.16); }
+.earnings-event .calendar-title { letter-spacing: .01em; }
+.detail-logo { width: 40px; height: 40px; margin-right: 14px; border-radius: 50%; vertical-align: -6px; box-shadow: 0 0 0 .5px rgba(255,255,255,.2); }
 .calendar-timing { color: var(--label-2); font-size: 15px; }
 .calendar-event { cursor: pointer; }
 .calendar-event:hover { background: rgba(255,255,255,.07); }

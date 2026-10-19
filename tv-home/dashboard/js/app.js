@@ -340,6 +340,8 @@ function restoreCalendarFocus(focusedId,focusedPage){
 // An earnings row: the Japan-time date of the report, the company, and whether it comes before the
 // New York open (that evening in Japan) or after the close (the next morning in Japan).
 const TIMING_LABEL={pre:'寄り前',after:'引け後',unknown:'時刻未定'};
+// A company's logo (bundled, see js/earnings.js); without one the ticker stands alone.
+const earningsLogo=(symbol,className)=>{const logo=el('img',className);logo.alt='';logo.src=`assets/earnings/${symbol}.png`;logo.onerror=()=>logo.remove();return logo;};
 function showEarnings(rows,focusedId,focusedPage){
   setText($('calendar-title'),'主要企業の決算');
   const info=earningsInfo.data,stale=earningsInfo.stale || info.missing>0;
@@ -354,9 +356,9 @@ function showEarnings(rows,focusedId,focusedPage){
     const date=new Date(event.timestamp),eventDay=jstDay(event.timestamp),day=el('div','calendar-day number');
     day.append(el('strong','',MONTH_DAY.format(date)),el('span','',eventDay===today?'今日':eventDay===tomorrow?'明日':WEEKDAY_SHORT.format(date)));
     if(eventDay===previousDay)row.classList.add('same-day');previousDay=eventDay;
-    const detail=el('div','calendar-detail'),title=el('span','calendar-title',event.name);title.append(el('small','calendar-ticker',event.symbol));detail.append(title);
+    const detail=el('div','calendar-detail calendar-company');detail.append(earningsLogo(event.symbol,'calendar-logo'),el('span','calendar-title',event.symbol));
     row.append(day,detail,el('span','calendar-time calendar-timing',TIMING_LABEL[event.timing]));
-    row.setAttribute('aria-label',`${dated(date)} 日本時間 ${event.name} ${event.symbol} 決算 ${TIMING_LABEL[event.timing]}`);
+    row.setAttribute('aria-label',`${dated(date)} 日本時間 ${event.symbol}（${event.company}）決算 ${TIMING_LABEL[event.timing]}`);
     if(index===0 && calendarIndex===1)row.classList.add('next-event');
     $('calendar-events').append(row);
   });
@@ -674,12 +676,13 @@ function openEarningsDetail(row){
   const cap=v=>!isNumber(v)?'':v>=1e12?`約${(v/1e12).toFixed(1)}兆ドル`:`約${Math.round(v/1e8).toLocaleString('ja-JP')}億ドル`;
   const us=`${event.date.slice(5).replace('-','/')}（米国）`;
   const japan=event.timing==='pre'?`${dated(date)}（${WEEKDAY_SHORT.format(date)}）の夜（およそ20〜23時）`:event.timing==='after'?`${dated(date)}（${WEEKDAY_SHORT.format(date)}）の朝（およそ5〜7時）`:'未定';
-  openDetail({eyebrow:'決算発表 · Nasdaq',title:`${event.name}（${event.symbol}）`,subtitle:[when,`${dated(date)}（${WEEKDAY_SHORT.format(date)}）${TIMING_LABEL[event.timing]}`].filter(Boolean).join(' · '),
+  openDetail({eyebrow:`決算発表 · ${event.company||'Nasdaq'}`,title:event.symbol,subtitle:[when,`${dated(date)}（${WEEKDAY_SHORT.format(date)}）${TIMING_LABEL[event.timing]}`].filter(Boolean).join(' · '),
     facts:[['発表',`${us} ${event.timing==='pre'?'寄り前（取引開始前）':event.timing==='after'?'引け後（取引終了後）':'時刻未定'}`],['日本時間の目安',japan],['対象',event.quarter],
       ['予想EPS',event.epsForecast===null?'':`${usd(event.epsForecast)}${event.estimates?`（アナリスト${event.estimates}人の平均）`:''}`],
       ['前年同期のEPS',event.lastYearEps===null?'':`${usd(event.lastYearEps)}${event.lastYearDate?`（${event.lastYearDate}発表）`:''}`],
       ['時価総額',cap(event.marketCap)],['会社名',event.company],['注記','Nasdaqの決算カレンダー。発表日や時刻は会社の都合で変わることがあります。']],
     link:{href:row.href,label:'Nasdaqで見る'},accent:getComputedStyle(row).getPropertyValue('--cat').trim()});
+  $('detail-title').prepend(earningsLogo(event.symbol,'detail-logo'));
 }
 const RELEASE_SOURCES={BLS:'米労働統計局（BLS）',BEA:'米経済分析局（BEA）',FRB:'米連邦準備制度理事会（FRB）'};
 function openEventDetail(row){

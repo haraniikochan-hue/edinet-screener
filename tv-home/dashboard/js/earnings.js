@@ -3,14 +3,15 @@
 // company that reports; only these are kept: the index heavyweights (the Magnificent Seven, Eli Lilly,
 // Walmart, JPMorgan, which opens each season), the semiconductors behind the SOX index — including
 // the US-listed TSMC, ASML and Arm, which move it as much as any US name — and the AI and software
-// bellwethers. Edit the list to follow other names (Nasdaq symbol → name shown on the TV).
-export const MAJOR_US = Object.freeze({
-  AAPL:'アップル', MSFT:'マイクロソフト', NVDA:'エヌビディア', GOOGL:'アルファベット', AMZN:'アマゾン', META:'メタ', TSLA:'テスラ',
-  AVGO:'ブロードコム', AMD:'AMD', MU:'マイクロン', QCOM:'クアルコム', INTC:'インテル', TXN:'テキサス・インスツルメンツ',
-  AMAT:'アプライド・マテリアルズ', LRCX:'ラムリサーチ', KLAC:'KLA', TSM:'TSMC', ASML:'ASML', ARM:'アーム',
-  ORCL:'オラクル', PLTR:'パランティア', NFLX:'ネットフリックス',
-  JPM:'JPモルガン', LLY:'イーライリリー', WMT:'ウォルマート',
-});
+// bellwethers. The TV shows each by its ticker and logo (assets/earnings/<SYMBOL>.png); a symbol added here
+// without a logo shows its ticker alone.
+export const MAJOR_US = Object.freeze([
+  'AAPL','MSFT','NVDA','GOOGL','AMZN','META','TSLA',
+  'AVGO','AMD','MU','QCOM','INTC','TXN','AMAT','LRCX','KLAC','TSM','ASML','ARM',
+  'ORCL','PLTR','NFLX',
+  'JPM','LLY','WMT',
+]);
+const LISTED = new Set(MAJOR_US);
 
 // Eight weeks covers a whole reporting season.
 export const EARNINGS_DAYS = 56;
@@ -49,12 +50,12 @@ const AT = { pre:[8,0], after:[16,5], unknown:[12,0] };
 export function parseEarnings(text, date) {
   const data = typeof text === 'string' ? JSON.parse(text) : text, rows = data?.data?.rows;
   if (!Array.isArray(rows)) throw new Error('決算予定がありません');
-  return rows.filter(row => typeof row?.symbol === 'string' && Object.prototype.hasOwnProperty.call(MAJOR_US, row.symbol)).map(row => {
+  return rows.filter(row => typeof row?.symbol === 'string' && LISTED.has(row.symbol)).map(row => {
     const timing = TIMING[row.time] || 'unknown', [hour, minute] = AT[timing];
     const quarter = /^([A-Z][a-z]{2})\/(\d{4})$/.exec(row.fiscalQuarterEnding || '');
     const month = quarter ? ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'].indexOf(quarter[1]) + 1 : 0;
     return {
-      id:`${row.symbol}:${date}`, symbol:row.symbol, name:MAJOR_US[row.symbol], company:String(row.name || '').trim(),
+      id:`${row.symbol}:${date}`, symbol:row.symbol, company:String(row.name || '').trim(),
       date, timing, timestamp:newYorkTime(date, hour, minute),
       quarter:month ? `${quarter[2]}年${month}月までの四半期` : '',
       epsForecast:money(row.epsForecast), estimates:Number.isInteger(Number(row.noOfEsts)) && Number(row.noOfEsts) > 0 ? Number(row.noOfEsts) : null,
@@ -74,7 +75,7 @@ export async function loadEarnings(fetchText, now = Date.now()) {
   const answered = settled.filter(item => item.status === 'fulfilled');
   if (answered.length < Math.ceil(dates.length / 2)) throw new Error('決算予定を取得できません');
   const events = answered.flatMap(item => item.value).sort((a, b) => a.timestamp - b.timestamp || (b.marketCap ?? 0) - (a.marketCap ?? 0));
-  return { events, from:dates[0], through:dates.at(-1), missing:dates.length - answered.length, companies:Object.keys(MAJOR_US).length };
+  return { events, from:dates[0], through:dates.at(-1), missing:dates.length - answered.length, companies:MAJOR_US.length };
 }
 
 // Reports still to come: one stays listed for two hours after its typical time.
