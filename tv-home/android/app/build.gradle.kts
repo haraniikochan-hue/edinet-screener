@@ -34,8 +34,8 @@ android {
         applicationId = "jp.tvhome.launcher"
         minSdk = 28
         targetSdk = 35
-        versionCode = 22
-        versionName = "0.25.0"
+        versionCode = 23
+        versionName = "0.26.0"
         buildConfigField("String", "SPOTIFY_CLIENT_ID", "\"$spotifyClientId\"")
         buildConfigField("String", "UNSPLASH_ACCESS_KEY", "\"$unsplashAccessKey\"")
     }
@@ -59,4 +59,5 @@ tasks.named("preBuild") { dependsOn(copyDashboard) }
 
 dependencies {
     implementation("androidx.webkit:webkit:1.12.1")
+    testImplementation("junit:junit:4.13.2")
 }
