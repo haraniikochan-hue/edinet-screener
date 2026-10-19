@@ -44,7 +44,7 @@
         <p class="greeting"><span id="greeting">こんにちは</span><span class="greeting-place">東京</span></p>
         <div class="clock-line"><time id="clock">--:--</time><div class="date"><span id="date">—月—日</span><span id="weekday">—曜日</span></div></div>
       </section>
-      <section class="card weather-section" aria-label="現在の天気と時間別予報">
+      <section class="card weather-section" aria-label="現在の天気と時間別予報。決定で詳しい天気" tabindex="0" role="button" data-nav-group="weather" data-nav-up="none" data-nav-left="none" data-nav-down="calendar">
         <div class="weather-now">
           <div class="weather-primary"><div class="weather-place"><span id="location-name">渋谷区</span><svg class="icon" aria-hidden="true"><use href="#i-location"/></svg></div><span id="temperature" class="number">--°</span></div>
           <div class="weather-summary"><span id="weather-icon" class="weather-icon" aria-hidden="true"></span><span id="weather-label">取得中</span><span id="tomorrow">明日の予報を取得しています</span></div>
@@ -57,12 +57,12 @@
       </section>
 
       <div class="market-column">
-        <section class="card market-card" aria-label="マーケットの銘柄一覧" data-nav-group="market" data-nav-up="top" data-nav-right="none" data-nav-left="calendar">
+        <section class="card market-card" aria-label="マーケットの銘柄一覧" data-nav-group="market" data-nav-up="top" data-nav-right="none">
           <div id="stocks" class="stock-grid"></div>
           <div id="tradingview" hidden></div>
         </section>
       </div>
-      <section class="card calendar-card" aria-labelledby="calendar-heading" data-nav-group="calendar" data-nav-up="none" data-nav-left="none" data-nav-down="dock">
+      <section class="card calendar-card" aria-labelledby="calendar-heading" data-nav-group="calendar" data-nav-up="weather" data-nav-left="none" data-nav-down="dock">
         <div class="card-header"><h2 id="calendar-heading" class="card-title"><svg class="icon" aria-hidden="true"><use href="#i-calendar"/></svg>米国経済指標</h2><span class="calendar-zone">日本時間</span></div>
         <p class="sr-only">これからの主要な発表</p>
         <div id="calendar-events" class="calendar-events"><p class="calendar-empty">公式日程を確認しています</p></div>
@@ -122,6 +122,7 @@
   <div id="detail-overlay" class="modal-overlay" hidden>
     <section id="detail-sheet" class="detail-sheet" role="dialog" aria-modal="true" aria-labelledby="detail-title" tabindex="-1">
       <div class="dialog-heading"><div><span id="detail-eyebrow" class="eyebrow"></span><h2 id="detail-title"></h2><p id="detail-subtitle" class="detail-subtitle"></p></div><button id="close-detail" class="icon-button" aria-label="閉じる"><svg class="icon"><use href="#i-xmark"/></svg></button></div>
+      <div id="detail-weather" class="weather-detail-body" hidden></div>
       <div id="detail-ranges" class="range-picker" role="group" aria-label="チャートの期間" hidden></div>
       <div id="detail-chart" class="detail-chart" hidden></div>
       <p id="detail-body" class="detail-body" hidden></p>

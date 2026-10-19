@@ -12,7 +12,7 @@ import { getMarketSnapshot, getMarketCandles, HyperliquidStream } from './hyperl
 import { MARKETS, MARKET_BY_SYMBOL, CHART_RANGES, marketCoins } from './market-definitions.js';
 import { drawMarketChart, drawDetailChart } from './market-chart.js';
 import { loadNews, loadCalendar, loadPhotos } from './feeds.js';
-import { HOUR, weatherTimestamp, weatherIsStale, hourlyForecast, makeWeatherIcon, renderHourlyForecast } from './weather.js';
+import { HOUR, weatherTimestamp, weatherIsStale, hourlyForecast, makeWeatherIcon, renderHourlyForecast, dailyForecast, temperatureColor, windDirection, uvLabel } from './weather.js';
 
 const $ = id => document.getElementById(id);
 const CALENDAR_PAGE_SIZE = 6, NEWS_INTERVAL = 20000, CARD_RADIUS = 32, IDLE_HOME = 60000;
@@ -21,7 +21,7 @@ let config = normalizeConfig(readStorage(storage,'tv-home-config',DEFAULT_CONFIG
 let backend = {backend:false,market:false,unsplash:false};
 let generation=0, jobs=[], news=[], newsIndex=0, music=null, toastTimer, returnFocus, selectedLocation=config.location;
 let calendarInfo=null, calendarIndex=0, calendarNextTime=0;
-let weatherResult=null, nextForecastHour=0, weatherWasStale=false;
+let weatherResult=null, airResult=null, nextForecastHour=0, weatherWasStale=false;
 let cryptoStream=null, streamStatus='connecting', chartVersion=0, chartQueue=Promise.resolve();
 let stageScale=1, lastMinute='', frost=null;
 const quotes = new Map();
@@ -212,6 +212,7 @@ function renderWeather(result) {
   setFeed('weather',stale || !available?'stale':'ok');
 }
 function renderAir(result) {
+  airResult=result;
   const observed=Date.parse(`${result.data.current.time}+09:00`), stale=freshness(result,observed,6*3600000);
   $('air').textContent=`空気 ${airLabel(result.data.current.us_aqi)}${stale?'（更新待ち）':''}`;
   $('air').title=`米国AQI ${result.data.current.us_aqi} · CAMSモデル予測 · ${stamp(observed)}`;setFeed('air',stale?'stale':'ok');
@@ -455,6 +456,7 @@ function openDetail({eyebrow='',title,subtitle='',body='',facts=[],chart=null,li
   detailReturn=document.activeElement;
   // Markets use the wide sheet with a period switch (openMarketDetail fills it in).
   $('detail-sheet').classList.toggle('market-detail',wide);$('detail-ranges').hidden=!wide;
+  $('detail-sheet').classList.remove('weather-detail');$('detail-weather').hidden=true;
   $('detail-eyebrow').textContent=eyebrow;$('detail-title').textContent=title;
   $('detail-subtitle').textContent=subtitle;$('detail-subtitle').hidden=!subtitle;
   $('detail-body').textContent=body;$('detail-body').hidden=!body;
@@ -576,6 +578,55 @@ $('detail-chart').addEventListener('pointermove',event=>{
   if(document.activeElement!==box)box.focus({preventScroll:true});
   scrubDetail(detailChart.nearest((event.clientX-rect.left)*box.clientWidth/rect.width));
 });
+// The weather detail: now, the next 24 hours, the week ahead and the conditions behind today's
+// forecast, all from the same Open-Meteo request as the card (and the CAMS air reading).
+function openWeatherDetail(){
+  const data=weatherResult?.data,current=data?.current,days=data?dailyForecast(data):[],today=days[0];
+  const round=v=>isNumber(v)?`${Math.round(v)}°`:'—';
+  openDetail({eyebrow:`天気 · ${$('location-name').textContent}`,
+    title:current?`${round(current.temperature_2m)} ${weatherLabel(current.weather_code)}`:'天気',
+    subtitle:current?[today && `最高 ${round(today.max)} · 最低 ${round(today.min)}`,isNumber(current.apparent_temperature) && `体感 ${round(current.apparent_temperature)}`,weatherWasStale && '更新待ち'].filter(Boolean).join(' · '):'天気を取得しています',
+    accent:current && isNumber(current.temperature_2m)?temperatureColor(current.temperature_2m):''});
+  $('detail-sheet').classList.add('weather-detail');
+  const body=$('detail-weather');body.hidden=false;
+  if(!current){body.replaceChildren(el('p','detail-chart-status','天気を取得しています'));return;}
+  const block=(title,...children)=>{const section=el('section','weather-block');section.append(el('h3','weather-block-title',title),...children);return section;};
+  const hours=el('div','hourly-forecast');
+  renderHourlyForecast(hours,hourlyForecast(data,Date.now(),{count:12,step:2}),{id:'detail-hourly'});
+  // Each day's low–high bar sits on the week's overall range, coloured like the temperature curve.
+  const lows=days.map(d=>d.min).filter(isNumber),highs=days.map(d=>d.max).filter(isNumber);
+  const lo=Math.min(...lows),hi=Math.max(...highs),at=v=>hi>lo?(v-lo)/(hi-lo)*100:50;
+  const week=el('ol','week-list');
+  for(const day of days){
+    const row=el('li','week-row'),icon=el('span','week-icon');icon.append(makeWeatherIcon(day.code,1));
+    const bar=el('span','week-bar');
+    if(isNumber(day.min) && isNumber(day.max)){
+      const fill=el('i');Object.assign(fill.style,{left:`${at(day.min)}%`,width:`${Math.max(2,at(day.max)-at(day.min))}%`,background:`linear-gradient(90deg,${temperatureColor(day.min)},${temperatureColor(day.max)})`});bar.append(fill);
+      if(day===today && isNumber(current.temperature_2m)){const now=el('b','week-now');now.style.left=`${at(Math.min(hi,Math.max(lo,current.temperature_2m)))}%`;bar.append(now);}
+    }
+    row.setAttribute('aria-label',`${day.label} ${weatherLabel(day.code)} 最低${round(day.min)} 最高${round(day.max)}${isNumber(day.probability)?` 降水確率${day.probability}%`:''}`);
+    row.append(el('span','week-day',day.label),icon,el('span',`week-rain number${day.probability>=40?' rain-likely':''}`,isNumber(day.probability) && day.probability>=20?`${day.probability}%`:''),
+      el('span','week-min number',round(day.min)),bar,el('span','week-max number',round(day.max)));
+    week.append(row);
+  }
+  const tile=(label,value,sub)=>{const item=el('div','weather-tile');item.append(el('span','tile-label',label),el('span','tile-value number',value),el('span','tile-sub',sub||''));return item;};
+  const fixed=(v,digits,unit)=>isNumber(v)?`${v.toFixed(digits)}${unit}`:'—';
+  const feels=current.apparent_temperature-current.temperature_2m,direction=windDirection(current.wind_direction_10m),aqi=airResult?.data?.current;
+  const tiles=el('div','weather-tiles');
+  tiles.append(
+    tile('体感温度',round(current.apparent_temperature),isNumber(feels)?Math.abs(feels)<1?'実際の気温とほぼ同じ':`実際より${Math.round(Math.abs(feels))}°${feels>0?'高い':'低い'}`:''),
+    tile('湿度',isNumber(current.relative_humidity_2m)?`${Math.round(current.relative_humidity_2m)}%`:'—','相対湿度'),
+    tile('風',fixed(current.wind_speed_10m,1,' m/s'),[direction && `${direction}の風`,isNumber(current.wind_gusts_10m) && `最大瞬間 ${current.wind_gusts_10m.toFixed(1)} m/s`].filter(Boolean).join(' · ')),
+    tile('気圧',isNumber(current.pressure_msl)?`${Math.round(current.pressure_msl)} hPa`:'—','海面気圧'),
+    tile('UV指数',isNumber(current.uv_index)?String(Math.round(current.uv_index)):'—',[uvLabel(current.uv_index),isNumber(today?.uv) && `今日の最大 ${Math.round(today.uv)}`].filter(Boolean).join(' · ')),
+    tile('今日の降水量',fixed(today?.precipitation,1,' mm'),isNumber(today?.probability)?`降水確率 最大${today.probability}%`:''),
+    tile('日の出・日の入',`${data.daily?.sunrise?.[0]?.slice(11,16)||'—'} / ${data.daily?.sunset?.[0]?.slice(11,16)||'—'}`,'今日'),
+    tile('空気',isNumber(aqi?.us_aqi)?airLabel(aqi.us_aqi):'—',isNumber(aqi?.us_aqi)?`米国AQI ${Math.round(aqi.us_aqi)}${isNumber(aqi.pm2_5)?` · PM2.5 ${aqi.pm2_5.toFixed(0)} μg/m³`:''}`:'未取得'));
+  const columns=el('div','weather-columns');columns.append(block('7日間',week),tiles);
+  const observed=weatherTimestamp(current.time);
+  body.replaceChildren(block('24時間（2時間ごと）',hours),columns,
+    el('p','weather-source',`Open-Meteo（CC BY 4.0）· ${Number.isFinite(observed)?stamp(observed):'時刻不明'} JSTのモデル予測${weatherWasStale?' · 更新待ち':''}${aqi?' · 空気はCAMSのモデル予測':''}`));
+}
 const RELEASE_SOURCES={BLS:'米労働統計局（BLS）',BEA:'米経済分析局（BEA）',FRB:'米連邦準備制度理事会（FRB）'};
 function openEventDetail(row){
   const event=calendarInfo?.data.events.find(item=>item.id===row.dataset.eventId);if(!event)return;
@@ -770,6 +821,7 @@ document.addEventListener('click',event=>{
   if(event.target.closest('#app-grid [data-package]'))closeAppList();
   // OK on a row or headline shows details in place: following a link would leave the launcher.
   const row=event.target.closest('#stage .stock-row');if(row){openMarketDetail(row.dataset.symbol);return;}
+  if(event.target.closest('#stage .weather-section')){openWeatherDetail();return;}
   const release=event.target.closest('#stage .calendar-event');if(release){event.preventDefault();openEventDetail(release);return;}
   if(event.target.closest('#news-title') && news.length){event.preventDefault();openNewsDetail();return;}
   if(event.target.closest('#connection-status')){openStatusDetail();return;}

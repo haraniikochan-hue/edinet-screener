@@ -57,6 +57,13 @@ try {
   await page.keyboard.press('ArrowLeft'); assert.equal(await focused(page), 'connection-status', 'nothing further left of the top controls');
   await page.locator('.calendar-event').first().focus(); await page.keyboard.press('ArrowRight');
   assert.equal(await page.evaluate(() => document.activeElement.closest('.market-card') !== null), true, 'calendar rows lead right into the market');
+  // v0.23.0: the weather card sits above the calendar; OK opens the weather detail
+  await page.locator('.calendar-event').first().focus(); await page.keyboard.press('ArrowUp');
+  assert.equal(await page.evaluate(() => document.activeElement.classList.contains('weather-section')), true, 'up from the first release reaches the weather card');
+  await page.keyboard.press('Enter');
+  assert.equal(await page.evaluate(() => !document.getElementById('detail-overlay').hidden && document.getElementById('detail-sheet').classList.contains('weather-detail')), true, 'OK on the weather card opens the weather detail');
+  await page.keyboard.press('Escape');
+  assert.equal(await page.evaluate(() => document.activeElement.classList.contains('weather-section')), true, 'Back returns to the weather card');
   await page.locator('.calendar-event').last().focus(); await page.keyboard.press('ArrowDown');
   assert.equal(await focused(page), 'cal0'); assert.match(await page.locator('#calendar-page').textContent(), /^7–12 \//, 'moving past the last release turns the page');
   await page.keyboard.press('ArrowUp'); assert.equal(await focused(page), 'cal5'); assert.match(await page.locator('#calendar-page').textContent(), /^1–6 \//);

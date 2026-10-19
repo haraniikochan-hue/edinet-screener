@@ -33,7 +33,8 @@ export function weatherSymbol(code, isDay) {
   return 'unknown';
 }
 
-export function hourlyForecast(data, now = Date.now()) {
+// The next `count` forecasts from the coming hour, `step` hours apart (the card: 6 × 1h; the detail: 12 × 2h).
+export function hourlyForecast(data, now = Date.now(), { count = 6, step = 1 } = {}) {
   const hourly = data?.hourly || {};
   const byTime = new Map();
   for (const [index,value] of (Array.isArray(hourly.time) ? hourly.time : []).entries()) {
@@ -41,12 +42,12 @@ export function hourlyForecast(data, now = Date.now()) {
     if (Number.isFinite(timestamp)) byTime.set(timestamp,index);
   }
   const first = (Math.floor(now / HOUR) + 1) * HOUR;
-  return Array.from({length:6}, (_,index) => {
-    const timestamp = first + index * HOUR, source = byTime.get(timestamp);
+  return Array.from({length:count}, (_,index) => {
+    const timestamp = first + index * step * HOUR, source = byTime.get(timestamp);
     const read = key => source === undefined ? null : hourly[key]?.[source];
     const temperature = read('temperature_2m'), probability = read('precipitation_probability');
     const code = read('weather_code'), isDay = read('is_day');
-    const newDay = dayKey(timestamp) !== dayKey(index ? timestamp - HOUR : now);
+    const newDay = dayKey(timestamp) !== dayKey(index ? timestamp - step * HOUR : now);
     return {
       timestamp, label:`${newDay ? '明日 ' : ''}${new Date(timestamp + JST).getUTCHours()}時`,
       temperature:isNumber(temperature) && temperature >= -100 && temperature <= 70 ? temperature : null,
@@ -121,7 +122,8 @@ export function makeWeatherIcon(code, isDay) {
   return svg;
 }
 
-export function renderHourlyForecast(container, rows) {
+// `id` keeps the SVG gradient ids unique when the card and the detail sheet both show a forecast.
+export function renderHourlyForecast(container, rows, { id = 'hourly' } = {}) {
   container.replaceChildren();
   const hasData = rows.some(row=>isNumber(row.temperature) || isNumber(row.probability) || weatherSymbol(row.code,row.isDay)!=='unknown');
   if (!hasData) {
@@ -130,24 +132,24 @@ export function renderHourlyForecast(container, rows) {
   }
   const {points,segments} = temperatureTrend(rows);
   const graph = svgNode('svg',{viewBox:'0 0 600 52',preserveAspectRatio:'none',class:'hourly-trend','aria-hidden':'true'});
-  const gradient = svgNode('linearGradient',{id:'hourly-temperature',gradientUnits:'userSpaceOnUse',x1:0,x2:600,y1:0,y2:0});
+  const gradient = svgNode('linearGradient',{id:`${id}-temperature`,gradientUnits:'userSpaceOnUse',x1:0,x2:600,y1:0,y2:0});
   rows.forEach((row,index)=>{
     if (points[index]) gradient.append(svgNode('stop',{offset:(points[index].x/600).toFixed(4),'stop-color':temperatureColor(row.temperature)}));
   });
   // The fill under the line fades out downwards instead of forming a flat band.
-  const fade = svgNode('linearGradient',{id:'hourly-fade',x1:0,x2:0,y1:0,y2:1});
+  const fade = svgNode('linearGradient',{id:`${id}-fade`,x1:0,x2:0,y1:0,y2:1});
   fade.append(svgNode('stop',{offset:0,'stop-color':'#fff','stop-opacity':.9}),svgNode('stop',{offset:1,'stop-color':'#fff','stop-opacity':0}));
-  const mask = svgNode('mask',{id:'hourly-area-mask',maskUnits:'userSpaceOnUse',x:0,y:0,width:600,height:52});
-  mask.append(svgNode('rect',{x:0,y:0,width:600,height:52,fill:'url(#hourly-fade)'}));
+  const mask = svgNode('mask',{id:`${id}-area-mask`,maskUnits:'userSpaceOnUse',x:0,y:0,width:600,height:52});
+  mask.append(svgNode('rect',{x:0,y:0,width:600,height:52,fill:`url(#${id}-fade)`}));
   const defs = svgNode('defs');defs.append(gradient,fade,mask);graph.append(defs);
   for (const segment of segments) {
     if (segment.length < 2) continue;
     const d = segment.map((p,i)=>`${i?'L':'M'}${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(' ');
-    graph.append(svgNode('path',{d:`${d} L${segment.at(-1).x},52 L${segment[0].x},52 Z`,class:'hourly-area',fill:'url(#hourly-temperature)',mask:'url(#hourly-area-mask)'}));
-    graph.append(svgNode('path',{d,class:'hourly-line',stroke:'url(#hourly-temperature)'}));
+    graph.append(svgNode('path',{d:`${d} L${segment.at(-1).x},52 L${segment[0].x},52 Z`,class:'hourly-area',fill:`url(#${id}-temperature)`,mask:`url(#${id}-area-mask)`}));
+    graph.append(svgNode('path',{d,class:'hourly-line',stroke:`url(#${id}-temperature)`}));
   }
   points.filter(Boolean).forEach(p=>graph.append(svgNode('circle',{cx:p.x,cy:p.y,r:2.2,class:'hourly-point'})));
-  const list = node('ol','hourly-grid');
+  const list = node('ol','hourly-grid');list.style.gridTemplateColumns=`repeat(${rows.length},minmax(0,1fr))`;
   rows.forEach((row,index)=>{
     const temperature = isNumber(row.temperature) ? `${Math.round(row.temperature)}°` : '—';
     const chance = isNumber(row.probability) ? `${Math.round(row.probability)}%` : '—';
@@ -166,3 +168,22 @@ export function renderHourlyForecast(container, rows) {
   container.append(graph,list);
   return true;
 }
+
+// The week ahead for the weather detail, from today (Japan time). Values outside physical ranges are dropped.
+const WEEKDAYS = '日月火水木金土';
+export function dailyForecast(data, now = Date.now()) {
+  const daily = data?.daily || {}, today = dayKey(now), tomorrow = dayKey(now + 24 * HOUR);
+  const within = (value, lo, hi) => isNumber(value) && value >= lo && value <= hi ? value : null;
+  return (Array.isArray(daily.time) ? daily.time : []).map((date, i) => ({
+    date, label: date === today ? '今日' : date === tomorrow ? '明日' : WEEKDAYS[new Date(`${date}T00:00Z`).getUTCDay()],
+    code: Number.isInteger(daily.weather_code?.[i]) ? daily.weather_code[i] : null,
+    max: within(daily.temperature_2m_max?.[i], -100, 70), min: within(daily.temperature_2m_min?.[i], -100, 70),
+    probability: within(daily.precipitation_probability_max?.[i], 0, 100), precipitation: within(daily.precipitation_sum?.[i], 0, 2000),
+    uv: within(daily.uv_index_max?.[i], 0, 20),
+  })).filter(row => /^\d{4}-\d{2}-\d{2}$/.test(row.date) && row.date >= today);
+}
+// Where the wind blows from, on the sixteen-point compass (北北西の風 = from the north-northwest).
+const COMPASS = ['北','北北東','北東','東北東','東','東南東','南東','南南東','南','南南西','南西','西南西','西','西北西','北西','北北西'];
+export const windDirection = degrees => isNumber(degrees) ? COMPASS[Math.round((((degrees % 360) + 360) % 360) / 22.5) % 16] : null;
+// The WHO UV index bands.
+export const uvLabel = uv => !isNumber(uv) ? null : uv < 3 ? '弱い' : uv < 6 ? '中程度' : uv < 8 ? '強い' : uv < 11 ? '非常に強い' : '極端に強い';

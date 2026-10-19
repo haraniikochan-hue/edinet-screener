@@ -95,16 +95,19 @@ export function weatherLabel(code) {
 export function airLabel(aqi) {
   return !isNumber(aqi) ? '—' : aqi <= 50 ? '良い' : aqi <= 100 ? '普通' : aqi <= 150 ? '敏感な方は注意' : aqi <= 200 ? '悪い' : '非常に悪い';
 }
+// One request every 15 minutes feeds both the card and the weather detail (a week ahead, wind in m/s).
 export async function getWeather(location) {
   const params = new URLSearchParams({latitude: location.latitude, longitude: location.longitude,
-    current: 'temperature_2m,weather_code,is_day', hourly:'temperature_2m,precipitation_probability,weather_code,is_day',
-    daily: 'temperature_2m_max,temperature_2m_min,sunrise,sunset', timezone: 'Asia/Tokyo', forecast_days: 2});
+    current: 'temperature_2m,weather_code,is_day,apparent_temperature,relative_humidity_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,pressure_msl,uv_index',
+    hourly:'temperature_2m,precipitation_probability,weather_code,is_day',
+    daily: 'temperature_2m_max,temperature_2m_min,sunrise,sunset,weather_code,precipitation_probability_max,precipitation_sum,uv_index_max',
+    wind_speed_unit: 'ms', timezone: 'Asia/Tokyo', forecast_days: 7});
   const data = await fetchJSON(`https://api.open-meteo.com/v1/forecast?${params}`);
   if (!isNumber(data.current?.temperature_2m) || !Array.isArray(data.daily?.time)) throw new Error('天気データがありません');
   return data;
 }
 export async function getAir(location) {
-  const params = new URLSearchParams({latitude: location.latitude, longitude: location.longitude, current: 'us_aqi', timezone: 'Asia/Tokyo'});
+  const params = new URLSearchParams({latitude: location.latitude, longitude: location.longitude, current: 'us_aqi,pm2_5', timezone: 'Asia/Tokyo'});
   const data = await fetchJSON(`https://air-quality-api.open-meteo.com/v1/air-quality?${params}`);
   if (!isNumber(data.current?.us_aqi)) throw new Error('空気質データがありません');
   return data;

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { HOUR, weatherTimestamp, weatherIsStale, hourlyForecast, temperatureTrend, weatherSymbol } from '../dashboard/js/weather.js';
+import { HOUR, weatherTimestamp, weatherIsStale, hourlyForecast, temperatureTrend, weatherSymbol, dailyForecast, windDirection, uvLabel } from '../dashboard/js/weather.js';
 import { getWeather } from '../dashboard/js/data.js';
 
 const start=Date.parse('2026-10-19T23:40:00+09:00');
@@ -69,5 +69,40 @@ test('one Open-Meteo request retrieves current, daily and hourly data in Japan t
     assert.deepEqual(requested.searchParams.get('hourly').split(','),['temperature_2m','precipitation_probability','weather_code','is_day']);
     assert.match(requested.searchParams.get('current'),/temperature_2m/);
     assert.match(requested.searchParams.get('daily'),/sunrise/);
+  } finally {globalThis.fetch=original;}
+});
+test('the weather detail reads every second hour across midnight',()=>{
+  const rows=hourlyForecast(forecast(),start,{count:4,step:2});
+  assert.deepEqual(rows.map(row=>row.label),['明日 0時','2時','4時','6時']);
+  assert.deepEqual(rows.map(row=>row.temperature),[17,15,13,11]);
+  assert.equal(rows[1].timestamp-rows[0].timestamp,2*HOUR);
+});
+test('the week ahead starts today in Japan time and drops impossible values',()=>{
+  const data={daily:{time:['2026-10-18','2026-10-19','2026-10-20','2026-10-21'],weather_code:[0,3,61,1.5],
+    temperature_2m_max:[20,26,120,24],temperature_2m_min:[10,17,15,16],precipitation_probability_max:[0,37,-5,80],
+    precipitation_sum:[0,6.3,1,0],uv_index_max:[3,5,2,40]}};
+  const days=dailyForecast(data,start);
+  assert.deepEqual(days.map(day=>day.label),['今日','明日','水']);
+  assert.deepEqual(days.map(day=>day.max),[26,null,24]);
+  assert.deepEqual(days.map(day=>day.probability),[37,null,80]);
+  assert.deepEqual(days.map(day=>day.code),[3,61,null]);
+  assert.equal(days[2].uv,null);
+  assert.deepEqual(dailyForecast({},start),[]);
+});
+test('wind is named by where it blows from, and UV by the WHO bands',()=>{
+  assert.equal(windDirection(0),'北');assert.equal(windDirection(333),'北北西');assert.equal(windDirection(360),'北');
+  assert.equal(windDirection(-90),'西');assert.equal(windDirection(180),'南');assert.equal(windDirection(null),null);
+  assert.deepEqual([0,2.9,3,6,8,11].map(uvLabel),['弱い','弱い','中程度','強い','非常に強い','極端に強い']);
+  assert.equal(uvLabel(undefined),null);
+});
+test('the forecast request covers a week of the detail fields with wind in m/s',async()=>{
+  const original=globalThis.fetch;let requested;
+  globalThis.fetch=async url=>{requested=new URL(url);return {ok:true,json:async()=>forecast()};};
+  try {
+    await getWeather({latitude:35.6589,longitude:139.70665});
+    assert.equal(requested.searchParams.get('forecast_days'),'7');
+    assert.equal(requested.searchParams.get('wind_speed_unit'),'ms');
+    for(const field of ['apparent_temperature','relative_humidity_2m','wind_speed_10m','wind_direction_10m','pressure_msl','uv_index'])assert.match(requested.searchParams.get('current'),new RegExp(field));
+    for(const field of ['weather_code','precipitation_probability_max','precipitation_sum','uv_index_max'])assert.match(requested.searchParams.get('daily'),new RegExp(field));
   } finally {globalThis.fetch=original;}
 });
