@@ -5,13 +5,16 @@
 const WIDTH = 480;
 // ≈ blur(24px) at the stage's 1920px, measured on a 480px-wide canvas.
 const FILTER = 'blur(6px) saturate(1.5)';
-// Like a dark material, the glass holds back highlights: brightness above KNEE (sRGB luma, 0–255) rolls
-// off smoothly towards CAP, scaling red, green and blue together so the photo keeps its colours. A bright
-// daytime sky becomes dim, tinted glass under white text and the up/down colours; a night photo, mostly
-// below the knee, stays clear.
+// Two materials, one per theme (js/daypart.js themeFor).
+// Dark: the glass holds back highlights: brightness above KNEE (sRGB luma, 0–255) rolls off smoothly
+// towards CAP, scaling red, green and blue together so the photo keeps its colours. A bright sky becomes
+// dim, tinted glass under white text; a night photo, mostly below the knee, stays clear.
 const KNEE = 34, CAP = 60;
-// Used instead when the photo cannot be read (a host without CORS): a flat ceiling, which greys colours.
-const CEILING = 'rgb(70,74,84)';
+// Light: the photo is lifted towards white — every channel moves into LIGHT_FLOOR–255 — so dark buildings
+// and bright sky alike become a pale glass that keeps the photo's tint, under dark text (iOS light mode).
+const LIGHT_FLOOR = 160, LIGHT_SPAN = .36;
+// Used instead when the photo cannot be read (a host without CORS): a flat ceiling or floor, which greys colours.
+const CEILING = 'rgb(70,74,84)', FLOOR = 'rgb(196,198,204)';
 
 export const frostSupported = () => typeof CSS !== 'undefined' && CSS.supports('clip-path','path("M0 0H1V1Z")')
   && Boolean(document.createElement('canvas').getContext);
@@ -43,21 +46,31 @@ export function shadeFor(luminance, target = .1) {
   return Math.min(.55, 1 - (target / luminance) ** (1 / 2.2));
 }
 
-// The relative luminance (WCAG) that 90% of a region of a painted canvas stays under.
-function regionLuminance(context, canvas, region) {
+// The relative luminance (WCAG) that a share (90% by default) of a region of a painted canvas stays under.
+function regionLuminance(context, canvas, region, share = .9) {
   const x = Math.floor(region.x0 * canvas.width), y = Math.floor(region.y0 * canvas.height);
   const w = Math.max(1, Math.ceil(region.x1 * canvas.width) - x), h = Math.max(1, Math.ceil(region.y1 * canvas.height) - y);
   const data = context.getImageData(x, y, w, h).data, lin = v => (v /= 255) <= .04045 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4, values = [];
   for (let i = 0; i < data.length; i += 4) values.push(.2126 * lin(data[i]) + .7152 * lin(data[i + 1]) + .0722 * lin(data[i + 2]));
   values.sort((a, b) => a - b);
-  return values[Math.floor(values.length * .9)];
+  return values[Math.floor(values.length * share)];
 }
+const WHOLE = { x:0, y:0, width:1920, height:1080 };
+
+// Whether a photo looks like its time of day, from its median brightness: a search for daytime photos
+// sometimes returns a night shot and the reverse. Sunset photos may be either.
+export const looksLike = (period, median) => !Number.isFinite(median) || period === 'dusk'
+  || (period === 'day' ? median >= .08 : median <= .2);
 // The text on the bare photo, in stage pixels.
 const TEXT_ON_PHOTO = { clock: { x:216, y:96, width:500, height:160 }, caption: { x:1040, y:40, width:600, height:44 } };
 
-function toneHighlights(context, width, height) {
+function tone(context, width, height, theme) {
   const image = context.getImageData(0, 0, width, height), d = image.data, span = CAP - KNEE;
   for (let i = 0; i < d.length; i += 4) {
+    if (theme === 'light') {
+      d[i] = LIGHT_FLOOR + d[i] * LIGHT_SPAN; d[i + 1] = LIGHT_FLOOR + d[i + 1] * LIGHT_SPAN; d[i + 2] = LIGHT_FLOOR + d[i + 2] * LIGHT_SPAN;
+      continue;
+    }
     const luma = .2126 * d[i] + .7152 * d[i + 1] + .0722 * d[i + 2];
     if (luma <= KNEE) continue;
     const scale = (KNEE + span * (1 - Math.exp((KNEE - luma) / span))) / luma;
@@ -66,9 +79,10 @@ function toneHighlights(context, width, height) {
   context.putImageData(image, 0, 0);
 }
 
-// Draws a blurred, saturated copy of an already loaded image and returns how strong a shadow the white
-// text on the bare photo needs ({clock, caption}, see shadeFor), or null when the photo cannot be read.
-export function paintFrost(canvas, image) {
+// Draws a blurred, saturated copy of an already loaded image in the theme's material, and returns how
+// strong a shadow the white text on the bare photo needs ({clock, caption}, see shadeFor) with the photo's
+// median brightness (scene), or null when the photo cannot be read.
+export function paintFrost(canvas, image, theme = 'dark') {
   const width = WIDTH, height = Math.max(1, Math.round(WIDTH * (image.naturalHeight || 1) / (image.naturalWidth || 1)));
   canvas.width = width; canvas.height = height;
   const context = canvas.getContext('2d');
@@ -85,12 +99,13 @@ export function paintFrost(canvas, image) {
   }
   try {
     // Measured on the blur before toning: the text sits on the photo as it is.
-    const shade = {};
+    const shade = { scene:regionLuminance(context, canvas, photoRegion(WHOLE, width / height), .5) };
     for (const [name, rect] of Object.entries(TEXT_ON_PHOTO)) shade[name] = shadeFor(regionLuminance(context, canvas, photoRegion(rect, width / height)));
-    toneHighlights(context, width, height);
+    tone(context, width, height, theme);
     return shade;
   } catch {
-    context.globalCompositeOperation = 'darken'; context.fillStyle = CEILING; context.fillRect(0,0,width,height);
+    context.globalCompositeOperation = theme === 'light' ? 'lighten' : 'darken';
+    context.fillStyle = theme === 'light' ? FLOOR : CEILING; context.fillRect(0,0,width,height);
     context.globalCompositeOperation = 'source-over';
     return null;
   }
@@ -100,9 +115,11 @@ export class Frost {
   constructor(container, canvases) {
     Object.assign(this,{container,canvases,ready:false,shades:[]});
   }
-  paint(index, image) {
-    try { this.shades[index] = paintFrost(this.canvases[index], image); return true; } catch { return false; }
+  paint(index, image, theme) {
+    try { this.shades[index] = paintFrost(this.canvases[index], image, theme); return true; } catch { return false; }
   }
+  // The painted photo's median brightness, or NaN when it could not be measured.
+  scene(index) { return this.shades[index]?.scene ?? NaN; }
   // Shows a painted photo and sets the shadow strength for the clock and the photo credit
   // (--clock-shade, --caption-shade; without a measurement the stylesheet's defaults apply).
   activate(index) {

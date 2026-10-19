@@ -25,26 +25,34 @@ export function parseRSS(xml) {
   }).filter(item => item.title && NHK_LINK.test(item.url) && Number.isFinite(Date.parse(item.publishedAt))).slice(0, 3);
 }
 
-// Background photos: downtowns of world cities, day and night, a few random ones per city each hour.
-// The Access Key stays with the server or the TV app; the page only names the search.
-export const PHOTO_CITIES = [
-  ['new york city skyline', 'ニューヨーク'], ['london city skyline', 'ロンドン'], ['paris city', 'パリ'],
-  ['chicago downtown', 'シカゴ'], ['tokyo city', '東京'], ['hong kong skyline', '香港'],
-  ['singapore skyline', 'シンガポール'], ['dubai downtown', 'ドバイ'],
-];
-export const PHOTOS_PER_CITY = 3;
-export const unsplashRandom = query => `https://api.unsplash.com/photos/random?query=${encodeURIComponent(query)}&count=${PHOTOS_PER_CITY}&orientation=landscape&content_filter=high`;
-export const validPhotoQuery = query => PHOTO_CITIES.some(([q]) => q === query);
+// Background photos: New York's downtown at the time of day (js/daypart.js) — by day, at sunset, by
+// night — from two searches each, a few random photos per search each hour. The Access Key stays with
+// the server or the TV app; the page only names the search (the TV app allows exactly these).
+export const PHOTO_PERIODS = Object.freeze({
+  day: { title:'ニューヨーク · 日中', queries:['new york city skyline daytime', 'manhattan skyline blue sky'] },
+  dusk: { title:'ニューヨーク · 夕暮れ', queries:['new york city skyline sunset', 'manhattan skyline golden hour'] },
+  night: { title:'ニューヨーク · 夜景', queries:['new york city skyline night', 'manhattan skyline night lights'] },
+});
+export const PHOTO_QUERIES = Object.freeze(Object.values(PHOTO_PERIODS).flatMap(period => period.queries));
+export const PHOTOS_PER_QUERY = 8;
+export const unsplashRandom = query => `https://api.unsplash.com/photos/random?query=${encodeURIComponent(query)}&count=${PHOTOS_PER_QUERY}&orientation=landscape&content_filter=high`;
+export const validPhotoQuery = query => PHOTO_QUERIES.includes(query);
 export function unsplashPhotos(photos, title) {
   return (Array.isArray(photos) ? photos : photos?.results || []).filter(p => p.urls?.regular && p.user?.name && p.user?.links?.html).map(p => {
     const url = new URL(p.urls.regular); url.searchParams.set('w','1920'); url.searchParams.set('q','85');
     return { url:url.href, title, photographer:p.user.name, profile:`${p.user.links.html}?utm_source=tv_home&utm_medium=referral`, source:'Unsplash', sourceUrl:'https://unsplash.com/?utm_source=tv_home&utm_medium=referral', photoUrl:`${p.links.html}?utm_source=tv_home&utm_medium=referral` };
   });
 }
-// fetchCity(query) returns Unsplash's JSON for one city; cities that fail are skipped, and the result is shuffled.
-export async function loadPhotos(fetchCity, random = Math.random) {
-  const results = await Promise.allSettled(PHOTO_CITIES.map(async ([query, title]) => unsplashPhotos(await fetchCity(query), title)));
-  const rows = results.flatMap(r => r.status === 'fulfilled' ? r.value : []);
+// fetchQuery(query) returns Unsplash's JSON for one search. Searches that fail are skipped, a photo found
+// by both is kept once, every photo is marked with its time of day, and the result is shuffled.
+export async function loadPhotos(fetchQuery, period = 'night', random = Math.random) {
+  const spec = PHOTO_PERIODS[period];
+  if (!spec) throw Object.assign(new Error('時間帯が不明です'), { status:400 });
+  const results = await Promise.allSettled(spec.queries.map(async query => unsplashPhotos(await fetchQuery(query), spec.title)));
+  const seen = new Set();
+  const rows = results.flatMap(r => r.status === 'fulfilled' ? r.value : [])
+    .filter(row => { const id = row.photoUrl; if (seen.has(id)) return false; seen.add(id); return true; })
+    .map(row => ({ ...row, period }));
   if (!rows.length) {
     const limited = results.some(r => r.reason?.status === 429);
     throw Object.assign(new Error(limited ? 'Unsplashの取得回数の上限です' : '写真がありません'), { status: limited ? 429 : 502 });

@@ -29,25 +29,27 @@ test('calendar uses live feeds and falls back to the snapshot per provider', asy
   assert.deepEqual(result.events.map(e => e.indicator).sort(), ['CPI','FOMC','GDP']);
 });
 
-import { PHOTO_CITIES, PHOTOS_PER_CITY, loadPhotos, unsplashRandom, validPhotoQuery } from '../dashboard/js/feeds.js';
+import { PHOTO_PERIODS, PHOTO_QUERIES, PHOTOS_PER_QUERY, loadPhotos, unsplashRandom, validPhotoQuery } from '../dashboard/js/feeds.js';
 const photo = id => ({ urls:{regular:`https://images.unsplash.com/${id}?ixid=x`}, user:{name:`P${id}`, links:{html:`https://unsplash.com/@${id}`}}, links:{html:`https://unsplash.com/photos/${id}`} });
 
-test('photos mix every city, are titled by city and skip a city that fails', async () => {
-  const rows = await loadPhotos(async query => {
-    if (query === PHOTO_CITIES[1][0]) throw new Error('down');
-    return [photo(query.length), photo(query.length + 100)];
-  }, () => 0);
-  assert.equal(rows.length, (PHOTO_CITIES.length - 1) * 2);
-  assert.ok(!rows.some(r => r.title === PHOTO_CITIES[1][1]));
-  assert.ok(rows.some(r => r.title === 'ニューヨーク'));
+test('photos are New York at the time of day, from both searches, each kept once', async () => {
+  const asked = [];
+  const rows = await loadPhotos(async query => { asked.push(query); return query.includes('blue sky') ? [photo('b'), photo('shared')] : [photo('a'), photo('shared')]; }, 'day', () => 0);
+  assert.deepEqual(asked, PHOTO_PERIODS.day.queries);
+  assert.equal(rows.length, 3, 'a photo found by both searches appears once');
+  assert.ok(rows.every(r => r.period === 'day' && r.title === 'ニューヨーク · 日中'));
   assert.match(rows[0].url, /w=1920/);
 });
 
-test('photos report the rate limit when every city is refused', async () => {
-  await assert.rejects(loadPhotos(async () => { throw Object.assign(new Error('x'), { status:429 }); }), /上限/);
+test('a failing search is skipped, every search refused reports the limit, and an unknown time is refused', async () => {
+  const rows = await loadPhotos(async query => { if (query.includes('golden')) throw new Error('down'); return [photo(query.length)]; }, 'dusk');
+  assert.equal(rows.length, 1); assert.equal(rows[0].period, 'dusk');
+  await assert.rejects(loadPhotos(async () => { throw Object.assign(new Error('x'), { status:429 }); }, 'night'), /上限/);
+  await assert.rejects(loadPhotos(async () => [photo(1)], 'noon'), /時間帯/);
 });
 
-test('only the listed city searches build a random-photo URL', () => {
-  assert.ok(validPhotoQuery('paris city')); assert.ok(!validPhotoQuery('anything else'));
-  assert.equal(unsplashRandom('paris city'), `https://api.unsplash.com/photos/random?query=paris%20city&count=${PHOTOS_PER_CITY}&orientation=landscape&content_filter=high`);
+test('only the listed searches build a random-photo URL', () => {
+  assert.equal(PHOTO_QUERIES.length, 6); assert.ok(PHOTO_QUERIES.every(q => /new york|manhattan/.test(q)));
+  assert.ok(validPhotoQuery('new york city skyline night')); assert.ok(!validPhotoQuery('paris city'));
+  assert.equal(unsplashRandom('new york city skyline night'), `https://api.unsplash.com/photos/random?query=new%20york%20city%20skyline%20night&count=${PHOTOS_PER_QUERY}&orientation=landscape&content_filter=high`);
 });

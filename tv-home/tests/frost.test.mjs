@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { roundedRectsPath, photoRegion, shadeFor } from '../dashboard/js/frost.js';
+import { roundedRectsPath, photoRegion, shadeFor, looksLike } from '../dashboard/js/frost.js';
 
 test('frost clip is one rounded sub-path per card in viewport pixels',()=>{
   const path=roundedRectsPath([{x:216,y:270,width:500,height:286},{x:844,y:270,width:860,height:432}],32);
@@ -24,4 +24,10 @@ test('text on the photo gets a shade only when the photo behind it is bright',()
   assert.equal(shadeFor(.05),0);assert.equal(shadeFor(.1),0);assert.equal(shadeFor(Number.NaN),0);
   assert.ok(shadeFor(.2)>.2 && shadeFor(.2)<.35);
   assert.ok(shadeFor(.5)>shadeFor(.2));assert.equal(shadeFor(1),.55);
+});
+test('a photo that contradicts its time of day is recognised by its brightness',()=>{
+  assert.equal(looksLike('day',.3),true);assert.equal(looksLike('day',.02),false,'a night shot in the day set');
+  assert.equal(looksLike('night',.03),true);assert.equal(looksLike('night',.4),false,'a daylight shot in the night set');
+  assert.equal(looksLike('dusk',.01),true);assert.equal(looksLike('dusk',.6),true);
+  assert.equal(looksLike('day',Number.NaN),true,'an unreadable photo is kept');
 });

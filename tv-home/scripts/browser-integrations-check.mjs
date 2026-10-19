@@ -32,7 +32,7 @@ try{
   report.push('Spotify mismatched OAuth state is rejected before any token request.');await invalidContext.close();
   const photosContext=await browser.newContext({viewport:{width:1920,height:1080}}),photos=await photosContext.newPage();
   await photos.route('**/api/config',route=>route.fulfill({json:{backend:true,market:false,unsplash:true,spotifyClientId:''}}));
-  await photos.route('**/api/photos',route=>route.fulfill({json:{fetchedAt:Date.now(),stale:false,data:[1,2].map(i=>({url:'assets/nyc-luca-bravo.jpg',title:`テスト写真${i}`,photographer:`テスト撮影者${i}`,profile:'https://example.org/photographer',source:'Test fixture',sourceUrl:'https://example.org/'}))}}));
+  await photos.route('**/api/photos/*',route=>route.fulfill({json:{fetchedAt:Date.now(),stale:false,data:[1,2].map(i=>({url:'assets/nyc-luca-bravo.jpg',title:`テスト写真${i}`,photographer:`テスト撮影者${i}`,profile:'https://example.org/photographer',source:'Test fixture',sourceUrl:'https://example.org/'}))}}));
   await photos.goto(base,{waitUntil:'domcontentloaded'});await photos.locator('[data-open-settings="general"]').click();await photos.locator('#photo-mode').selectOption('unsplash');await photos.getByRole('button',{name:'設定を保存',exact:true}).click();
   await photos.locator('#photo-title').filter({hasText:'テスト写真1'}).waitFor();await photos.locator('#next-photo').click();await photos.locator('#photo-title').filter({hasText:'テスト写真2'}).waitFor();
   assert.match(await photos.locator('#photo-credit').textContent(),/テスト撮影者2/);assert.equal(await photos.locator('.photo-layer.is-active').count(),1);

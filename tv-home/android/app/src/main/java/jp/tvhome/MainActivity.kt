@@ -65,11 +65,14 @@ private val UPSTREAM = setOf(
 // Nasdaq's earnings calendar, one US date per request (dashboard/js/earnings.js EARNINGS_URL).
 private val EARNINGS = Regex("^https://api\\.nasdaq\\.com/api/calendar/earnings\\?date=\\d{4}-\\d{2}-\\d{2}$")
 
-// The city searches the page may ask Unsplash for (dashboard/js/feeds.js PHOTO_CITIES).
+// The searches the page may ask Unsplash for: New York by day, at sunset, by night (dashboard/js/feeds.js PHOTO_PERIODS).
 private val PHOTO_QUERIES = setOf(
-    "new york city skyline", "london city skyline", "paris city", "chicago downtown",
-    "tokyo city", "hong kong skyline", "singapore skyline", "dubai downtown",
+    "new york city skyline daytime", "manhattan skyline blue sky",
+    "new york city skyline sunset", "manhattan skyline golden hour",
+    "new york city skyline night", "manhattan skyline night lights",
 )
+// Photos per search (dashboard/js/feeds.js PHOTOS_PER_QUERY).
+private const val PHOTOS_PER_QUERY = "8"
 
 // The Spotify TV app, whose media session feeds the Spotify card without a Spotify login.
 private const val SPOTIFY_TV = "com.spotify.tv.android"
@@ -368,13 +371,13 @@ class MainActivity : Activity() {
         return result
     }
 
-    /** A few random photos for one city search (dashboard/js/feeds.js unsplashRandom), with the Access Key added here. */
+    /** A few random photos for one search (dashboard/js/feeds.js unsplashRandom), with the Access Key added here. */
     private fun unsplash(query: String?): WebResourceResponse {
         if (BuildConfig.UNSPLASH_ACCESS_KEY.isEmpty()) return json(503, JSONObject().put("error", "Unsplash APIキー未設定"))
         if (query !in PHOTO_QUERIES) return json(403, JSONObject().put("error", "許可されていない検索です"))
         return try {
             val target = Uri.parse("https://api.unsplash.com/photos/random").buildUpon()
-                .appendQueryParameter("query", query).appendQueryParameter("count", "3")
+                .appendQueryParameter("query", query).appendQueryParameter("count", PHOTOS_PER_QUERY)
                 .appendQueryParameter("orientation", "landscape").appendQueryParameter("content_filter", "high")
                 .build().toString()
             val connection = URL(target).openConnection() as HttpURLConnection

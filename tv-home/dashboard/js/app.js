@@ -6,6 +6,7 @@ import { nativeAppTile, pressApp } from './launcher.js';
 import { DOCK_KEY, arrangeDock, moveInDock, setOnDock, normalizeDock } from './dock.js';
 import { Slideshow, SAMPLE_PHOTOS } from './slideshow.js';
 import { Frost, frostSupported } from './frost.js';
+import { dayPart } from './daypart.js';
 import { DEFAULT_ADBLOCK_DNS, adBlockStatus, nativePrivateDns, setNativePrivateDns, validDnsHost } from './adblock.js';
 import * as spotify from './spotify.js';
 import { mountTradingView } from './tradingview.js';
@@ -20,6 +21,7 @@ const CALENDAR_PAGE_SIZE = 6, NEWS_INTERVAL = 20000, CARD_RADIUS = 32, IDLE_HOME
 const storage = { getItem:key => { try{return localStorage.getItem(key);}catch{return null;} }, setItem:(key,value) => localStorage.setItem(key,value) };
 let config = normalizeConfig(readStorage(storage,'tv-home-config',DEFAULT_CONFIG));
 let backend = {backend:false,market:false,unsplash:false};
+let photoPart='night', photosJob=null, themeTimer=0;
 let generation=0, jobs=[], news=[], newsIndex=0, music=null, toastTimer, returnFocus, selectedLocation=config.location;
 let calendarInfo=null, calendarIndex=0, calendarNextTime=0, earningsInfo=null, calendarSource={text:'',title:''};
 let weatherResult=null, airResult=null, nextForecastHour=0, weatherWasStale=false;
@@ -56,7 +58,7 @@ async function appApi(path) {
     return {backend:true,market:false,unsplash,spotifyClientId:/^[a-f0-9]{32}$/.test(spotifyClientId)?spotifyClientId:''};
   }
   // The app adds the Unsplash Access Key itself; the page never sees it.
-  const data = path==='news' ? await loadNews(appText) : path==='calendar' ? await loadCalendar(appText,await fetchJSON('data/economic-calendar.json')) : path==='earnings' ? await loadEarnings(appText) : path==='photos' ? await loadPhotos(query=>fetchJSON(`/api/unsplash?query=${encodeURIComponent(query)}`)) : null;
+  const data = path==='news' ? await loadNews(appText) : path==='calendar' ? await loadCalendar(appText,await fetchJSON('data/economic-calendar.json')) : path==='earnings' ? await loadEarnings(appText) : path.startsWith('photos/') ? await loadPhotos(query=>fetchJSON(`/api/unsplash?query=${encodeURIComponent(query)}`),path.slice(7)) : null;
   if(!data)throw new Error('TV版では使えません');
   return {data,fetchedAt:Date.now(),stale:path==='calendar' && data.sources.some(s=>s.status==='stale')};
 }
@@ -110,6 +112,7 @@ function tick() {
     setText($('date'),format('ja-JP',{timeZone:config.timeZone,month:'long',day:'numeric'}).format(now));
     setText($('weekday'),format('ja-JP',{timeZone:config.timeZone,weekday:'long'}).format(now));
   }
+  updateDayPart(now.getTime());
   if(calendarNextTime && now.getTime()>=calendarNextTime)showCalendar();
   if(weatherResult && (now.getTime()>=nextForecastHour || (!weatherWasStale && weatherIsStale(weatherResult,now.getTime()))))renderWeather(weatherResult);
   updateCryptoStatus();
@@ -454,7 +457,12 @@ function restartJobs() {
     jobs.push(makeJob('calendar',6*3600000,cachedTask('economic-calendar',()=>apiForJob('calendar'),renderCalendar,{server:true,maxAge:7*86400000}),()=>{if(calendarInfo)renderCalendar({...calendarInfo,stale:true});else void loadCalendarSnapshot();}));
     jobs.push(makeJob('earnings',12*3600000,cachedTask('earnings',()=>apiForJob('earnings'),renderEarnings,{server:true,maxAge:3*86400000}),()=>{if(earningsInfo)renderEarnings({...earningsInfo,stale:true});}));
     jobs.push(makeJob('news',15*60000,cachedTask('news',()=>apiForJob('news'),renderNews,{server:true}),()=>{news=[];$('news-title').textContent='ニュースを取得できません';$('news-title').removeAttribute('href');$('news-source').textContent='NHK · しばらくして再取得します';$('next-news').setAttribute('aria-label','次のニュース');$('news-dots').replaceChildren();}));
-    if(config.photoMode==='unsplash')jobs.push(makeJob('photos',3600000,cachedTask('photos',()=>apiForJob('photos'),result=>{setPhotos(result.data);setFeed('photos',result.stale?'stale':'ok');},{server:true,maxAge:7*86400000}),()=>{toast('Unsplashを取得できません。同梱写真を表示しています。');}));
+    if(config.photoMode==='unsplash')jobs.push(photosJob=makeJob('photos',3600000,async current=>{
+      // New York at this time of day; each period keeps its own saved set for a quick switch.
+      const part=photoPart,result=await cachedLoad({key:photoCacheKey(part),storage,maxAge:7*86400000,load:()=>apiForJob(`photos/${part}`)});
+      if(!current() || part!==photoPart)return;
+      setPhotos(result.data.data);setFeed('photos',result.stale || result.data.stale?'stale':'ok');
+    },()=>{toast('Unsplashを取得できません。同梱写真を表示しています。');}));
   }else{
     $('news-title').textContent='ニュースはサーバー接続後に表示';$('news-source').textContent='設定でデータサーバーを指定できます';
     if(config.photoMode==='unsplash')toast('Unsplashの自動取得にはAPIサーバーが必要です');
@@ -476,7 +484,7 @@ function configureMarket() {
 function applyConfig() {
   $('location-name').textContent=config.location.name;
   document.body.classList.toggle('motion',config.motion && !matchMedia('(prefers-reduced-motion: reduce)').matches);
-  configureMarket();setPhotos(SAMPLE_PHOTOS);slideshow.schedule(config.photoInterval);restartJobs();tick();
+  configureMarket();photoPart=currentDayPart();photosJob=null;setPhotos(startingPhotos());slideshow.schedule(config.photoInterval);restartJobs();tick();
 }
 const ADBLOCK = {checking:['確認中…',''],active:['広告ブロック 有効','live'],partial:['一部の広告のみ遮断','waiting'],inactive:['広告ブロック 無効',''],unknown:['確認できません（オフライン）','']};
 let adblockCheckedAt=0, adblockStatus='', adblockVersion=0;
@@ -882,7 +890,33 @@ document.addEventListener('contextmenu',event=>{
 });
 
 if(frostSupported())frost=new Frost(document.querySelector('.frost'),[...document.querySelectorAll('.frost-layer')]);
-const slideshow=new Slideshow({layers:[...document.querySelectorAll('.photo-layer')],caption:$('photo-credit'),title:$('photo-title'),frost,onFrost:updateFrost,onError:()=>{setFeed('photos','error');$('photo-title').textContent='背景写真を読み込めませんでした';}});
+const slideshow=new Slideshow({layers:[...document.querySelectorAll('.photo-layer')],caption:$('photo-credit'),title:$('photo-title'),frost,onFrost:updateFrost,onTheme:applyTheme,onError:()=>{setFeed('photos','error');$('photo-title').textContent='背景写真を読み込めませんでした';}});
+// The time of day from the sun at the weather's location (js/daypart.js); a change brings that time's photos.
+function sunTimes(){
+  const daily=weatherResult?.data?.daily,index=daily?.time?.indexOf(ISO_DAY.format(new Date())) ?? -1;
+  return index<0 ? [NaN,NaN] : [weatherTimestamp(daily.sunrise?.[index]),weatherTimestamp(daily.sunset?.[index])];
+}
+function currentDayPart(now=Date.now()){return dayPart(now,...sunTimes());}
+function updateDayPart(now){
+  const part=currentDayPart(now);if(part===photoPart)return;
+  photoPart=part;if(config.photoMode!=='unsplash')return;
+  const saved=readStorage(storage,`tv-cache:${photoCacheKey(part)}`,null)?.data?.data;
+  if(Array.isArray(saved) && saved.length)setPhotos(saved);
+  void photosJob?.run(true);
+}
+const photoCacheKey=part=>`${config.apiBase || 'local'}:photos:${part}`;
+function startingPhotos(){
+  const saved=config.photoMode==='unsplash' ? readStorage(storage,`tv-cache:${photoCacheKey(photoPart)}`,null)?.data?.data : null;
+  return Array.isArray(saved) && saved.length ? saved : SAMPLE_PHOTOS;
+}
+// The theme follows the photo on screen: light over a daytime photo, dark over sunset and night. It turns
+// halfway through the 2.4 s cross-fade, when the new photo and its glass are mostly in.
+function applyTheme(theme){
+  clearTimeout(themeTimer);
+  const set=()=>{if(theme==='light')document.documentElement.dataset.theme='light';else delete document.documentElement.dataset.theme;};
+  if(!document.body.classList.contains('ready') || (document.documentElement.dataset.theme || 'dark')===theme)set();
+  else themeTimer=setTimeout(set,1200);
+}
 // The photo switch is only offered when there is another photo to switch to.
 function setPhotos(photos){slideshow.setPhotos(photos);$('next-photo').hidden=slideshow.photos.length<2;}
 document.addEventListener('click',event=>{
@@ -951,7 +985,7 @@ scheduleNews();
 function enableJapaneseFont(){const link=$('font-ja');if(!link)return;const on=()=>{link.media='all';};if(link.sheet)on();else link.addEventListener('load',on,{once:true});}
 async function start(){
   enableJapaneseFont();
-  fit();buildStocks();tick();setPhotos(SAMPLE_PHOTOS);initializeBridge();void loadCalendarSnapshot();
+  fit();buildStocks();photoPart=currentDayPart();tick();setPhotos(startingPhotos());initializeBridge();void loadCalendarSnapshot();
   // The TV app already runs full screen; the button only helps in a desktop browser.
   $('fullscreen').hidden=Boolean(window.Android) || !document.fullscreenEnabled;
   // The TV app rebuilds the page after freeing memory; coming back home must not replay the entrance.

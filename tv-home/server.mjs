@@ -71,9 +71,10 @@ async function api(pathname) {
       return rows;
     });
   }
-  if (pathname === '/api/photos') {
+  const photos = /^\/api\/photos\/(day|dusk|night)$/.exec(pathname);
+  if (photos) {
     if (!process.env.UNSPLASH_ACCESS_KEY) throw httpError(503, 'Unsplash APIキー未設定');
-    return memo('photos', 3600000, () => loadPhotos(query => upstream(unsplashRandom(query), { headers:{ Authorization:`Client-ID ${process.env.UNSPLASH_ACCESS_KEY}`, 'Accept-Version':'v1' } })));
+    return memo(`photos:${photos[1]}`, 3600000, () => loadPhotos(query => upstream(unsplashRandom(query), { headers:{ Authorization:`Client-ID ${process.env.UNSPLASH_ACCESS_KEY}`, 'Accept-Version':'v1' } }), photos[1]));
   }
   throw httpError(404, 'APIがありません');
 }
