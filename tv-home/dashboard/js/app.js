@@ -68,8 +68,11 @@ function freshness(result, observation, ttl) {return result.stale || !Number.isF
 // TV only: the whole 1920×1080 screen (dashboard, sheets, toast) is scaled to the WebView, which
 // usually reports 960×540 CSS px on a 1080p/4K Google TV, and letterboxed if the aspect differs.
 function fit() {
-  stageScale=Math.min(innerWidth/1920,innerHeight/1080);
-  Object.assign($('screen').style,{transform:`scale(${stageScale})`,left:`${(innerWidth-1920*stageScale)/2}px`,top:`${(innerHeight-1080*stageScale)/2}px`});
+  // The Cast receiver on the Xiaomi TV (Chrome 92) reports innerWidth 3840×2160 while showing 960×540,
+  // so measure the visible area of the root element instead.
+  const root=document.documentElement,width=root.clientWidth||innerWidth,height=root.clientHeight||innerHeight;
+  stageScale=Math.min(width/1920,height/1080);
+  Object.assign($('screen').style,{transform:`scale(${stageScale})`,left:`${(width-1920*stageScale)/2}px`,top:`${(height-1080*stageScale)/2}px`});
   updateFrost();
 }
 // The screen never scrolls, so the frosted layer only needs re-clipping when it is refitted.

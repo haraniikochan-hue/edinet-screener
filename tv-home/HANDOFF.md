@@ -43,6 +43,16 @@ v0.6.0〜v0.9.0はクラウドのセッションで作った。ユーザーが�
   ```
   PCのブラウザで `http://127.0.0.1:4173/` を開く。ZIPを使う場合は展開したフォルダで `npm run dev`。
 - **テレビを変更せずに見る**：`HOST=0.0.0.0 npm run dev` で起動し、テレビのブラウザで `http://<PCのLAN内IP>:4173/` を開く（PCのファイアウォールで4173番の受信許可が必要な場合がある）。この方法ではSpotify認証はできない（第9節）。テレビのブラウザはWebViewと違うことがあるので、実機確認の結果にはどちらで見たかを書く。
+- **Castでテレビに出す（2026-10-19に実施・表示確認済み）**：テレビは内蔵Chromecastで、LANでは `MiTV-MZTU0`／名前「リビングルームのテレビ」（mDNSの `_googlecast._tcp`）。テレビの設定やアプリは変えずに、PCから表示できる。
+  ```sh
+  HOST=0.0.0.0 npm run dev
+  python3 -m venv ~/.local/catt-venv && ~/.local/catt-venv/bin/pip install catt
+  ~/.local/catt-venv/bin/catt -d "リビングルームのテレビ" cast_site http://<PCのLAN内IP>:4173/
+  ~/.local/catt-venv/bin/catt -d "リビングルームのテレビ" stop    # 終了。送り直す前にも一度止める
+  ```
+  - `cast_site` は受信アプリDashCastを、iframeを使わずにページごと移動させる方式（force）で使う。このため `frame-ancestors 'self'` のままで表示できる。表示中はDashCastがこのページに置き換わっているので、別のURLを送るときは先に `stop` する。
+  - Cast表示ではリモコンの矢印キーがページに届かない前提で、見るだけの確認に使う。操作の確認はテレビのブラウザかAPKで行う。
+  - PCがスリープしたりサーバーを止めたりすると表示も止まる。
 - **ADBで読み取るだけの確認**：テレビで開発者向けオプションとUSBデバッグまたはワイヤレスデバッグを有効にするのはユーザー自身の操作。それが済んで接続を許可してもらってから、読み取りだけを行う。
   ```sh
   adb connect <テレビのIP>:5555      # ワイヤレスデバッグなら先に adb pair <IP>:<ポート>
@@ -179,6 +189,8 @@ Xiaomi TVのGPU・CPUで滑らかに動くよう最適化した。見た目はv0
 - 表示されていなかった経済指標のカテゴリー行（`.calendar-meta`）は作らない。入場アニメーションはフェードのみ（各カードがぼかし済み写真の上に留まるため）。
 - 検証：`browser-check.mjs` は3840×2160・1366×768・1280×720・960×540で、ページのスクロールなし・ぼかし済みカード・設定シートが画面と一緒に縮尺されること（幅＝900×縮尺）を確認。`browser-ux-check.mjs` は960×540（2倍密度）でもリモコン移動・詳細シート・設定のスクロール・トーストを確認する。
 - 実機での見え方（文字の大きさ、オーバースキャン）は未確認。小さすぎる場合は、画面全体ではなくシート・カードの文字を調整する。
+- **Castの受信ブラウザで見つかった問題（2026-10-19修正）**：Chrome 92（CrKey 1.56、Android 14）の受信ブラウザで計測すると、表示領域・`clientWidth`・`visualViewport`・`screen` はすべて960×540、`devicePixelRatio` は2。一方で `innerWidth`/`innerHeight` だけが読み込みの約2秒後に3840×2160へ変わり、`fit()` の縮尺が4倍になって画面が大きく拡大されていた。`fit()` は `document.documentElement.clientWidth/clientHeight` で測るように変更した。テレビで全体がちょうど収まることをユーザーが目視で確認した。960×540・2倍密度という想定は、このCast受信ブラウザについては実測で正しかった（WebViewは未計測）。
+- **Chrome 92で使えない機能（未対応）**：`AbortSignal.timeout`（Chrome 103以降）は `js/adblock.js` と `js/spotify.js` で使っている。広告ブロックの確認では例外が「接続不可」と判定され、結果が誤りになりうる。Spotifyは取得に失敗する。CSSの `:has()`（Chrome 105以降）は3か所あり、効かないと見た目が少し変わるだけ。`checkVisibility()` には代わりの処理がある。テレビのWebViewの版を調べたうえで、必要なら直す。
 
 ## 4. 12銘柄と価格の意味
 
@@ -381,6 +393,7 @@ PLAYWRIGHT_MODULE=/absolute/path/to/playwright/index.mjs CHROMIUM_PATH=/path/to/
 - **v0.7.0（2026-10-19）**：単体テスト47件（広告ブロックのホスト名検証・判定・ブリッジ・設定の6件を追加）、実APIの `browser-check.mjs`、`browser-weather-check.mjs`、`browser-integrations-check.mjs` が成功。統合検証に、広告ドメインの遮断あり／なしの判定と、模擬ブリッジへ検証済みホスト名と空文字（自動に戻す）だけが渡ること、不正なDNSサーバーを保存時に拒否することを追加した。実機のプライベートDNS変更とAPKのブリッジは未検証。
 - **v0.8.0（2026-10-19）**：単体テスト47件（RSSの要約と長さ上限を追加）、新しい `browser-ux-check.mjs`（リモコン移動・ページ送り・戻る・詳細シート・設定のリモコン操作・放置時の戻り）、`browser-integrations-check.mjs`、`browser-weather-check.mjs` が成功。性能は待機中のChromium CPU 4%で、v0.6.1から悪化なし。この日はOpen-Meteoの予報APIがこの環境から接続できず、実APIの `browser-check.mjs` は天気の取得待ちでタイムアウトした。予報APIだけを制御レスポンスに置き換えた一時コピーでは全項目が成功した（記録とスクリーンショットは上書きしていない。`artifacts/` の画面はv0.7.0の実API実行時のもの）。
 - **v0.9.0（2026-10-19）**：単体テスト47件、`npm run build`、`browser-ux-check.mjs`（960×540・2倍密度の確認と、↑の直後の↓で元に戻る確認を追加）、`browser-integrations-check.mjs`、`browser-weather-check.mjs` が成功。性能は待機中のChromium CPU 1.4%（天気は取得不可の状態）。Open-Meteoの予報APIはこの日もこの環境から接続できず、実APIの `browser-check.mjs` は予報と空気質だけを制御レスポンスに置き換えた一時コピーで全項目が成功（相場・WebSocket・経済指標・ニュース・TradingViewは実API、4画面サイズの縮尺確認を含む）。記録とスクリーンショットは上書きしていない。スマホ・縦画面のスクリーンショット（`dashboard-768/660/320/mobile.png`）は削除した。
+- **PCのセッション（2026-10-19）**：ユーザーのMac（Intel、Node.js 24.22.0を `~/.local/node` に配置）で、単体テスト47件と `npm run build` が成功した。`npm run dev` でPCのブラウザに実データ（相場・天気・経済指標・ニュース）が表示された。Castでテレビへ送り、縮尺を修正した後に全体が収まることをユーザーが目視で確認した（第3.3節）。テレビの設定・アプリは変更していない。ブラウザ検証スクリプトはこの環境では実行していない（Playwrightがない）。
 - `browser-market-check.mjs` は冒頭の1件（WebSocketの82,000を期待するが、同時刻のHTTPスナップショット81,000が後から描画される）が失敗する。**同じ失敗が未変更のv0.5.5でも再現**するため既存のテストの競合で、今回の変更によるものではない。その1件だけを飛ばした一時コピーでは、上場廃止・切断時のHTTP切り替え・古い値の表示・CoinGecko切り替えがすべて成功した（`artifacts/market-check.json` はv0.4.0の記録のまま）。
 
 スクリーンショットの価格・時刻は撮影当時の実データ。現在価格の保証や固定表示のサンプルではない。
@@ -389,7 +402,7 @@ PLAYWRIGHT_MODULE=/absolute/path/to/playwright/index.mjs CHROMIUM_PATH=/path/to/
 
 | 項目 | 現状 | 必要になったときの次の行動 |
 | --- | --- | --- |
-| TV型番・OS | 未確認 | 型番、Google TV/Android TV/PatchWall、WebView/Androidの版を確認 |
+| TV型番・OS | 一部確認（2026-10-19、Castから） | 65インチ、Cast上の型番 `MiTV-MZTU0`、Android 14（Build UKN1.240806.017）、Cast受信ブラウザはChrome 92・960×540・密度2。Google TVかPatchWallか、WebViewの版は未確認（ADBで調べる） |
 | 作業端末と接続経路 | 未確認 | PC利用可否、スマホ/Termux、同一LAN・ADB接続を確認 |
 | APK | 未作成 | Kotlin/WebView、ランチャー宣言、アプリ列挙と起動、リモコン・戻る・復帰を実装 |
 | サーバー運用 | ローカルのみ | TVから届くNodeの配置とHTTPSを決める。静的配信だけでは全API機能を維持できない |
