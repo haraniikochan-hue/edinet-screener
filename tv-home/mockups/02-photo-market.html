@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>写真スライドと株のホーム画面（モック）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;500;600&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0A0F1A}
+a{color:#F2B263}a:hover{color:#FFD39A}
+</style>
+<style>
+html,body{height:100%;overflow:hidden;background:#000}
+#stage{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0}
+</style>
+</head>
+<body>
+<!-- 1920x1080 の静的モック。ウィンドウに合わせて縮小表示する -->
+<div id="stage">
+<div style="width: 1920px; height: 1080px; box-sizing: border-box; position: relative; overflow: hidden; background: #0A0F1A; color: #EEF0F3; font-family: 'Zen Kaku Gothic New', sans-serif;">
+
+<svg role="img" aria-label="写真スライドの仮表示：夜の摩天楼" width="1920" height="1080" viewBox="0 0 1920 1080" style="position: absolute; left: 0; top: 0;">
+<defs>
+<linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#0B1426"></stop>
+<stop offset="0.6" stop-color="#1C2A44"></stop>
+<stop offset="1" stop-color="#3A3550"></stop>
+</linearGradient>
+<pattern id="win" width="22" height="30" patternUnits="userSpaceOnUse">
+<rect x="6" y="8" width="7" height="10" fill="#F6C979" opacity="0.55"></rect>
+</pattern>
+<pattern id="win2" width="18" height="24" patternUnits="userSpaceOnUse">
+<rect x="5" y="6" width="5" height="8" fill="#F6C979" opacity="0.3"></rect>
+</pattern>
+</defs>
+<rect width="1920" height="1080" fill="url(#sky)"></rect>
+<circle cx="1480" cy="150" r="36" fill="#E9E4D4" opacity="0.85"></circle>
+<path d="M0 760 L0 560 L90 560 L90 500 L170 500 L170 600 L260 600 L260 430 L300 400 L340 430 L340 620 L430 620 L430 470 L520 470 L520 640 L600 640 L600 380 L640 380 L640 330 L660 260 L680 330 L680 380 L720 380 L720 650 L820 650 L820 520 L900 520 L900 600 L980 600 L980 420 L1060 420 L1060 640 L1150 640 L1150 300 L1180 300 L1180 230 L1200 150 L1220 230 L1220 300 L1250 300 L1250 660 L1340 660 L1340 480 L1430 480 L1430 600 L1520 600 L1520 440 L1600 440 L1600 640 L1690 640 L1690 520 L1780 520 L1780 590 L1920 590 L1920 760 Z" fill="#141B2B"></path>
+<path d="M0 760 L0 560 L90 560 L90 500 L170 500 L170 600 L260 600 L260 430 L300 400 L340 430 L340 620 L430 620 L430 470 L520 470 L520 640 L600 640 L600 380 L640 380 L640 330 L660 260 L680 330 L680 380 L720 380 L720 650 L820 650 L820 520 L900 520 L900 600 L980 600 L980 420 L1060 420 L1060 640 L1150 640 L1150 300 L1180 300 L1180 230 L1200 150 L1220 230 L1220 300 L1250 300 L1250 660 L1340 660 L1340 480 L1430 480 L1430 600 L1520 600 L1520 440 L1600 440 L1600 640 L1690 640 L1690 520 L1780 520 L1780 590 L1920 590 L1920 760 Z" fill="url(#win)"></path>
+<path d="M0 1080 L0 720 L140 720 L140 660 L250 660 L250 740 L380 740 L380 640 L470 640 L470 760 L620 760 L620 690 L760 690 L760 780 L900 780 L900 700 L1040 700 L1040 760 L1200 760 L1200 680 L1320 680 L1320 770 L1480 770 L1480 700 L1640 700 L1640 760 L1800 760 L1800 690 L1920 690 L1920 1080 Z" fill="#0C111C"></path>
+<path d="M0 1080 L0 720 L140 720 L140 660 L250 660 L250 740 L380 740 L380 640 L470 640 L470 760 L620 760 L620 690 L760 690 L760 780 L900 780 L900 700 L1040 700 L1040 760 L1200 760 L1200 680 L1320 680 L1320 770 L1480 770 L1480 700 L1640 700 L1640 760 L1800 760 L1800 690 L1920 690 L1920 1080 Z" fill="url(#win2)"></path>
+</svg>
+
+<div style="position: relative; height: 100%; box-sizing: border-box; padding: 64px 96px 56px; display: flex; flex-direction: column; justify-content: space-between;">
+
+<div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 64px;">
+
+<div style="display: flex; flex-direction: column; gap: 20px;">
+<div style="display: flex; align-items: baseline; gap: 24px;">
+<div style="font-family: 'Outfit', sans-serif; font-weight: 200; font-size: 180px; line-height: 0.9; letter-spacing: -3px;">21:08</div>
+<div style="display: flex; flex-direction: column; gap: 4px; padding-bottom: 14px;">
+<div style="font-size: 32px; font-weight: 500;">10月19日</div>
+<div style="font-size: 26px; color: #C3C9D3;">月曜日</div>
+</div>
+</div>
+<div style="display: flex; align-items: center; gap: 18px; font-size: 26px; color: #DCE0E6;">
+<svg aria-hidden="true" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#F2B263" stroke-width="1.6" stroke-linecap="round"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"></path></svg>
+<span style="font-family: 'Outfit', sans-serif; font-size: 44px; font-weight: 300;">17°</span>
+<span>晴れ　明日 最高 23°</span>
+</div>
+</div>
+
+<div style="width: 860px; box-sizing: border-box; background: rgba(10,13,20,0.82); border: 1px solid rgba(255,255,255,0.08); border-radius: 28px; padding: 28px 32px 20px; display: flex; flex-direction: column; gap: 8px;">
+<div style="display: flex; justify-content: space-between; align-items: baseline; padding: 0 8px 8px;">
+<div style="font-size: 24px; font-weight: 700; color: #C3C9D3; letter-spacing: 2px;">マーケット</div>
+<div style="font-family: 'Outfit', sans-serif; font-size: 22px; color: #8C95A3;">10/17 終値</div>
+</div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 32px;">
+
+<div style="display: flex; align-items: center; gap: 18px; padding: 12px 8px; border-top: 1px solid rgba(255,255,255,0.07);">
+<div style="width: 52px; height: 52px; flex-shrink: 0; border-radius: 50%; background: #2A3342; color: #E6E9EE; display: flex; align-items: center; justify-content: center; font-family: 'Outfit', sans-serif; font-weight: 600; font-size: 18px;">500</div>
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+<div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px;">
+<span style="font-family: 'Outfit', sans-serif; font-weight: 500; font-size: 26px;">SPX</span>
+<span style="font-size: 17px; color: #8C95A3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">S&P 500</span>
+</div>
+<div style="display: flex; gap: 14px; align-items: baseline; font-family: 'Outfit', sans-serif;">
+<span style="font-size: 26px; font-weight: 300;">7,659.44</span>
+<span style="font-size: 23px; font-weight: 500; color: #FF8F85;">−1.09%</span>
+</div>
+</div>
+</div>
+
+<div style="display: flex; align-items: center; gap: 18px; padding: 12px 8px; border-top: 1px solid rgba(255,255,255,0.07);">
+<div style="width: 52px; height: 52px; flex-shrink: 0; border-radius: 50%; background: #2A3342; color: #E6E9EE; display: flex; align-items: center; justify-content: center; font-family: 'Outfit', sans-serif; font-weight: 600; font-size: 18px;">N</div>
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+<div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px;">
+<span style="font-family: 'Outfit', sans-serif; font-weight: 500; font-size: 26px;">NVDA</span>
+<span style="font-size: 17px; color: #8C95A3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">NVIDIA</span>
+</div>
+<div style="display: flex; gap: 14px; align-items: baseline; font-family: 'Outfit', sans-serif;">
+<span style="font-size: 26px; font-weight: 300;">214.13</span>
+<span style="font-size: 23px; font-weight: 500; color: #FF8F85;">−1.43%</span>
+</div>
+</div>
+</div>
+
+<div style="display: flex; align-items: center; gap: 18px; padding: 12px 8px; border-top: 1px solid rgba(255,255,255,0.07);">
+<div style="width: 52px; height: 52px; flex-shrink: 0; border-radius: 50%; background: #2A3342; color: #E6E9EE; display: flex; align-items: center; justify-content: center; font-family: 'Outfit', sans-serif; font-weight: 600; font-size: 18px;">30</div>
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+<div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px;">
+<span style="font-family: 'Outfit', sans-serif; font-weight: 500; font-size: 26px;">DJI</span>
+<span style="font-size: 17px; color: #8C95A3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">ダウ平均</span>
+</div>
+<div style="display: flex; gap: 14px; align-items: baseline; font-family: 'Outfit', sans-serif;">
+<span style="font-size: 26px; font-weight: 300;">52,007.21</span>
+<span style="font-size: 23px; font-weight: 500; color: #FF8F85;">−0.34%</span>
+</div>
+</div>
+</div>
+
+<div style="display: flex; align-items: center; gap: 18px; padding: 12px 8px; border-top: 1px solid rgba(255,255,255,0.07);">
+<div style="width: 52px; height: 52px; flex-shrink: 0; border-radius: 50%; background: #2A3342; color: #E6E9EE; display: flex; align-items: center; justify-content: center; font-family: 'Outfit', sans-serif; font-weight: 600; font-size: 18px;">A</div>
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+<div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px;">
+<span style="font-family: 'Outfit', sans-serif; font-weight: 500; font-size: 26px;">AAPL</span>
+<span style="font-size: 17px; color: #8C95A3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Apple</span>
+</div>
+<div style="display: flex; gap: 14px; align-items: baseline; font-family: 'Outfit', sans-serif;">
+<span style="font-size: 26px; font-weight: 300;">343.46</span>
+<span style="font-size: 23px; font-weight: 500; color: #6BD9A8;">+0.43%</span>
+</div>
+</div>
+</div>
+
+<div style="display: flex; align-items: center; gap: 18px; padding: 12px 8px; border-top: 1px solid rgba(255,255,255,0.07);">
+<div style="width: 52px; height: 52px; flex-shrink: 0; border-radius: 50%; background: #2A3342; color: #E6E9EE; display: flex; align-items: center; justify-content: center; font-family: 'Outfit', sans-serif; font-weight: 600; font-size: 18px;">IX</div>
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+<div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px;">
+<span style="font-family: 'Outfit', sans-serif; font-weight: 500; font-size: 26px;">IXIC</span>
+<span style="font-size: 17px; color: #8C95A3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">ナスダック総合</span>
+</div>
+<div style="display: flex; gap: 14px; align-items: baseline; font-family: 'Outfit', sans-serif;">
+<span style="font-size: 26px; font-weight: 300;">26,140.03</span>
+<span style="font-size: 23px; font-weight: 500; color: #FF8F85;">−2.14%</span>
+</div>
+</div>
+</div>
+
+<div style="display: flex; align-items: center; gap: 18px; padding: 12px 8px; border-top: 1px solid rgba(255,255,255,0.07);">
+<div style="width: 52px; height: 52px; flex-shrink: 0; border-radius: 50%; background: #2A3342; color: #E6E9EE; display: flex; align-items: center; justify-content: center; font-family: 'Outfit', sans-serif; font-weight: 600; font-size: 18px;">M</div>
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+<div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px;">
+<span style="font-family: 'Outfit', sans-serif; font-weight: 500; font-size: 26px;">MARA</span>
+<span style="font-size: 17px; color: #8C95A3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">MARA</span>
+</div>
+<div style="display: flex; gap: 14px; align-items: baseline; font-family: 'Outfit', sans-serif;">
+<span style="font-size: 26px; font-weight: 300;">7.53</span>
+<span style="font-size: 23px; font-weight: 500; color: #FF8F85;">−9.60%</span>
+</div>
+</div>
+</div>
+
+<div style="display: flex; align-items: center; gap: 18px; padding: 12px 8px; border-top: 1px solid rgba(255,255,255,0.07);">
+<div style="width: 52px; height: 52px; flex-shrink: 0; border-radius: 50%; background: #2A3342; color: #E6E9EE; display: flex; align-items: center; justify-content: center; font-family: 'Outfit', sans-serif; font-weight: 600; font-size: 18px;">VIX</div>
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+<div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px;">
+<span style="font-family: 'Outfit', sans-serif; font-weight: 500; font-size: 26px;">VIX</span>
+<span style="font-size: 17px; color: #8C95A3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">恐怖指数</span>
+</div>
+<div style="display: flex; gap: 14px; align-items: baseline; font-family: 'Outfit', sans-serif;">
+<span style="font-size: 26px; font-weight: 300;">19.98</span>
+<span style="font-size: 23px; font-weight: 500; color: #6BD9A8;">+21.46%</span>
+</div>
+</div>
+</div>
+
+<div style="display: flex; align-items: center; gap: 18px; padding: 12px 8px; border-top: 1px solid rgba(255,255,255,0.07);">
+<div style="width: 52px; height: 52px; flex-shrink: 0; border-radius: 50%; background: #2A3342; color: #E6E9EE; display: flex; align-items: center; justify-content: center; font-family: 'Outfit', sans-serif; font-weight: 600; font-size: 18px;">MS</div>
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+<div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px;">
+<span style="font-family: 'Outfit', sans-serif; font-weight: 500; font-size: 26px;">MSTR</span>
+<span style="font-size: 17px; color: #8C95A3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Strategy</span>
+</div>
+<div style="display: flex; gap: 14px; align-items: baseline; font-family: 'Outfit', sans-serif;">
+<span style="font-size: 26px; font-weight: 300;">136.83</span>
+<span style="font-size: 23px; font-weight: 500; color: #FF8F85;">−9.56%</span>
+</div>
+</div>
+</div>
+
+<div style="display: flex; align-items: center; gap: 18px; padding: 12px 8px; border-top: 1px solid rgba(255,255,255,0.07);">
+<div style="width: 52px; height: 52px; flex-shrink: 0; border-radius: 50%; background: #2A3342; color: #E6E9EE; display: flex; align-items: center; justify-content: center; font-family: 'Outfit', sans-serif; font-weight: 600; font-size: 18px;">10Y</div>
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+<div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px;">
+<span style="font-family: 'Outfit', sans-serif; font-weight: 500; font-size: 26px;">US10Y</span>
+<span style="font-size: 17px; color: #8C95A3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">米10年債利回り</span>
+</div>
+<div style="display: flex; gap: 14px; align-items: baseline; font-family: 'Outfit', sans-serif;">
+<span style="font-size: 26px; font-weight: 300;">5.081</span>
+<span style="font-size: 23px; font-weight: 500; color: #6BD9A8;">+0.04%</span>
+</div>
+</div>
+</div>
+
+<div style="display: flex; align-items: center; gap: 18px; padding: 12px 8px; border-top: 1px solid rgba(255,255,255,0.07);">
+<div style="width: 52px; height: 52px; flex-shrink: 0; border-radius: 50%; background: #2A3342; color: #E6E9EE; display: flex; align-items: center; justify-content: center; font-family: 'Outfit', sans-serif; font-weight: 600; font-size: 18px;">G</div>
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+<div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px;">
+<span style="font-family: 'Outfit', sans-serif; font-weight: 500; font-size: 26px;">GOOGL</span>
+<span style="font-size: 17px; color: #8C95A3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Alphabet</span>
+</div>
+<div style="display: flex; gap: 14px; align-items: baseline; font-family: 'Outfit', sans-serif;">
+<span style="font-size: 26px; font-weight: 300;">340.59</span>
+<span style="font-size: 23px; font-weight: 500; color: #FF8F85;">−2.47%</span>
+</div>
+</div>
+</div>
+
+<div style="display: flex; align-items: center; gap: 18px; padding: 12px 8px; border-top: 1px solid rgba(255,255,255,0.07);">
+<div style="width: 52px; height: 52px; flex-shrink: 0; border-radius: 50%; background: #2A3342; color: #E6E9EE; display: flex; align-items: center; justify-content: center; font-family: 'Outfit', sans-serif; font-weight: 600; font-size: 18px;">¥</div>
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+<div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px;">
+<span style="font-family: 'Outfit', sans-serif; font-weight: 500; font-size: 26px;">USDJPY</span>
+<span style="font-size: 17px; color: #8C95A3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">ドル円</span>
+</div>
+<div style="display: flex; gap: 14px; align-items: baseline; font-family: 'Outfit', sans-serif;">
+<span style="font-size: 26px; font-weight: 300;">157.976</span>
+<span style="font-size: 23px; font-weight: 500; color: #C3C9D3;">±0.00%</span>
+</div>
+</div>
+</div>
+
+<div style="display: flex; align-items: center; gap: 18px; padding: 12px 8px; border-top: 1px solid rgba(255,255,255,0.07);">
+<div style="width: 52px; height: 52px; flex-shrink: 0; border-radius: 50%; background: #2A3342; color: #E6E9EE; display: flex; align-items: center; justify-content: center; font-family: 'Outfit', sans-serif; font-weight: 600; font-size: 18px;">T</div>
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+<div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px;">
+<span style="font-family: 'Outfit', sans-serif; font-weight: 500; font-size: 26px;">TSLA</span>
+<span style="font-size: 17px; color: #8C95A3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Tesla</span>
+</div>
+<div style="display: flex; gap: 14px; align-items: baseline; font-family: 'Outfit', sans-serif;">
+<span style="font-size: 26px; font-weight: 300;">354.72</span>
+<span style="font-size: 23px; font-weight: 500; color: #FF8F85;">−2.13%</span>
+</div>
+</div>
+</div>
+
+<div style="display: flex; align-items: center; gap: 18px; padding: 12px 8px; border-top: 1px solid rgba(255,255,255,0.07);">
+<div style="width: 52px; height: 52px; flex-shrink: 0; border-radius: 50%; background: #2A3342; color: #E6E9EE; display: flex; align-items: center; justify-content: center; font-family: 'Outfit', sans-serif; font-weight: 600; font-size: 18px;">C</div>
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+<div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px;">
+<span style="font-family: 'Outfit', sans-serif; font-weight: 500; font-size: 26px;">COIN</span>
+<span style="font-size: 17px; color: #8C95A3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Coinbase</span>
+</div>
+<div style="display: flex; gap: 14px; align-items: baseline; font-family: 'Outfit', sans-serif;">
+<span style="font-size: 26px; font-weight: 300;">173.16</span>
+<span style="font-size: 23px; font-weight: 500; color: #FF8F85;">−5.79%</span>
+</div>
+</div>
+</div>
+
+<div style="display: flex; align-items: center; gap: 18px; padding: 12px 8px; border-top: 1px solid rgba(255,255,255,0.07);">
+<div style="width: 52px; height: 52px; flex-shrink: 0; border-radius: 50%; background: #2A3342; color: #E6E9EE; display: flex; align-items: center; justify-content: center; font-family: 'Outfit', sans-serif; font-weight: 600; font-size: 18px;">MS</div>
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+<div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px;">
+<span style="font-family: 'Outfit', sans-serif; font-weight: 500; font-size: 26px;">MSFT</span>
+<span style="font-size: 17px; color: #8C95A3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Microsoft</span>
+</div>
+<div style="display: flex; gap: 14px; align-items: baseline; font-family: 'Outfit', sans-serif;">
+<span style="font-size: 26px; font-weight: 300;">529.05</span>
+<span style="font-size: 23px; font-weight: 500; color: #FF8F85;">−1.93%</span>
+</div>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+
+<div style="display: flex; justify-content: space-between; align-items: flex-end; gap: 32px;">
+<div style="display: flex; gap: 24px; align-items: center;">
+<button style="width: 220px; height: 124px; border-radius: 20px; border: 4px solid #F2B263; background: rgba(34,43,56,0.92); color: #FFFFFF; font-family: inherit; font-size: 27px; font-weight: 700; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; transform: scale(1.08); box-shadow: 0 16px 40px rgba(0,0,0,0.5);">
+<svg aria-hidden="true" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M8 5.5v13l10.5-6.5z"></path></svg>
+SmartTube</button>
+<button style="width: 206px; height: 116px; border-radius: 18px; border: 4px solid transparent; background: rgba(18,24,34,0.88); color: #D8DDE4; font-family: inherit; font-size: 25px; font-weight: 500; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;">
+<svg aria-hidden="true" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="3" y="5" width="18" height="12" rx="2"></rect><path d="M8 21h8M12 17v4"></path></svg>
+地デジ</button>
+<button style="width: 206px; height: 116px; border-radius: 18px; border: 4px solid transparent; background: rgba(18,24,34,0.88); color: #D8DDE4; font-family: inherit; font-size: 25px; font-weight: 500; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;">
+<svg aria-hidden="true" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M7 4v16M17 4v16M3 9h4M3 15h4M17 9h4M17 15h4"></path></svg>
+Netflix</button>
+<button style="width: 206px; height: 116px; border-radius: 18px; border: 4px solid transparent; background: rgba(18,24,34,0.88); color: #D8DDE4; font-family: inherit; font-size: 25px; font-weight: 500; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;">
+<svg aria-hidden="true" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M7 4v16M17 4v16M3 9h4M3 15h4M17 9h4M17 15h4"></path></svg>
+Prime Video</button>
+<button style="width: 206px; height: 116px; border-radius: 18px; border: 4px solid transparent; background: rgba(18,24,34,0.88); color: #D8DDE4; font-family: inherit; font-size: 25px; font-weight: 500; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;">
+<svg aria-hidden="true" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"></path></svg>
+設定</button>
+</div>
+<div style="display: flex; flex-direction: column; align-items: flex-end; gap: 6px; font-size: 20px; color: #C3C9D3; text-align: right;">
+<div>ニューヨーク　ミッドタウンの夜</div>
+<div style="font-size: 17px; color: #8C95A3;">Photo: [撮影者名] / Unsplash　·　3 / 24</div>
+</div>
+</div>
+
+</div>
+</div>
+</div>
+<script>
+function fit(){var s=Math.min(innerWidth/1920,innerHeight/1080),el=document.getElementById('stage');
+el.style.transform='scale('+s+')';el.style.left=((innerWidth-1920*s)/2)+'px';el.style.top=((innerHeight-1080*s)/2)+'px';}
+addEventListener('resize',fit);fit();
+</script>
+</body>
+</html>

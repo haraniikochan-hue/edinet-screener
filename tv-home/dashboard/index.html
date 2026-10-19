@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0A0F1A">
+  <meta name="description" content="渋谷の天気とニューヨークのマーケットを、リビングの一画面に。TV Home ダッシュボード。">
+  <title>TV Home — 街と、いま。</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;600&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script type="module" src="js/app.js"></script>
+</head>
+<body>
+  <div class="background" aria-hidden="true"><div class="photo-layer is-active"></div><div class="photo-layer"></div></div>
+  <div class="shade" aria-hidden="true"></div>
+  <main id="stage" aria-label="TV Home ダッシュボード">
+    <header class="masthead"><span class="wordmark"><i></i> HOME <span class="divider">/</span><span>街と、いま。</span></span><div class="utility"><span id="connection-status" class="subtle">接続中</span><button id="refresh" class="quiet-button" aria-label="データを更新">↻ <span>更新</span></button><button id="fullscreen" class="quiet-button" aria-label="全画面に切り替え">⛶ <span>全画面</span></button></div></header>
+
+    <div class="dashboard-grid">
+      <section class="overview" aria-label="時計と日付">
+        <div class="local-time"><span class="eyebrow">TOKYO <span class="city-divider">/</span> JAPAN</span><div class="clock-line"><time id="clock">--:--</time><div class="date"><span id="date">—月—日</span><span id="weekday">—曜日</span></div></div></div>
+      </section>
+      <section class="card weather-section" aria-label="現在の天気と時間別予報">
+          <div class="weather-line"><span id="weather-icon" class="weather-icon" aria-hidden="true"></span><span id="temperature" class="number">—°</span><div><div><span id="location-name">渋谷区</span><span class="weather-separator"> / </span><span id="weather-label">取得中</span></div><div id="tomorrow" class="secondary">明日の予報を取得しています</div></div></div>
+          <section class="hourly-section" aria-labelledby="hourly-heading">
+            <div class="hourly-heading"><h3 id="hourly-heading">時間別天気 <span id="hourly-status">取得中</span></h3><span class="rain-key"><svg viewBox="0 0 16 20" aria-hidden="true"><path d="M8 1C6 5 2 9 2 12a6 6 0 0 0 12 0C14 9 10 5 8 1Z"></path></svg>降水確率</span></div>
+            <div id="hourly-forecast" class="hourly-forecast"><p class="hourly-empty">時間別予報を取得しています</p></div>
+          </section>
+          <div class="chips"><span id="sunrise">日の出 —</span><span id="sunset">日の入 —</span><span id="air">空気 —</span></div>
+          <div class="source-line" id="weather-source">Open-Meteo · モデル予測</div>
+      </section>
+
+      <div class="market-column">
+        <section class="card market-card" aria-label="マーケットの銘柄一覧">
+          <div id="stocks" class="stock-grid"></div>
+          <div id="tradingview" hidden></div>
+        </section>
+      </div>
+      <section class="card calendar-card" aria-labelledby="calendar-heading">
+        <div class="calendar-heading"><div><span class="eyebrow">UNITED STATES</span><h2 id="calendar-heading">米国経済指標</h2></div><span class="calendar-zone">JST <span>日本時間</span></span></div>
+        <p class="sr-only">これからの主要な発表</p>
+        <div id="calendar-events" class="calendar-events"><p class="secondary">公式日程を確認しています</p></div>
+        <div class="calendar-footer"><span id="calendar-page" class="number"></span><div class="calendar-paging"><button id="calendar-prev" aria-label="前の経済指標の予定">‹</button><button id="calendar-next" aria-label="次の経済指標の予定">›</button></div></div>
+        <div id="calendar-source" class="source-line">BLS · BEA · FRB</div>
+      </section>
+      <div class="side-stack"><section class="card news-card" aria-labelledby="news-heading"><div class="card-heading"><h2 id="news-heading">ニュース</h2><button id="next-news" class="text-button" aria-label="次のニュース">— / — →</button></div><a id="news-title" class="news-title" target="_blank" rel="noopener noreferrer">ニュースを取得しています</a><div class="news-footer"><span id="news-source" class="tiny">NHK 経済</span><span class="news-dots" id="news-dots" aria-hidden="true"></span></div></section><section class="card music-card" aria-labelledby="music-heading"><div class="album" id="album"><svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="25"></circle><circle cx="32" cy="32" r="9"></circle><circle cx="32" cy="32" r="2"></circle></svg></div><div class="music-details"><div class="card-heading"><h2 id="music-heading">SPOTIFY</h2><span id="music-state" class="music-indicator" aria-hidden="true">♫</span></div><a id="track-name" class="track-name" target="_blank" rel="noopener noreferrer">音楽を、この画面に。</a><span id="artist-name" class="secondary">再生中の曲を表示</span><div id="music-progress" class="progress" hidden><span></span></div><button id="spotify-connect" class="text-button">Spotifyを連携 ↗</button></div></section></div>
+    </div>
+
+    <footer class="launcher-footer">
+      <nav id="apps" class="app-list" aria-label="アプリ">
+        <button class="app-tile" data-app="smarttube" data-brand="smarttube" aria-label="SmartTube"><span class="app-icon" aria-hidden="true"><span class="app-brand-mark"></span></span><span class="app-label" aria-hidden="true">SmartTube</span></button>
+        <button class="app-tile" data-app="unext" data-brand="unext" aria-label="U-NEXT"><span class="app-icon" aria-hidden="true"><img src="assets/apps/unext.png" alt=""></span><span class="app-label" aria-hidden="true">U-NEXT</span></button>
+        <button class="app-tile" data-app="netflix" data-brand="netflix" aria-label="Netflix"><span class="app-icon" aria-hidden="true"><span class="app-brand-mark"></span></span><span class="app-label" aria-hidden="true">Netflix</span></button>
+        <button class="app-tile" data-app="prime" data-brand="prime" aria-label="Prime Video"><span class="app-icon" aria-hidden="true"><span class="app-brand-mark"></span></span><span class="app-label" aria-hidden="true">Prime Video</span></button>
+        <button class="app-tile" data-app="disneyplus" data-brand="disneyplus" aria-label="Disney+"><span class="app-icon" aria-hidden="true"><img src="assets/apps/disneyplus.png" alt=""></span><span class="app-label" aria-hidden="true">Disney+</span></button>
+        <button class="app-tile" data-app="spotify" data-brand="spotify" aria-label="Spotify"><span class="app-icon" aria-hidden="true"><span class="app-brand-mark"></span></span><span class="app-label" aria-hidden="true">Spotify</span></button>
+        <button class="app-tile" data-brand="settings" data-open-settings="general" aria-label="設定"><span class="app-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m9.8 3-.5 2.1-1.5.9-2.1-.6-2.2 3.8 1.6 1.5v1.7l-1.6 1.5 2.2 3.8 2.1-.6 1.5.9.5 2.1h4.4l.5-2.1 1.5-.9 2.1.6 2.2-3.8-1.6-1.5v-1.7l1.6-1.5-2.2-3.8-2.1.6-1.5-.9-.5-2.1Z"></path><circle cx="12" cy="11.5" r="3"></circle></svg></span><span class="app-label" aria-hidden="true">設定</span></button>
+      </nav>
+      <div class="photo-caption"><div id="photo-title">ニューヨーク · ミッドタウン</div><div class="photo-credit" id="photo-credit"></div><button id="next-photo" class="text-button">写真を切り替え →</button></div>
+    </footer>
+    <div class="bottom-line"><span>← → ↑ ↓ 移動 <span class="key-separator">·</span> Enter 決定 <span class="key-separator">·</span> Esc 戻る</span><span id="bottom-note">WEB PREVIEW <span class="key-separator">·</span> アプリ起動はTV版で対応</span></div>
+  </main>
+
+  <div id="settings-overlay" class="modal-overlay" hidden>
+    <section id="settings-dialog" class="settings-dialog" role="dialog" aria-modal="true" aria-labelledby="settings-title" tabindex="-1">
+      <div class="dialog-heading"><div><span class="eyebrow">MAKE YOURSELF AT HOME</span><h2 id="settings-title">ホームの設定</h2></div><button id="close-settings" class="icon-button" aria-label="設定を閉じる">×</button></div>
+      <form id="settings-form">
+        <fieldset><legend>天気の地域</legend><div class="search-row"><label class="sr-only" for="city-search">市区町村</label><input id="city-search" type="search" placeholder="市区町村を検索" autocomplete="off"><button type="button" id="search-city" class="small-button">検索</button></div><div id="city-results" class="city-results" aria-live="polite"></div><p id="selected-city" class="help">現在：渋谷区</p></fieldset>
+        <fieldset><legend>マーケット</legend><label for="market-mode">表示方式</label><select id="market-mode"><option value="custom">TV Home / Hyperliquid・HIP-3</option><option value="tradingview">TradingView参考ウィジェット（別の配信元）</option></select><label for="crypto-source-select">BTC・HYPEの価格（TV Home表示）</label><select id="crypto-source-select"><option value="hyperliquid">Hyperliquid / 無期限先物のマーク価格</option><option value="coingecko">CoinGecko / USD参考価格</option></select><p id="market-help" class="help">12銘柄をHyperliquid・HIP-3から取得します。APIキーは不要です。価格は各契約のマーク価格、変化率は24時間比。指数やETFそのものの現物価格とは異なります。BTCはUSDT建て、HYPEはUSDC建てです。</p><p class="help">チャートは直近24時間の取引価格（15分足の終値）です。点線は期間最初の足の始値。約定のない時間は空白のまま表示します。CoinGeckoに切り替えたBTC・HYPEにはチャートを表示しません。</p><div class="market-status" aria-label="マーケットのデータ状態"><div class="feed-summary"><span class="feed-pill" id="crypto-feed">Hyperliquid · 接続中</span><span class="market-coverage"><span class="status-dot" id="market-dot"></span><span id="stock-source">接続中</span></span></div><div class="chart-caption"><span id="crypto-note">価格：無期限先物のマーク価格 · 変化率：24h · チャート：取引価格</span><span id="chart-legend"><i></i> 点線：期間最初の足の始値</span></div></div></fieldset>
+        <fieldset><legend>背景写真</legend><label for="photo-mode">写真の取得元</label><select id="photo-mode"><option value="sample">同梱のNY写真（出典付き）</option><option value="unsplash">Unsplashから自動取得</option></select><div class="form-two"><label for="photo-interval">切替間隔<select id="photo-interval"><option value="30">30秒</option><option value="60">1分</option><option value="180">3分</option><option value="300">5分</option></select></label><label class="checkbox-label"><input type="checkbox" id="motion">ゆっくりズーム</label></div><p id="photo-help" class="help">Unsplashはサーバー側のAPIキー設定後に利用できます。</p><details class="setup-guide"><summary>Unsplashの接続方法</summary><ol><li><a href="https://unsplash.com/oauth/applications" target="_blank" rel="noopener noreferrer">Unsplash Developers ↗</a> で「New Application」を作成。</li><li>表示されたAccess Keyをサーバーの <code>.env.local</code> の <code>UNSPLASH_ACCESS_KEY</code> に設定して再起動。</li><li>取得元を「Unsplashから自動取得」にして保存。</li></ol><p class="help">Secret Keyは不要です。キーはこの画面やチャットには入力しません。NYの写真をまとめて取得し、指定した間隔で切り替えます。</p></details></fieldset>
+        <fieldset><legend>Spotify</legend><label for="spotify-client-id">Client ID</label><input id="spotify-client-id" type="text" autocomplete="off" spellcheck="false" placeholder="Spotify Developer DashboardのClient ID"><p class="help">Client Secretは不要です。連携画面で「再生中の曲」の読み取りを許可してください。</p><p class="help">登録するリダイレクトURI：<code id="spotify-redirect"></code></p><div class="button-row"><button type="button" id="connect-in-settings" class="small-button">保存してSpotifyを連携</button><button type="button" id="disconnect-spotify" class="text-button">連携を解除</button></div><p id="spotify-message" class="help" aria-live="polite"></p></fieldset>
+        <details><summary>データソースと表示について</summary><p class="help">マーケット：BTC・HYPEはHyperliquid、SP500・JP225・SOXL・XYZ100・JPY・DRAM・GOLD・CLはtrade.xyz、10Y・30YはparaのHIP-3契約。WebSocketを最大毎秒描画し、切断時は30秒ごとのHTTP取得に切り替えます。時刻は受信時刻です。履歴は5分ごとに更新。XYZ100は独自の米国100銘柄指数です。JPYは1米ドルあたりの円。10Y・30Yは契約の数値をそのまま表示します。</p><p class="help">経済指標カレンダーはBLS・BEAの公式配信を6時間ごとに確認。CPI、雇用統計、PPI、JOLTS、GDP、PCEを表示します。FOMCはFRB公式日程（2026年10月18日確認、2027年まで）で、通常の14:00 ETを予定時刻としています。すべて夏時間を反映して日本時間に変換。予想値・実績値は未接続です。天気・空気はOpen-Meteo / CAMSのモデル予測。ニュースはNHK経済（15分更新）。日程は変更される場合があります。保存済み日程を使う場合は確認日を表示します。</p><p class="help">設定はこのブラウザに保存されます。APIキーはブラウザに保存せず、.env.localで設定します。朝晩とも同じフル版を表示します。スポーツは表示しません。</p><label for="api-base">別サーバーのURL（必要な場合のみ）</label><input id="api-base" type="url" placeholder="https://your-dashboard.example"><p class="help">静的配信・WebViewから使うAPIサーバー。HTTPSと適切なCORS設定が必要です。</p></details>
+        <div id="settings-error" class="form-error" role="alert"></div><div class="dialog-actions"><button type="button" id="cancel-settings" class="secondary-button">キャンセル</button><button type="submit" class="primary-button">設定を保存</button></div>
+      </form>
+    </section>
+  </div>
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  <noscript><p class="noscript">ダッシュボードを表示するにはJavaScriptを有効にしてください。</p></noscript>
+</body>
+</html>

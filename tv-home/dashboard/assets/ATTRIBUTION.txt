@@ -1,0 +1,10 @@
+nyc-luca-bravo.jpg
+Title: City of lights — Top of The Rock, New York, United States
+Photographer: Luca Bravo
+Original publication: 2017-06-02 (before Unsplash's June 5, 2017 license change)
+License: CC0 1.0 Universal — https://creativecommons.org/publicdomain/zero/1.0/
+Source: https://commons.wikimedia.org/wiki/File:City_of_lights_(Unsplash).jpg
+Photographer: https://unsplash.com/@lucabravo
+Image: https://thumb.wikimedia.org/wikipedia/commons/thumb/b/bc/City_of_lights_%28Unsplash%29.jpg/1920px-City_of_lights_%28Unsplash%29.jpg
+Retrieved: 2026-10-18. Served locally as a sample/fallback.
+Unsplash API images are separate, hotlinked and attributed in the live UI.

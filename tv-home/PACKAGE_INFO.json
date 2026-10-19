@@ -1,0 +1,42 @@
+{
+  "project": "TV Home",
+  "appVersion": "0.5.5",
+  "handoffRevision": "2026-10-19.1",
+  "createdAt": "2026-10-19T01:25:40.328652+00:00",
+  "userStatus": "Current UI accepted as almost complete; next work not yet specified.",
+  "entryPoint": "START_HERE.md",
+  "currentSpecification": "HANDOFF.md",
+  "nextSessionPrompt": "NEXT_SESSION_PROMPT.txt",
+  "preview": "artifacts/dashboard-desktop.png",
+  "run": "npm run dev",
+  "localUrl": "http://127.0.0.1:4173/",
+  "nodeRequirement": "22.9+; validated with Node.js 24.19.0",
+  "runtimeNpmDependencies": [],
+  "acceptedBaselineArchive": "tv-home-phase2-v11.zip",
+  "appCodeUnchanged": true,
+  "contents": [
+    "source",
+    "built dist",
+    "server",
+    "tests",
+    "scripts",
+    "configuration example",
+    "attributions",
+    "latest screenshots",
+    "verification records",
+    "user reference images",
+    "initial mockups",
+    "handoff history"
+  ],
+  "excluded": [
+    "credentials and .env.local",
+    "browser sessions and API tokens",
+    "node_modules and browser binaries",
+    "old intermediate screenshots/videos and nested ZIP copies"
+  ],
+  "verification": "artifacts/handoff-check.json",
+  "integrityManifest": "MANIFEST.sha256",
+  "published": false,
+  "apkBuilt": false,
+  "tvConnected": false
+}

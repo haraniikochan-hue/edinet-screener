@@ -1,0 +1,11 @@
+添付ZIPの「START_HERE.md」「HANDOFF.md」「AGENTS.md」を読んで、TV Homeプロジェクトを引き継いでください。
+
+現在のアプリはv0.5.5です。Xiaomi TV用ホーム画面のフェーズ2・Webダッシュボードで、今のUIは私が「ほぼ完成形」と評価しています。最新の見た目は artifacts/dashboard-desktop.png と現行の dashboard/ が基準です。
+
+朝晩同じフル版、渋谷区の時間別天気、Hyperliquidの12銘柄と24時間チャート、米国経済指標、ニュース、Spotify、7つのアプリドックまで実装済みです。Disney+とSpotifyも追加済み。SmartTubeは見た目だけYouTubeです。
+
+今の配置・余白・クリアなガラスデザインを引き継ぎ、確定済みの事項は聞き直さないでください。古いmockupsやdocs/HANDOFF_HISTORY.mdは履歴で、最新仕様ではありません。
+
+Spotify実アカウント・Unsplash実キー・TV実機・APK・ホスティング公開は未接続／未実施です。残作業と検証範囲はHANDOFF.mdに記載しています。
+
+まず現状を読み取り、可能なら npm run dev で起動を確認したうえで、私の次の依頼に対応してください。引き継ぎだけを理由にUIの作り直しやTVのシステム変更を始めないでください。

@@ -1,0 +1,1714 @@
+{
+  "verifiedAt": "2026-10-18T19:06:22.823Z",
+  "sources": [
+    {
+      "source": "BLS",
+      "status": "snapshot",
+      "verifiedAt": "2026-10-18T19:06:22.823Z",
+      "coverageThrough": "2026-12-15T13:30:00.000Z",
+      "url": "https://www.bls.gov/schedule/news_release/bls.ics"
+    },
+    {
+      "source": "BEA",
+      "status": "snapshot",
+      "verifiedAt": "2026-10-18T19:06:22.823Z",
+      "coverageThrough": "2027-12-22T13:30:00.000Z",
+      "url": "https://www.bea.gov/news/schedule/ics/online-calendar-subscription.ics"
+    },
+    {
+      "source": "FRB",
+      "status": "snapshot",
+      "verifiedAt": "2026-10-18",
+      "coverageThrough": "2027-12-31",
+      "url": "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm"
+    }
+  ],
+  "events": [
+    {
+      "id": "BLS:JOLTS:1736262000000",
+      "indicator": "JOLTS",
+      "title": "求人件数",
+      "category": "雇用",
+      "timestamp": 1736262000000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Job Openings and Labor Turnover Survey"
+    },
+    {
+      "id": "BLS:NFP:1736515800000",
+      "indicator": "NFP",
+      "title": "雇用統計",
+      "category": "雇用・失業率",
+      "timestamp": 1736515800000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Employment Situation"
+    },
+    {
+      "id": "BLS:PPI:1736861400000",
+      "indicator": "PPI",
+      "title": "生産者物価指数",
+      "category": "インフレ",
+      "timestamp": 1736861400000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Producer Price Index"
+    },
+    {
+      "id": "BLS:CPI:1736947800000",
+      "indicator": "CPI",
+      "title": "消費者物価指数",
+      "category": "インフレ",
+      "timestamp": 1736947800000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Consumer Price Index"
+    },
+    {
+      "id": "BEA:PCE:1738330200000",
+      "indicator": "PCE",
+      "title": "PCE・個人所得",
+      "category": "個人消費・インフレ",
+      "timestamp": 1738330200000,
+      "source": "BEA",
+      "url": "https://www.bea.gov/news/schedule",
+      "originalTitle": "Personal Income and Outlays, December 2024"
+    },
+    {
+      "id": "BLS:JOLTS:1738681200000",
+      "indicator": "JOLTS",
+      "title": "求人件数",
+      "category": "雇用",
+      "timestamp": 1738681200000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Job Openings and Labor Turnover Survey"
+    },
+    {
+      "id": "BLS:NFP:1738935000000",
+      "indicator": "NFP",
+      "title": "雇用統計",
+      "category": "雇用・失業率",
+      "timestamp": 1738935000000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Employment Situation"
+    },
+    {
+      "id": "BLS:CPI:1739367000000",
+      "indicator": "CPI",
+      "title": "消費者物価指数",
+      "category": "インフレ",
+      "timestamp": 1739367000000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Consumer Price Index"
+    },
+    {
+      "id": "BLS:PPI:1739453400000",
+      "indicator": "PPI",
+      "title": "生産者物価指数",
+      "category": "インフレ",
+      "timestamp": 1739453400000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Producer Price Index"
+    },
+    {
+      "id": "BEA:PCE:1740749400000",
+      "indicator": "PCE",
+      "title": "PCE・個人所得",
+      "category": "個人消費・インフレ",
+      "timestamp": 1740749400000,
+      "source": "BEA",
+      "url": "https://www.bea.gov/news/schedule",
+      "originalTitle": "Personal Income and Outlays, January 2025"
+    },
+    {
+      "id": "BLS:NFP:1741354200000",
+      "indicator": "NFP",
+      "title": "雇用統計",
+      "category": "雇用・失業率",
+      "timestamp": 1741354200000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Employment Situation"
+    },
+    {
+      "id": "BLS:JOLTS:1741701600000",
+      "indicator": "JOLTS",
+      "title": "求人件数",
+      "category": "雇用",
+      "timestamp": 1741701600000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Job Openings and Labor Turnover Survey"
+    },
+    {
+      "id": "BLS:CPI:1741782600000",
+      "indicator": "CPI",
+      "title": "消費者物価指数",
+      "category": "インフレ",
+      "timestamp": 1741782600000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Consumer Price Index"
+    },
+    {
+      "id": "BLS:PPI:1741869000000",
+      "indicator": "PPI",
+      "title": "生産者物価指数",
+      "category": "インフレ",
+      "timestamp": 1741869000000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Producer Price Index"
+    },
+    {
+      "id": "BEA:PCE:1743165000000",
+      "indicator": "PCE",
+      "title": "PCE・個人所得",
+      "category": "個人消費・インフレ",
+      "timestamp": 1743165000000,
+      "source": "BEA",
+      "url": "https://www.bea.gov/news/schedule",
+      "originalTitle": "Personal Income and Outlays, February 2025"
+    },
+    {
+      "id": "BLS:JOLTS:1743516000000",
+      "indicator": "JOLTS",
+      "title": "求人件数",
+      "category": "雇用",
+      "timestamp": 1743516000000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Job Openings and Labor Turnover Survey"
+    },
+    {
+      "id": "BLS:NFP:1743769800000",
+      "indicator": "NFP",
+      "title": "雇用統計",
+      "category": "雇用・失業率",
+      "timestamp": 1743769800000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Employment Situation"
+    },
+    {
+      "id": "BLS:CPI:1744288200000",
+      "indicator": "CPI",
+      "title": "消費者物価指数",
+      "category": "インフレ",
+      "timestamp": 1744288200000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Consumer Price Index"
+    },
+    {
+      "id": "BLS:PPI:1744374600000",
+      "indicator": "PPI",
+      "title": "生産者物価指数",
+      "category": "インフレ",
+      "timestamp": 1744374600000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Producer Price Index"
+    },
+    {
+      "id": "BLS:JOLTS:1745935200000",
+      "indicator": "JOLTS",
+      "title": "求人件数",
+      "category": "雇用",
+      "timestamp": 1745935200000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Job Openings and Labor Turnover Survey"
+    },
+    {
+      "id": "BEA:PCE:1746021600000",
+      "indicator": "PCE",
+      "title": "PCE・個人所得",
+      "category": "個人消費・インフレ",
+      "timestamp": 1746021600000,
+      "source": "BEA",
+      "url": "https://www.bea.gov/news/schedule",
+      "originalTitle": "Personal Income and Outlays, March 2025"
+    },
+    {
+      "id": "BLS:NFP:1746189000000",
+      "indicator": "NFP",
+      "title": "雇用統計",
+      "category": "雇用・失業率",
+      "timestamp": 1746189000000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Employment Situation"
+    },
+    {
+      "id": "BLS:CPI:1747139400000",
+      "indicator": "CPI",
+      "title": "消費者物価指数",
+      "category": "インフレ",
+      "timestamp": 1747139400000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Consumer Price Index"
+    },
+    {
+      "id": "BLS:PPI:1747312200000",
+      "indicator": "PPI",
+      "title": "生産者物価指数",
+      "category": "インフレ",
+      "timestamp": 1747312200000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Producer Price Index"
+    },
+    {
+      "id": "BEA:PCE:1748608200000",
+      "indicator": "PCE",
+      "title": "PCE・個人所得",
+      "category": "個人消費・インフレ",
+      "timestamp": 1748608200000,
+      "source": "BEA",
+      "url": "https://www.bea.gov/news/schedule",
+      "originalTitle": "Personal Income and Outlays, April 2025"
+    },
+    {
+      "id": "BLS:JOLTS:1748959200000",
+      "indicator": "JOLTS",
+      "title": "求人件数",
+      "category": "雇用",
+      "timestamp": 1748959200000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Job Openings and Labor Turnover Survey"
+    },
+    {
+      "id": "BLS:NFP:1749213000000",
+      "indicator": "NFP",
+      "title": "雇用統計",
+      "category": "雇用・失業率",
+      "timestamp": 1749213000000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Employment Situation"
+    },
+    {
+      "id": "BLS:CPI:1749645000000",
+      "indicator": "CPI",
+      "title": "消費者物価指数",
+      "category": "インフレ",
+      "timestamp": 1749645000000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Consumer Price Index"
+    },
+    {
+      "id": "BLS:PPI:1749731400000",
+      "indicator": "PPI",
+      "title": "生産者物価指数",
+      "category": "インフレ",
+      "timestamp": 1749731400000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Producer Price Index"
+    },
+    {
+      "id": "BEA:PCE:1751027400000",
+      "indicator": "PCE",
+      "title": "PCE・個人所得",
+      "category": "個人消費・インフレ",
+      "timestamp": 1751027400000,
+      "source": "BEA",
+      "url": "https://www.bea.gov/news/schedule",
+      "originalTitle": "Personal Income and Outlays, May 2025"
+    },
+    {
+      "id": "BLS:JOLTS:1751378400000",
+      "indicator": "JOLTS",
+      "title": "求人件数",
+      "category": "雇用",
+      "timestamp": 1751378400000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Job Openings and Labor Turnover Survey"
+    },
+    {
+      "id": "BLS:NFP:1751545800000",
+      "indicator": "NFP",
+      "title": "雇用統計",
+      "category": "雇用・失業率",
+      "timestamp": 1751545800000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Employment Situation"
+    },
+    {
+      "id": "BLS:CPI:1752582600000",
+      "indicator": "CPI",
+      "title": "消費者物価指数",
+      "category": "インフレ",
+      "timestamp": 1752582600000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Consumer Price Index"
+    },
+    {
+      "id": "BLS:PPI:1752669000000",
+      "indicator": "PPI",
+      "title": "生産者物価指数",
+      "category": "インフレ",
+      "timestamp": 1752669000000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Producer Price Index"
+    },
+    {
+      "id": "BLS:JOLTS:1753797600000",
+      "indicator": "JOLTS",
+      "title": "求人件数",
+      "category": "雇用",
+      "timestamp": 1753797600000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Job Openings and Labor Turnover Survey"
+    },
+    {
+      "id": "BEA:PCE:1753965000000",
+      "indicator": "PCE",
+      "title": "PCE・個人所得",
+      "category": "個人消費・インフレ",
+      "timestamp": 1753965000000,
+      "source": "BEA",
+      "url": "https://www.bea.gov/news/schedule",
+      "originalTitle": "Personal Income and Outlays, June 2025"
+    },
+    {
+      "id": "BLS:NFP:1754051400000",
+      "indicator": "NFP",
+      "title": "雇用統計",
+      "category": "雇用・失業率",
+      "timestamp": 1754051400000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Employment Situation"
+    },
+    {
+      "id": "BLS:CPI:1755001800000",
+      "indicator": "CPI",
+      "title": "消費者物価指数",
+      "category": "インフレ",
+      "timestamp": 1755001800000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Consumer Price Index"
+    },
+    {
+      "id": "BLS:PPI:1755174600000",
+      "indicator": "PPI",
+      "title": "生産者物価指数",
+      "category": "インフレ",
+      "timestamp": 1755174600000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Producer Price Index"
+    },
+    {
+      "id": "BEA:PCE:1756470600000",
+      "indicator": "PCE",
+      "title": "PCE・個人所得",
+      "category": "個人消費・インフレ",
+      "timestamp": 1756470600000,
+      "source": "BEA",
+      "url": "https://www.bea.gov/news/schedule",
+      "originalTitle": "Personal Income and Outlays, July 2025"
+    },
+    {
+      "id": "BLS:JOLTS:1756908000000",
+      "indicator": "JOLTS",
+      "title": "求人件数",
+      "category": "雇用",
+      "timestamp": 1756908000000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Job Openings and Labor Turnover Survey"
+    },
+    {
+      "id": "BLS:NFP:1757075400000",
+      "indicator": "NFP",
+      "title": "雇用統計",
+      "category": "雇用・失業率",
+      "timestamp": 1757075400000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Employment Situation"
+    },
+    {
+      "id": "BLS:PPI:1757507400000",
+      "indicator": "PPI",
+      "title": "生産者物価指数",
+      "category": "インフレ",
+      "timestamp": 1757507400000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Producer Price Index"
+    },
+    {
+      "id": "BLS:CPI:1757593800000",
+      "indicator": "CPI",
+      "title": "消費者物価指数",
+      "category": "インフレ",
+      "timestamp": 1757593800000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Consumer Price Index"
+    },
+    {
+      "id": "BEA:PCE:1758889800000",
+      "indicator": "PCE",
+      "title": "PCE・個人所得",
+      "category": "個人消費・インフレ",
+      "timestamp": 1758889800000,
+      "source": "BEA",
+      "url": "https://www.bea.gov/news/schedule",
+      "originalTitle": "Personal Income and Outlays, August 2025"
+    },
+    {
+      "id": "BLS:JOLTS:1759240800000",
+      "indicator": "JOLTS",
+      "title": "求人件数",
+      "category": "雇用",
+      "timestamp": 1759240800000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Job Openings and Labor Turnover Survey"
+    },
+    {
+      "id": "BLS:CPI:1761309000000",
+      "indicator": "CPI",
+      "title": "消費者物価指数",
+      "category": "インフレ",
+      "timestamp": 1761309000000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Consumer Price Index"
+    },
+    {
+      "id": "BLS:NFP:1763645400000",
+      "indicator": "NFP",
+      "title": "雇用統計",
+      "category": "雇用・失業率",
+      "timestamp": 1763645400000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Employment Situation"
+    },
+    {
+      "id": "BLS:PPI:1764077400000",
+      "indicator": "PPI",
+      "title": "生産者物価指数",
+      "category": "インフレ",
+      "timestamp": 1764077400000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Producer Price Index"
+    },
+    {
+      "id": "BEA:PCE:1764946800000",
+      "indicator": "PCE",
+      "title": "PCE・個人所得",
+      "category": "個人消費・インフレ",
+      "timestamp": 1764946800000,
+      "source": "BEA",
+      "url": "https://www.bea.gov/news/schedule",
+      "originalTitle": "Personal Income and Outlays, September 2025"
+    },
+    {
+      "id": "BLS:JOLTS:1765292400000",
+      "indicator": "JOLTS",
+      "title": "求人件数",
+      "category": "雇用",
+      "timestamp": 1765292400000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Job Openings and Labor Turnover Survey"
+    },
+    {
+      "id": "BLS:NFP:1765891800000",
+      "indicator": "NFP",
+      "title": "雇用統計",
+      "category": "雇用・失業率",
+      "timestamp": 1765891800000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Employment Situation"
+    },
+    {
+      "id": "BLS:CPI:1766064600000",
+      "indicator": "CPI",
+      "title": "消費者物価指数",
+      "category": "インフレ",
+      "timestamp": 1766064600000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Consumer Price Index"
+    },
+    {
+      "id": "BLS:JOLTS:1767798000000",
+      "indicator": "JOLTS",
+      "title": "求人件数",
+      "category": "雇用",
+      "timestamp": 1767798000000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Job Openings and Labor Turnover Survey"
+    },
+    {
+      "id": "BLS:NFP:1767965400000",
+      "indicator": "NFP",
+      "title": "雇用統計",
+      "category": "雇用・失業率",
+      "timestamp": 1767965400000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Employment Situation"
+    },
+    {
+      "id": "BLS:CPI:1768311000000",
+      "indicator": "CPI",
+      "title": "消費者物価指数",
+      "category": "インフレ",
+      "timestamp": 1768311000000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Consumer Price Index"
+    },
+    {
+      "id": "BLS:PPI:1768397400000",
+      "indicator": "PPI",
+      "title": "生産者物価指数",
+      "category": "インフレ",
+      "timestamp": 1768397400000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Producer Price Index"
+    },
+    {
+      "id": "BEA:PCE:1769094000000",
+      "indicator": "PCE",
+      "title": "PCE・個人所得",
+      "category": "個人消費・インフレ",
+      "timestamp": 1769094000000,
+      "source": "BEA",
+      "url": "https://www.bea.gov/news/schedule",
+      "originalTitle": "Personal Income and Outlays, October and November 2025"
+    },
+    {
+      "id": "FRB:FOMC:2026-01-28",
+      "indicator": "FOMC",
+      "title": "FOMC 政策金利",
+      "category": "金融政策",
+      "timestamp": 1769626800000,
+      "source": "FRB",
+      "url": "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm",
+      "originalTitle": "FOMC policy decision",
+      "note": "通常の14:00 ETを予定時刻として表示"
+    },
+    {
+      "id": "BLS:PPI:1769779800000",
+      "indicator": "PPI",
+      "title": "生産者物価指数",
+      "category": "インフレ",
+      "timestamp": 1769779800000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Producer Price Index"
+    },
+    {
+      "id": "BLS:JOLTS:1770303600000",
+      "indicator": "JOLTS",
+      "title": "求人件数",
+      "category": "雇用",
+      "timestamp": 1770303600000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Job Openings and Labor Turnover Survey"
+    },
+    {
+      "id": "BLS:NFP:1770816600000",
+      "indicator": "NFP",
+      "title": "雇用統計",
+      "category": "雇用・失業率",
+      "timestamp": 1770816600000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Employment Situation"
+    },
+    {
+      "id": "BLS:CPI:1770989400000",
+      "indicator": "CPI",
+      "title": "消費者物価指数",
+      "category": "インフレ",
+      "timestamp": 1770989400000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Consumer Price Index"
+    },
+    {
+      "id": "BEA:GDP:1771594200000",
+      "indicator": "GDP",
+      "title": "GDP 速報値",
+      "category": "経済成長",
+      "timestamp": 1771594200000,
+      "source": "BEA",
+      "url": "https://www.bea.gov/news/schedule",
+      "originalTitle": "GDP (Advance Estimate), 4th Quarter and Year 2025"
+    },
+    {
+      "id": "BEA:PCE:1771594200000",
+      "indicator": "PCE",
+      "title": "PCE・個人所得",
+      "category": "個人消費・インフレ",
+      "timestamp": 1771594200000,
+      "source": "BEA",
+      "url": "https://www.bea.gov/news/schedule",
+      "originalTitle": "Personal Income and Outlays, December 2025"
+    },
+    {
+      "id": "BLS:PPI:1772199000000",
+      "indicator": "PPI",
+      "title": "生産者物価指数",
+      "category": "インフレ",
+      "timestamp": 1772199000000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Producer Price Index"
+    },
+    {
+      "id": "BLS:NFP:1772803800000",
+      "indicator": "NFP",
+      "title": "雇用統計",
+      "category": "雇用・失業率",
+      "timestamp": 1772803800000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Employment Situation"
+    },
+    {
+      "id": "BLS:CPI:1773232200000",
+      "indicator": "CPI",
+      "title": "消費者物価指数",
+      "category": "インフレ",
+      "timestamp": 1773232200000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Consumer Price Index"
+    },
+    {
+      "id": "BEA:GDP:1773405000000",
+      "indicator": "GDP",
+      "title": "GDP 改定値",
+      "category": "経済成長",
+      "timestamp": 1773405000000,
+      "source": "BEA",
+      "url": "https://www.bea.gov/news/schedule",
+      "originalTitle": "GDP (Second Estimate), 4th Quarter and Year 2025"
+    },
+    {
+      "id": "BEA:PCE:1773405000000",
+      "indicator": "PCE",
+      "title": "PCE・個人所得",
+      "category": "個人消費・インフレ",
+      "timestamp": 1773405000000,
+      "source": "BEA",
+      "url": "https://www.bea.gov/news/schedule",
+      "originalTitle": "Personal Income and Outlays, January 2026"
+    },
+    {
+      "id": "BLS:JOLTS:1773410400000",
+      "indicator": "JOLTS",
+      "title": "求人件数",
+      "category": "雇用",
+      "timestamp": 1773410400000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Job Openings and Labor Turnover Survey"
+    },
+    {
+      "id": "BLS:PPI:1773837000000",
+      "indicator": "PPI",
+      "title": "生産者物価指数",
+      "category": "インフレ",
+      "timestamp": 1773837000000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Producer Price Index"
+    },
+    {
+      "id": "FRB:FOMC:2026-03-18",
+      "indicator": "FOMC",
+      "title": "FOMC 政策金利",
+      "category": "金融政策",
+      "timestamp": 1773856800000,
+      "source": "FRB",
+      "url": "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm",
+      "originalTitle": "FOMC policy decision",
+      "note": "通常の14:00 ETを予定時刻として表示"
+    },
+    {
+      "id": "BLS:JOLTS:1774965600000",
+      "indicator": "JOLTS",
+      "title": "求人件数",
+      "category": "雇用",
+      "timestamp": 1774965600000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Job Openings and Labor Turnover Survey"
+    },
+    {
+      "id": "BLS:NFP:1775219400000",
+      "indicator": "NFP",
+      "title": "雇用統計",
+      "category": "雇用・失業率",
+      "timestamp": 1775219400000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Employment Situation"
+    },
+    {
+      "id": "BEA:GDP:1775737800000",
+      "indicator": "GDP",
+      "title": "GDP 確報値",
+      "category": "経済成長",
+      "timestamp": 1775737800000,
+      "source": "BEA",
+      "url": "https://www.bea.gov/news/schedule",
+      "originalTitle": "GDP (Third Estimate), Industries, Corporate Profits, State GDP, and State Personal Income, 4th Quarter and Year 2025"
+    },
+    {
+      "id": "BEA:PCE:1775737800000",
+      "indicator": "PCE",
+      "title": "PCE・個人所得",
+      "category": "個人消費・インフレ",
+      "timestamp": 1775737800000,
+      "source": "BEA",
+      "url": "https://www.bea.gov/news/schedule",
+      "originalTitle": "Personal Income and Outlays, February 2026"
+    },
+    {
+      "id": "BLS:CPI:1775824200000",
+      "indicator": "CPI",
+      "title": "消費者物価指数",
+      "category": "インフレ",
+      "timestamp": 1775824200000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Consumer Price Index"
+    },
+    {
+      "id": "BLS:PPI:1776169800000",
+      "indicator": "PPI",
+      "title": "生産者物価指数",
+      "category": "インフレ",
+      "timestamp": 1776169800000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Producer Price Index"
+    },
+    {
+      "id": "FRB:FOMC:2026-04-29",
+      "indicator": "FOMC",
+      "title": "FOMC 政策金利",
+      "category": "金融政策",
+      "timestamp": 1777485600000,
+      "source": "FRB",
+      "url": "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm",
+      "originalTitle": "FOMC policy decision",
+      "note": "通常の14:00 ETを予定時刻として表示"
+    },
+    {
+      "id": "BEA:GDP:1777552200000",
+      "indicator": "GDP",
+      "title": "GDP 速報値",
+      "category": "経済成長",
+      "timestamp": 1777552200000,
+      "source": "BEA",
+      "url": "https://www.bea.gov/news/schedule",
+      "originalTitle": "GDP (Advance Estimate), 1st Quarter 2026"
+    },
+    {
+      "id": "BEA:PCE:1777552200000",
+      "indicator": "PCE",
+      "title": "PCE・個人所得",
+      "category": "個人消費・インフレ",
+      "timestamp": 1777552200000,
+      "source": "BEA",
+      "url": "https://www.bea.gov/news/schedule",
+      "originalTitle": "Personal Income and Outlays, March 2026"
+    },
+    {
+      "id": "BLS:JOLTS:1777989600000",
+      "indicator": "JOLTS",
+      "title": "求人件数",
+      "category": "雇用",
+      "timestamp": 1777989600000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Job Openings and Labor Turnover Survey"
+    },
+    {
+      "id": "BLS:NFP:1778243400000",
+      "indicator": "NFP",
+      "title": "雇用統計",
+      "category": "雇用・失業率",
+      "timestamp": 1778243400000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Employment Situation"
+    },
+    {
+      "id": "BLS:CPI:1778589000000",
+      "indicator": "CPI",
+      "title": "消費者物価指数",
+      "category": "インフレ",
+      "timestamp": 1778589000000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Consumer Price Index"
+    },
+    {
+      "id": "BLS:PPI:1778675400000",
+      "indicator": "PPI",
+      "title": "生産者物価指数",
+      "category": "インフレ",
+      "timestamp": 1778675400000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Producer Price Index"
+    },
+    {
+      "id": "BEA:GDP:1779971400000",
+      "indicator": "GDP",
+      "title": "GDP 改定値",
+      "category": "経済成長",
+      "timestamp": 1779971400000,
+      "source": "BEA",
+      "url": "https://www.bea.gov/news/schedule",
+      "originalTitle": "GDP (Second Estimate) and Corporate Profits, 1st Quarter 2026"
+    },
+    {
+      "id": "BEA:PCE:1779971400000",
+      "indicator": "PCE",
+      "title": "PCE・個人所得",
+      "category": "個人消費・インフレ",
+      "timestamp": 1779971400000,
+      "source": "BEA",
+      "url": "https://www.bea.gov/news/schedule",
+      "originalTitle": "Personal Income and Outlays, April 2026"
+    },
+    {
+      "id": "BLS:JOLTS:1780408800000",
+      "indicator": "JOLTS",
+      "title": "求人件数",
+      "category": "雇用",
+      "timestamp": 1780408800000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Job Openings and Labor Turnover Survey"
+    },
+    {
+      "id": "BLS:NFP:1780662600000",
+      "indicator": "NFP",
+      "title": "雇用統計",
+      "category": "雇用・失業率",
+      "timestamp": 1780662600000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Employment Situation"
+    },
+    {
+      "id": "BLS:CPI:1781094600000",
+      "indicator": "CPI",
+      "title": "消費者物価指数",
+      "category": "インフレ",
+      "timestamp": 1781094600000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Consumer Price Index"
+    },
+    {
+      "id": "BLS:PPI:1781181000000",
+      "indicator": "PPI",
+      "title": "生産者物価指数",
+      "category": "インフレ",
+      "timestamp": 1781181000000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Producer Price Index"
+    },
+    {
+      "id": "FRB:FOMC:2026-06-17",
+      "indicator": "FOMC",
+      "title": "FOMC 政策金利",
+      "category": "金融政策",
+      "timestamp": 1781719200000,
+      "source": "FRB",
+      "url": "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm",
+      "originalTitle": "FOMC policy decision",
+      "note": "通常の14:00 ETを予定時刻として表示"
+    },
+    {
+      "id": "BEA:GDP:1782390600000",
+      "indicator": "GDP",
+      "title": "GDP 確報値",
+      "category": "経済成長",
+      "timestamp": 1782390600000,
+      "source": "BEA",
+      "url": "https://www.bea.gov/news/schedule",
+      "originalTitle": "GDP (Third Estimate), Industries, Corporate Profits, State GDP, and State Personal Income, 1st Quarter 2026"
+    },
+    {
+      "id": "BEA:PCE:1782390600000",
+      "indicator": "PCE",
+      "title": "PCE・個人所得",
+      "category": "個人消費・インフレ",
+      "timestamp": 1782390600000,
+      "source": "BEA",
+      "url": "https://www.bea.gov/news/schedule",
+      "originalTitle": "Personal Income and Outlays, May 2026"
+    },
+    {
+      "id": "BLS:JOLTS:1782828000000",
+      "indicator": "JOLTS",
+      "title": "求人件数",
+      "category": "雇用",
+      "timestamp": 1782828000000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Job Openings and Labor Turnover Survey"
+    },
+    {
+      "id": "BLS:NFP:1782995400000",
+      "indicator": "NFP",
+      "title": "雇用統計",
+      "category": "雇用・失業率",
+      "timestamp": 1782995400000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Employment Situation"
+    },
+    {
+      "id": "BLS:CPI:1784032200000",
+      "indicator": "CPI",
+      "title": "消費者物価指数",
+      "category": "インフレ",
+      "timestamp": 1784032200000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Consumer Price Index"
+    },
+    {
+      "id": "BLS:PPI:1784118600000",
+      "indicator": "PPI",
+      "title": "生産者物価指数",
+      "category": "インフレ",
+      "timestamp": 1784118600000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Producer Price Index"
+    },
+    {
+      "id": "FRB:FOMC:2026-07-29",
+      "indicator": "FOMC",
+      "title": "FOMC 政策金利",
+      "category": "金融政策",
+      "timestamp": 1785348000000,
+      "source": "FRB",
+      "url": "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm",
+      "originalTitle": "FOMC policy decision",
+      "note": "通常の14:00 ETを予定時刻として表示"
+    },
+    {
+      "id": "BEA:GDP:1785414600000",
+      "indicator": "GDP",
+      "title": "GDP 速報値",
+      "category": "経済成長",
+      "timestamp": 1785414600000,
+      "source": "BEA",
+      "url": "https://www.bea.gov/news/schedule",
+      "originalTitle": "GDP (Advance Estimate), 2nd Quarter 2026"
+    },
+    {
+      "id": "BEA:PCE:1785414600000",
+      "indicator": "PCE",
+      "title": "PCE・個人所得",
+      "category": "個人消費・インフレ",
+      "timestamp": 1785414600000,
+      "source": "BEA",
+      "url": "https://www.bea.gov/news/schedule",
+      "originalTitle": "Personal Income and Outlays, June 2026"
+    },
+    {
+      "id": "BLS:JOLTS:1785852000000",
+      "indicator": "JOLTS",
+      "title": "求人件数",
+      "category": "雇用",
+      "timestamp": 1785852000000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Job Openings and Labor Turnover Survey"
+    },
+    {
+      "id": "BLS:NFP:1786105800000",
+      "indicator": "NFP",
+      "title": "雇用統計",
+      "category": "雇用・失業率",
+      "timestamp": 1786105800000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Employment Situation"
+    },
+    {
+      "id": "BLS:CPI:1786537800000",
+      "indicator": "CPI",
+      "title": "消費者物価指数",
+      "category": "インフレ",
+      "timestamp": 1786537800000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Consumer Price Index"
+    },
+    {
+      "id": "BLS:PPI:1786624200000",
+      "indicator": "PPI",
+      "title": "生産者物価指数",
+      "category": "インフレ",
+      "timestamp": 1786624200000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Producer Price Index"
+    },
+    {
+      "id": "BEA:GDP:1787747400000",
+      "indicator": "GDP",
+      "title": "GDP 改定値",
+      "category": "経済成長",
+      "timestamp": 1787747400000,
+      "source": "BEA",
+      "url": "https://www.bea.gov/news/schedule",
+      "originalTitle": "GDP (Second Estimate) and Corporate Profits, 2nd Quarter 2026"
+    },
+    {
+      "id": "BEA:PCE:1787747400000",
+      "indicator": "PCE",
+      "title": "PCE・個人所得",
+      "category": "個人消費・インフレ",
+      "timestamp": 1787747400000,
+      "source": "BEA",
+      "url": "https://www.bea.gov/news/schedule",
+      "originalTitle": "Personal Income and Outlays, July 2026 "
+    },
+    {
+      "id": "BLS:JOLTS:1788271200000",
+      "indicator": "JOLTS",
+      "title": "求人件数",
+      "category": "雇用",
+      "timestamp": 1788271200000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Job Openings and Labor Turnover Survey"
+    },
+    {
+      "id": "BLS:NFP:1788525000000",
+      "indicator": "NFP",
+      "title": "雇用統計",
+      "category": "雇用・失業率",
+      "timestamp": 1788525000000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Employment Situation"
+    },
+    {
+      "id": "BLS:PPI:1789043400000",
+      "indicator": "PPI",
+      "title": "生産者物価指数",
+      "category": "インフレ",
+      "timestamp": 1789043400000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Producer Price Index"
+    },
+    {
+      "id": "BLS:CPI:1789129800000",
+      "indicator": "CPI",
+      "title": "消費者物価指数",
+      "category": "インフレ",
+      "timestamp": 1789129800000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Consumer Price Index"
+    },
+    {
+      "id": "FRB:FOMC:2026-09-16",
+      "indicator": "FOMC",
+      "title": "FOMC 政策金利",
+      "category": "金融政策",
+      "timestamp": 1789581600000,
+      "source": "FRB",
+      "url": "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm",
+      "originalTitle": "FOMC policy decision",
+      "note": "通常の14:00 ETを予定時刻として表示"
+    },
+    {
+      "id": "BLS:JOLTS:1790690400000",
+      "indicator": "JOLTS",
+      "title": "求人件数",
+      "category": "雇用",
+      "timestamp": 1790690400000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Job Openings and Labor Turnover Survey"
+    },
+    {
+      "id": "BEA:GDP:1790771400000",
+      "indicator": "GDP",
+      "title": "GDP 確報値",
+      "category": "経済成長",
+      "timestamp": 1790771400000,
+      "source": "BEA",
+      "url": "https://www.bea.gov/news/schedule",
+      "originalTitle": "GDP (Third Estimate), Industries, Corporate Profits, State GDP, and State Personal Income, 2nd Quarter 2026; State PCE, 2025"
+    },
+    {
+      "id": "BEA:PCE:1790771400000",
+      "indicator": "PCE",
+      "title": "PCE・個人所得",
+      "category": "個人消費・インフレ",
+      "timestamp": 1790771400000,
+      "source": "BEA",
+      "url": "https://www.bea.gov/news/schedule",
+      "originalTitle": "Personal Income and Outlays, August 2026"
+    },
+    {
+      "id": "BLS:NFP:1790944200000",
+      "indicator": "NFP",
+      "title": "雇用統計",
+      "category": "雇用・失業率",
+      "timestamp": 1790944200000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Employment Situation"
+    },
+    {
+      "id": "BLS:CPI:1791981000000",
+      "indicator": "CPI",
+      "title": "消費者物価指数",
+      "category": "インフレ",
+      "timestamp": 1791981000000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Consumer Price Index"
+    },
+    {
+      "id": "BLS:PPI:1792067400000",
+      "indicator": "PPI",
+      "title": "生産者物価指数",
+      "category": "インフレ",
+      "timestamp": 1792067400000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Producer Price Index"
+    },
+    {
+      "id": "FRB:FOMC:2026-10-28",
+      "indicator": "FOMC",
+      "title": "FOMC 政策金利",
+      "category": "金融政策",
+      "timestamp": 1793210400000,
+      "source": "FRB",
+      "url": "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm",
+      "originalTitle": "FOMC policy decision",
+      "note": "通常の14:00 ETを予定時刻として表示"
+    },
+    {
+      "id": "BEA:GDP:1793277000000",
+      "indicator": "GDP",
+      "title": "GDP 速報値",
+      "category": "経済成長",
+      "timestamp": 1793277000000,
+      "source": "BEA",
+      "url": "https://www.bea.gov/news/schedule",
+      "originalTitle": "GDP (Advance Estimate), 3rd Quarter 2026"
+    },
+    {
+      "id": "BEA:PCE:1793277000000",
+      "indicator": "PCE",
+      "title": "PCE・個人所得",
+      "category": "個人消費・インフレ",
+      "timestamp": 1793277000000,
+      "source": "BEA",
+      "url": "https://www.bea.gov/news/schedule",
+      "originalTitle": "Personal Income and Outlays, September 2026"
+    },
+    {
+      "id": "BLS:JOLTS:1793718000000",
+      "indicator": "JOLTS",
+      "title": "求人件数",
+      "category": "雇用",
+      "timestamp": 1793718000000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Job Openings and Labor Turnover Survey"
+    },
+    {
+      "id": "BLS:NFP:1793971800000",
+      "indicator": "NFP",
+      "title": "雇用統計",
+      "category": "雇用・失業率",
+      "timestamp": 1793971800000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Employment Situation"
+    },
+    {
+      "id": "BLS:CPI:1794317400000",
+      "indicator": "CPI",
+      "title": "消費者物価指数",
+      "category": "インフレ",
+      "timestamp": 1794317400000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Consumer Price Index"
+    },
+    {
+      "id": "BLS:PPI:1794576600000",
+      "indicator": "PPI",
+      "title": "生産者物価指数",
+      "category": "インフレ",
+      "timestamp": 1794576600000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Producer Price Index"
+    },
+    {
+      "id": "BEA:GDP:1795613400000",
+      "indicator": "GDP",
+      "title": "GDP 改定値",
+      "category": "経済成長",
+      "timestamp": 1795613400000,
+      "source": "BEA",
+      "url": "https://www.bea.gov/news/schedule",
+      "originalTitle": "GDP (Second Estimate) and Corporate Profits, 3rd Quarter 2026"
+    },
+    {
+      "id": "BEA:PCE:1795613400000",
+      "indicator": "PCE",
+      "title": "PCE・個人所得",
+      "category": "個人消費・インフレ",
+      "timestamp": 1795613400000,
+      "source": "BEA",
+      "url": "https://www.bea.gov/news/schedule",
+      "originalTitle": "Personal Income and Outlays, October 2026"
+    },
+    {
+      "id": "BLS:JOLTS:1796137200000",
+      "indicator": "JOLTS",
+      "title": "求人件数",
+      "category": "雇用",
+      "timestamp": 1796137200000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Job Openings and Labor Turnover Survey"
+    },
+    {
+      "id": "BLS:NFP:1796391000000",
+      "indicator": "NFP",
+      "title": "雇用統計",
+      "category": "雇用・失業率",
+      "timestamp": 1796391000000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Employment Situation"
+    },
+    {
+      "id": "FRB:FOMC:2026-12-09",
+      "indicator": "FOMC",
+      "title": "FOMC 政策金利",
+      "category": "金融政策",
+      "timestamp": 1796842800000,
+      "source": "FRB",
+      "url": "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm",
+      "originalTitle": "FOMC policy decision",
+      "note": "通常の14:00 ETを予定時刻として表示"
+    },
+    {
+      "id": "BLS:CPI:1796909400000",
+      "indicator": "CPI",
+      "title": "消費者物価指数",
+      "category": "インフレ",
+      "timestamp": 1796909400000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Consumer Price Index"
+    },
+    {
+      "id": "BLS:PPI:1797341400000",
+      "indicator": "PPI",
+      "title": "生産者物価指数",
+      "category": "インフレ",
+      "timestamp": 1797341400000,
+      "source": "BLS",
+      "url": "https://www.bls.gov/schedule/",
+      "originalTitle": "Producer Price Index"
+    },
+    {
+      "id": "BEA:GDP:1798032600000",
+      "indicator": "GDP",
+      "title": "GDP 確報値",
+      "category": "経済成長",
+      "timestamp": 1798032600000,
+      "source": "BEA",
+      "url": "https://www.bea.gov/news/schedule",
+      "originalTitle": "GDP (Third Estimate), Industries, Corporate Profits, State GDP, and State Personal Income, 3rd Quarter 2026"
+    },
+    {
+      "id": "BEA:PCE:1798032600000",
+      "indicator": "PCE",
+      "title": "PCE・個人所得",
+      "category": "個人消費・インフレ",
+      "timestamp": 1798032600000,
+      "source": "BEA",
+      "url": "https://www.bea.gov/news/schedule",
+      "originalTitle": "Personal Income and Outlays, November 2026"
+    },
+    {
+      "id": "FRB:FOMC:2027-01-27",
+      "indicator": "FOMC",
+      "title": "FOMC 政策金利",
+      "category": "金融政策",
+      "timestamp": 1801076400000,
+      "source": "FRB",
+      "url": "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm",
+      "originalTitle": "FOMC policy decision",
+      "note": "通常の14:00 ETを予定時刻として表示"
+    },
+    {
+      "id": "BEA:GDP:1801143000000",
+      "indicator": "GDP",
+      "title": "GDP 速報値",
+      "category": "経済成長",
+      "timestamp": 1801143000000,
+      "source": "BEA",
+      "url": "https://www.bea.gov/news/schedule",
+      "originalTitle": "GDP (Advance Estimate), 4th Quarter and Year 2026"
+    },
+    {
+      "id": "BEA:PCE:1801143000000",
+      "indicator": "PCE",
+      "title": "PCE・個人所得",
+      "category": "個人消費・インフレ",
+      "timestamp": 1801143000000,
+      "source": "BEA",
+      "url": "https://www.bea.gov/news/schedule",
+      "originalTitle": "Personal Income and Outlays, December 2026"
+    },
+    {
+      "id": "BEA:GDP:1803562200000",
+      "indicator": "GDP",
+      "title": "GDP 改定値",
+      "category": "経済成長",
+      "timestamp": 1803562200000,
+      "source": "BEA",
+      "url": "https://www.bea.gov/news/schedule",
+      "originalTitle": "GDP (Second Estimate), 4th Quarter and Year 2026"
+    },
+    {
+      "id": "BEA:PCE:1803562200000",
+      "indicator": "PCE",
+      "title": "PCE・個人所得",
+      "category": "個人消費・インフレ",
+      "timestamp": 1803562200000,
+      "source": "BEA",
+      "url": "https://www.bea.gov/news/schedule",
+      "originalTitle": "Personal Income and Outlays, January 2027"
+    },
+    {
+      "id": "FRB:FOMC:2027-03-17",
+      "indicator": "FOMC",
+      "title": "FOMC 政策金利",
+      "category": "金融政策",
+      "timestamp": 1805306400000,
+      "source": "FRB",
+      "url": "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm",
+      "originalTitle": "FOMC policy decision",
+      "note": "通常の14:00 ETを予定時刻として表示"
+    },
+    {
+      "id": "BEA:GDP:1806496200000",
+      "indicator": "GDP",
+      "title": "GDP 確報値",
+      "category": "経済成長",
+      "timestamp": 1806496200000,
+      "source": "BEA",
+      "url": "https://www.bea.gov/news/schedule",
+      "originalTitle": "GDP (Third Estimate), Industries, Corporate Profits, State GDP, and State Personal Income, 4th Quarter and Year 2026"
+    },
+    {
+      "id": "BEA:PCE:1806496200000",
+      "indicator": "PCE",
+      "title": "PCE・個人所得",
+      "category": "個人消費・インフレ",
+      "timestamp": 1806496200000,
+      "source": "BEA",
+      "url": "https://www.bea.gov/news/schedule",
+      "originalTitle": "Personal Income and Outlays, February 2027"
+    },
+    {
+      "id": "FRB:FOMC:2027-04-28",
+      "indicator": "FOMC",
+      "title": "FOMC 政策金利",
+      "category": "金融政策",
+      "timestamp": 1808935200000,
+      "source": "FRB",
+      "url": "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm",
+      "originalTitle": "FOMC policy decision",
+      "note": "通常の14:00 ETを予定時刻として表示"
+    },
+    {
+      "id": "BEA:GDP:1809001800000",
+      "indicator": "GDP",
+      "title": "GDP 速報値",
+      "category": "経済成長",
+      "timestamp": 1809001800000,
+      "source": "BEA",
+      "url": "https://www.bea.gov/news/schedule",
+      "originalTitle": "GDP (Advance Estimate), 1st Quarter 2027"
+    },
+    {
+      "id": "BEA:PCE:1809001800000",
+      "indicator": "PCE",
+      "title": "PCE・個人所得",
+      "category": "個人消費・インフレ",
+      "timestamp": 1809001800000,
+      "source": "BEA",
+      "url": "https://www.bea.gov/news/schedule",
+      "originalTitle": "Personal Income and Outlays, March 2027"
+    },
+    {
+      "id": "BEA:GDP:1811421000000",
+      "indicator": "GDP",
+      "title": "GDP 改定値",
+      "category": "経済成長",
+      "timestamp": 1811421000000,
+      "source": "BEA",
+      "url": "https://www.bea.gov/news/schedule",
+      "originalTitle": "GDP (Second Estimate) and Corporate Profits, 1st Quarter 2027"
+    },
+    {
+      "id": "BEA:PCE:1811421000000",
+      "indicator": "PCE",
+      "title": "PCE・個人所得",
+      "category": "個人消費・インフレ",
+      "timestamp": 1811421000000,
+      "source": "BEA",
+      "url": "https://www.bea.gov/news/schedule",
+      "originalTitle": "Personal Income and Outlays, April 2027"
+    },
+    {
+      "id": "FRB:FOMC:2027-06-09",
+      "indicator": "FOMC",
+      "title": "FOMC 政策金利",
+      "category": "金融政策",
+      "timestamp": 1812564000000,
+      "source": "FRB",
+      "url": "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm",
+      "originalTitle": "FOMC policy decision",
+      "note": "通常の14:00 ETを予定時刻として表示"
+    },
+    {
+      "id": "BEA:GDP:1813926600000",
+      "indicator": "GDP",
+      "title": "GDP 確報値",
+      "category": "経済成長",
+      "timestamp": 1813926600000,
+      "source": "BEA",
+      "url": "https://www.bea.gov/news/schedule",
+      "originalTitle": "GDP (Third Estimate), Industries, Corporate Profits, State GDP, and State Personal Income, 1st Quarter 2027"
+    },
+    {
+      "id": "BEA:PCE:1813926600000",
+      "indicator": "PCE",
+      "title": "PCE・個人所得",
+      "category": "個人消費・インフレ",
+      "timestamp": 1813926600000,
+      "source": "BEA",
+      "url": "https://www.bea.gov/news/schedule",
+      "originalTitle": "Personal Income and Outlays, May 2027"
+    },
+    {
+      "id": "FRB:FOMC:2027-07-28",
+      "indicator": "FOMC",
+      "title": "FOMC 政策金利",
+      "category": "金融政策",
+      "timestamp": 1816797600000,
+      "source": "FRB",
+      "url": "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm",
+      "originalTitle": "FOMC policy decision",
+      "note": "通常の14:00 ETを予定時刻として表示"
+    },
+    {
+      "id": "BEA:GDP:1816864200000",
+      "indicator": "GDP",
+      "title": "GDP 速報値",
+      "category": "経済成長",
+      "timestamp": 1816864200000,
+      "source": "BEA",
+      "url": "https://www.bea.gov/news/schedule",
+      "originalTitle": "GDP (Advance Estimate), 2nd Quarter 2027"
+    },
+    {
+      "id": "BEA:PCE:1816864200000",
+      "indicator": "PCE",
+      "title": "PCE・個人所得",
+      "category": "個人消費・インフレ",
+      "timestamp": 1816864200000,
+      "source": "BEA",
+      "url": "https://www.bea.gov/news/schedule",
+      "originalTitle": "Personal Income and Outlays, June 2027"
+    },
+    {
+      "id": "BEA:GDP:1819197000000",
+      "indicator": "GDP",
+      "title": "GDP 改定値",
+      "category": "経済成長",
+      "timestamp": 1819197000000,
+      "source": "BEA",
+      "url": "https://www.bea.gov/news/schedule",
+      "originalTitle": "GDP (Second Estimate) and Corporate Profits, 2nd Quarter 2027"
+    },
+    {
+      "id": "BEA:PCE:1819197000000",
+      "indicator": "PCE",
+      "title": "PCE・個人所得",
+      "category": "個人消費・インフレ",
+      "timestamp": 1819197000000,
+      "source": "BEA",
+      "url": "https://www.bea.gov/news/schedule",
+      "originalTitle": "Personal Income and Outlays, July 2027"
+    },
+    {
+      "id": "FRB:FOMC:2027-09-15",
+      "indicator": "FOMC",
+      "title": "FOMC 政策金利",
+      "category": "金融政策",
+      "timestamp": 1821031200000,
+      "source": "FRB",
+      "url": "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm",
+      "originalTitle": "FOMC policy decision",
+      "note": "通常の14:00 ETを予定時刻として表示"
+    },
+    {
+      "id": "BEA:GDP:1822307400000",
+      "indicator": "GDP",
+      "title": "GDP 確報値",
+      "category": "経済成長",
+      "timestamp": 1822307400000,
+      "source": "BEA",
+      "url": "https://www.bea.gov/news/schedule",
+      "originalTitle": "GDP (Third Estimate), Industries, Corporate Profits, State GDP, and State Personal Income, 2nd Quarter 2027; State Consumer Spending, 2026"
+    },
+    {
+      "id": "BEA:PCE:1822307400000",
+      "indicator": "PCE",
+      "title": "PCE・個人所得",
+      "category": "個人消費・インフレ",
+      "timestamp": 1822307400000,
+      "source": "BEA",
+      "url": "https://www.bea.gov/news/schedule",
+      "originalTitle": "Personal Income and Outlays, August 2027"
+    },
+    {
+      "id": "FRB:FOMC:2027-10-27",
+      "indicator": "FOMC",
+      "title": "FOMC 政策金利",
+      "category": "金融政策",
+      "timestamp": 1824660000000,
+      "source": "FRB",
+      "url": "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm",
+      "originalTitle": "FOMC policy decision",
+      "note": "通常の14:00 ETを予定時刻として表示"
+    },
+    {
+      "id": "BEA:GDP:1824726600000",
+      "indicator": "GDP",
+      "title": "GDP 速報値",
+      "category": "経済成長",
+      "timestamp": 1824726600000,
+      "source": "BEA",
+      "url": "https://www.bea.gov/news/schedule",
+      "originalTitle": "GDP (Advance Estimate), 3rd Quarter 2027"
+    },
+    {
+      "id": "BEA:PCE:1824726600000",
+      "indicator": "PCE",
+      "title": "PCE・個人所得",
+      "category": "個人消費・インフレ",
+      "timestamp": 1824726600000,
+      "source": "BEA",
+      "url": "https://www.bea.gov/news/schedule",
+      "originalTitle": "Personal Income and Outlays, September 2027"
+    },
+    {
+      "id": "BEA:GDP:1827063000000",
+      "indicator": "GDP",
+      "title": "GDP 改定値",
+      "category": "経済成長",
+      "timestamp": 1827063000000,
+      "source": "BEA",
+      "url": "https://www.bea.gov/news/schedule",
+      "originalTitle": "GDP (Second Estimate) and Corporate Profits, 3rd Quarter 2027"
+    },
+    {
+      "id": "BEA:PCE:1827063000000",
+      "indicator": "PCE",
+      "title": "PCE・個人所得",
+      "category": "個人消費・インフレ",
+      "timestamp": 1827063000000,
+      "source": "BEA",
+      "url": "https://www.bea.gov/news/schedule",
+      "originalTitle": "Personal Income and Outlays, October 2027"
+    },
+    {
+      "id": "FRB:FOMC:2027-12-08",
+      "indicator": "FOMC",
+      "title": "FOMC 政策金利",
+      "category": "金融政策",
+      "timestamp": 1828292400000,
+      "source": "FRB",
+      "url": "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm",
+      "originalTitle": "FOMC policy decision",
+      "note": "通常の14:00 ETを予定時刻として表示"
+    },
+    {
+      "id": "BEA:GDP:1829482200000",
+      "indicator": "GDP",
+      "title": "GDP 確報値",
+      "category": "経済成長",
+      "timestamp": 1829482200000,
+      "source": "BEA",
+      "url": "https://www.bea.gov/news/schedule",
+      "originalTitle": "GDP (Third Estimate), Industries, Corporate Profits, State GDP, and State Personal Income, 3rd Quarter 2027"
+    },
+    {
+      "id": "BEA:PCE:1829482200000",
+      "indicator": "PCE",
+      "title": "PCE・個人所得",
+      "category": "個人消費・インフレ",
+      "timestamp": 1829482200000,
+      "source": "BEA",
+      "url": "https://www.bea.gov/news/schedule",
+      "originalTitle": "Personal Income and Outlays, November 2027"
+    }
+  ]
+}

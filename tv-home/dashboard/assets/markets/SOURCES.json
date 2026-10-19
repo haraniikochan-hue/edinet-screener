@@ -1,0 +1,46 @@
+{
+  "checkedAt": "2026-10-18T18:53:30.135463+00:00",
+  "usage": "Market identification; names and marks belong to their respective owners. Bond icons are original generic illustrations.",
+  "assets": [
+    {
+      "asset": "dashboard/assets/markets/BTC.svg",
+      "source": "https://app.hyperliquid.xyz/coins/BTC.svg"
+    },
+    {
+      "asset": "dashboard/assets/markets/HYPE.svg",
+      "source": "https://app.hyperliquid.xyz/coins/HYPE.svg"
+    },
+    {
+      "asset": "dashboard/assets/markets/xyz-SP500.svg",
+      "source": "https://app.hyperliquid.xyz/coins/xyz:SP500.svg"
+    },
+    {
+      "asset": "dashboard/assets/markets/xyz-XYZ100.svg",
+      "source": "https://app.hyperliquid.xyz/coins/xyz:XYZ100.svg"
+    },
+    {
+      "asset": "dashboard/assets/markets/xyz-JP225.svg",
+      "source": "https://app.hyperliquid.xyz/coins/xyz:JP225.svg"
+    },
+    {
+      "asset": "dashboard/assets/markets/xyz-JPY.svg",
+      "source": "https://app.hyperliquid.xyz/coins/xyz:JPY.svg"
+    },
+    {
+      "asset": "dashboard/assets/markets/xyz-GOLD.svg",
+      "source": "https://app.hyperliquid.xyz/coins/xyz:GOLD.svg"
+    },
+    {
+      "asset": "dashboard/assets/markets/xyz-CL.svg",
+      "source": "https://app.hyperliquid.xyz/coins/xyz:CL.svg"
+    },
+    {
+      "asset": "dashboard/assets/markets/xyz-DRAM.svg",
+      "source": "https://app.hyperliquid.xyz/coins/xyz:DRAM.svg"
+    },
+    {
+      "asset": "dashboard/assets/markets/xyz-SOXL.svg",
+      "source": "https://app.hyperliquid.xyz/coins/xyz:SOXL.svg"
+    }
+  ]
+}

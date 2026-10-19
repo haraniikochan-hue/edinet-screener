@@ -1,0 +1,186 @@
+:root {
+  color-scheme: dark;
+  --text: #fafcff;
+  --secondary: #dde7ee;
+  --muted: #b7c7d3;
+  --accent: #ceeaff;
+  --up: #77e6b9;
+  --down: #ff92a5;
+  --border: #e8f5ff1c;
+  --card: rgba(14,25,39,.14);
+  --app-size: 72px;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: #091321; color: var(--text); font: 500 16px -apple-system,BlinkMacSystemFont,'Zen Kaku Gothic New',sans-serif; -webkit-font-smoothing: antialiased; }
+button,input,select { font: inherit; }
+button { border: 0; cursor: pointer; color: inherit; }
+a { color: inherit; text-decoration: none; }
+a:hover { color: var(--accent); }
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible { outline: 3px solid #fff; outline-offset: 5px; border-radius: 10px; }
+button:disabled { cursor: default; opacity: .3; }
+h2,p { margin: 0; }
+h2 { font-size: 20px; font-weight: 700; letter-spacing: .3px; }
+[hidden] { display: none!important; }
+.number,time,.wordmark,.eyebrow,.stock-symbol,.feed-pill { font-family: 'Outfit','Zen Kaku Gothic New',sans-serif; font-variant-numeric: tabular-nums; }
+.secondary { color: var(--secondary); font-size: 16px; }
+.subtle,.tiny { color: var(--muted); font-size: 13px; }
+.up { color: var(--up); }.down { color: var(--down); }.neutral { color: var(--secondary); }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+.background,.shade { position: fixed; inset: 0; pointer-events: none; }
+.background { overflow: hidden; background: #132439; }
+.photo-layer { position: absolute; inset: -2%; background-size: cover; background-position: 50% 48%; opacity: 0; transition: opacity 2s ease; transform: scale(1.015); filter: saturate(.9) brightness(1.08); }
+.photo-layer.is-active { opacity: 1; }.motion .photo-layer.is-active { animation: drift 65s linear both; }
+.shade { background: linear-gradient(180deg,#060e214d,transparent 48%,#070e2099),linear-gradient(90deg,#07152b59,transparent 44%); }
+.tv { overflow: hidden; }.tv #stage { position: absolute; width: 1920px; height: 1080px; transform-origin: top left; }
+#stage { position: relative; min-height: 100vh; padding: 48px 216px 36px; display: grid; grid-template-rows: 28px minmax(0,1fr) 84px 16px; gap: 28px; }
+.masthead,.utility,.wordmark { display: flex; align-items: center; }.masthead { justify-content: space-between; }
+.wordmark { gap: 12px; font-size: 17px; font-weight: 500; letter-spacing: 2.7px; }.wordmark i { width: 8px; height: 8px; border-radius: 50%; background: #ecf6ff; box-shadow: 0 0 16px #d7ebff7a; }
+.wordmark>span:last-child { color: var(--secondary); font-size: 13px; letter-spacing: 1.5px; }.divider { color: #b0c1ce; padding: 0 5px; }
+.utility { gap: 25px; }#connection-status { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+#connection-status::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: var(--up); }#connection-status[data-state=waiting]::before { background: #f5d3a1; }
+.quiet-button { display: flex; align-items: center; gap: 8px; background: transparent; color: var(--secondary); font-size: 20px; padding: 5px 2px; }.quiet-button span { font-size: 13px; }
+.eyebrow { display: block; color: var(--muted); font-size: 10px; font-weight: 400; letter-spacing: 2px; }
+.overview { grid-area: overview; display: flex; flex-direction: column; justify-content: space-between; align-items: flex-start; min-width: 0; text-shadow: 0 2px 20px #0005; }
+.local-time { flex-shrink: 0; }.local-time .eyebrow { color: var(--secondary); font-size: 12px; letter-spacing: 3px; }.city-divider { padding: 0 9px; color: #b8dcf6; }
+.clock-line { display: flex; gap: 25px; align-items: flex-end; height: 124px; }.clock-line time { font-size: 138px; font-weight: 200; line-height: .93; letter-spacing: -5px; text-shadow: 0 5px 30px #0002; }
+.date { display: flex; flex-direction: column; gap: 5px; font-size: 24px; padding-bottom: 8px; white-space: nowrap; }.date span:last-child { font-size: 16px; color: var(--secondary); }
+.card { min-width: 0; border: 1px solid #e5f3ff26; background: linear-gradient(130deg,#ffffff0d,transparent 48%,#bdeaff03),var(--card); border-radius: 30px; box-shadow: inset 0 1px 0 #ffffff1c,inset 0 -1px 0 #ffffff05,0 8px 30px #00000016; -webkit-backdrop-filter: blur(20px) saturate(125%); backdrop-filter: blur(20px) saturate(125%); }
+.card-heading { display: flex; flex-shrink: 0; align-items: center; justify-content: space-between; gap: 12px; }.card-heading>* { min-width: 0; }
+.weather-section { grid-area: weather; width: 100%; padding: 18px 22px 16px; }
+.weather-line { display: flex; align-items: center; gap: 16px; font-size: 18px; line-height: 1.4; }.weather-icon { flex-shrink: 0; display: grid; place-items: center; width: 34px; height: 40px; }.weather-line>.number { font-size: 42px; line-height: 1.1; font-weight: 300; }.weather-separator { opacity: .5; padding: 0 3px; }.weather-line .secondary { font-size: 12px; color: var(--muted); }
+.weather-glyph { width: 100%; height: 100%; fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.glyph-sun { fill: #ffdb8a; stroke: #ffe2a1; }.glyph-rays { stroke: #ffdb8a; }.glyph-moon { fill: #d6e8ff; stroke: #e7f3ff; }.glyph-cloud { fill: #e3edfa; stroke: #f6faff; }.glyph-rain { stroke: #88cdff; stroke-width: 2; }.glyph-snow { fill: #bcdeff; }.glyph-lightning { fill: #ffdc8a; stroke: #ffdc8a; stroke-width: .5; }.glyph-fog { stroke: #c8d6e8; stroke-width: 1.8; }.glyph-unknown { stroke: var(--muted); }
+.hourly-section { margin-top: 12px; padding-top: 10px; border-top: 1px solid #ffffff16; }
+.hourly-heading { display: flex; justify-content: space-between; align-items: center; gap: 10px; height: 16px; margin-bottom: 7px; }
+.hourly-heading h3 { margin: 0; font-size: 11px; font-weight: 500; letter-spacing: .3px; }.hourly-heading h3 span { color: var(--muted); font-size: 9px; letter-spacing: 0; margin-left: 8px; }.hourly-heading .forecast-stale { color: #efd5b6; }
+.rain-key { display: flex; align-items: center; gap: 4px; color: #b2d8f4; font-size: 9px; white-space: nowrap; }.rain-key svg { width: 7px; height: 10px; fill: #a4d6ff; }
+.hourly-forecast { position: relative; height: 117px; }.hourly-grid { position: relative; display: grid; grid-template-columns: repeat(6,minmax(0,1fr)); list-style: none; padding: 0; margin: 0; }
+.hourly-item { display: grid; grid-template-rows: 14px 24px 52px 18px; row-gap: 3px; min-width: 0; text-align: center; }
+.hourly-time { align-self: center; color: var(--secondary); font-size: 11px; white-space: nowrap; }.hourly-icon { display: grid; place-items: center; }.hourly-icon .weather-glyph { width: 24px; height: 24px; }
+.hourly-temperature { position: relative; }.hourly-temperature>span { position: absolute; left: 0; width: 100%; line-height: 22px; font-size: 21px; font-weight: 400; letter-spacing: -.4px; }
+.hourly-trend { position: absolute; top: 44px; left: 0; width: 100%; height: 52px; overflow: visible; }
+.hourly-line { fill: none; stroke: #b1dbff; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }.hourly-point { fill: #d8ecff; }.hourly-area { fill: #b1dbff; opacity: .07; }
+.hourly-rain { color: #b5c9db; position: relative; font-size: 11px; line-height: 13px; }.hourly-rain.rain-likely { color: #a2d4ff; }.hourly-rain-bar { position: absolute; height: 2px; width: 30px; left: calc(50% - 15px); bottom: 0; overflow: hidden; border-radius: 2px; background: #ffffff12; }.hourly-rain-bar i { display: block; height: 100%; background: #9ed7ff; border-radius: inherit; }
+.hourly-empty { display: grid; place-items: center; height: 100%; color: var(--muted); font-size: 13px; }
+.chips { display: flex; flex-wrap: wrap; gap: 13px; margin: 8px 0 4px; color: var(--secondary); font-size: 10px; }.chips span+span { border-left: 1px solid #ffffff26; padding-left: 13px; }.source-line { font-size: 9px; line-height: 1.5; color: var(--muted); }.weather-section>.source-line { font-size: 8px; }
+.dashboard-grid { display: grid; grid-template-columns: 500px 860px; grid-template-rows: 142px 286px minmax(0,1fr) 162px; grid-template-areas: 'overview .' 'weather market' 'calendar market' 'calendar extras'; justify-content: space-between; row-gap: 24px; min-height: 0; }
+.calendar-card { grid-area: calendar; display: flex; flex-direction: column; padding: 20px 24px 16px; min-height: 0; }
+.calendar-heading { display: flex; align-items: center; justify-content: space-between; gap: 15px; margin-bottom: 12px; }.calendar-heading .eyebrow { font-size: 8px; letter-spacing: 1.8px; }.calendar-heading h2 { font-size: 21px; margin-top: 3px; letter-spacing: .4px; }.calendar-zone { display: flex; flex-direction: column; gap: 2px; align-items: flex-end; font: 400 12px 'Outfit',sans-serif; color: var(--secondary); }.calendar-zone span { font: 9px 'Zen Kaku Gothic New',sans-serif; color: var(--muted); }
+.calendar-events { display: grid; grid-template-rows: repeat(6,minmax(0,1fr)); flex: 1; min-height: 0; }
+.calendar-event { display: grid; grid-template-columns: 58px minmax(0,1fr) 61px; align-items: center; gap: 15px; padding: 6px 4px; border-bottom: 1px solid #ffffff0f; border-radius: 0; transition: background .2s; }.calendar-event:last-child { border-bottom: 0; }
+.calendar-event.next-event .calendar-day strong { color: #d9ecff; }.calendar-event:hover { background: #ffffff0c; border-radius: 10px; color: #fff; }
+.calendar-event:focus-visible { outline: 2px solid #fff; outline-offset: 1px; border-radius: 8px; background: #ffffff12; }
+.calendar-day { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; }.calendar-day strong { font-size: 21px; font-weight: 400; letter-spacing: -.5px; }.calendar-day span { font-size: 9px; color: var(--muted); }
+.calendar-detail { display: flex; flex-direction: column; gap: 4px; min-width: 0; }.calendar-title { font-size: 17px; font-weight: 500; white-space: nowrap; }.calendar-meta { font-size: 10px; color: var(--muted); white-space: nowrap; }.calendar-time { text-align: right; font-size: 21px; font-weight: 400; letter-spacing: -.3px; }
+.calendar-footer { display: flex; justify-content: space-between; align-items: center; margin: 7px 0 4px; gap: 10px; }#calendar-page { color: var(--muted); font-size: 10px; }.calendar-paging { display: flex; gap: 8px; }.calendar-paging button { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; border: 1px solid #ffffff1f; background: #ffffff06; font: 300 22px/1 'Outfit',sans-serif; }
+.calendar-empty { font-size: 15px; color: var(--muted); line-height: 1.8; padding: 20px 0; grid-row: 1/-1; }
+.market-column { grid-area: market; display: flex; min-width: 0; min-height: 0; }.market-card { width: 100%; height: 100%; display: flex; flex-direction: column; min-height: 0; padding: 16px 28px; }
+.text-button { padding: 5px 1px; background: transparent; color: var(--secondary); font-size: 12px; text-align: left; }.text-button:hover { color: #fff; }
+.stock-grid { position: relative; display: grid; flex: 1; min-height: 0; grid-template-columns: repeat(2,minmax(0,1fr)); grid-template-rows: repeat(6,minmax(0,1fr)); column-gap: 30px; }
+.stock-grid::before { content: ''; position: absolute; top: 7px; bottom: 7px; left: 50%; width: 1px; background: linear-gradient(transparent,#ffffff12 15%,#ffffff12 85%,transparent); pointer-events: none; }
+.stock-row { min-width: 0; display: grid; grid-template-columns: 28px minmax(66px,1fr) 78px 108px; grid-template-areas: 'icon labels chart values'; gap: 10px; align-items: center; padding: 10px 0; border-bottom: 1px solid #ffffff10; }.stock-row:nth-last-child(-n+2) { border-bottom: 0; }
+.symbol-icon { grid-area: icon; width: 28px; height: 28px; border-radius: 50%; object-fit: contain; box-shadow: 0 2px 8px #0002; }.stock-labels { grid-area: labels; display: flex; flex-direction: column; min-width: 0; gap: 5px; }.stock-symbol { font-size: 17px; font-weight: 500; letter-spacing: .1px; line-height: 1; }.company-name { font-size: 9px; line-height: 1.3; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.stock-price-row { grid-area: values; display: flex; flex-direction: column; align-items: flex-end; gap: 5px; font-size: 24px; font-weight: 400; line-height: 1.1; letter-spacing: -.4px; white-space: nowrap; }.stock-change { font-size: 11px; letter-spacing: .1px; font-weight: 400; }.stock-unavailable { color: var(--muted); font-size: 10px; }.unavailable .stock-price-row>span:first-child { color: #b6c6d5; }.quote-stale .company-name { color: #efd5b6; }
+.stock-chart { grid-area: chart; position: relative; min-width: 0; height: 30px; display: grid; place-items: center; }.stock-chart svg { width: 100%; height: 30px; overflow: visible; }.chart-baseline { stroke: #e3ecf53d; stroke-width: 1; stroke-dasharray: 3 5; }.chart-up { color: var(--up); fill: var(--up); }.chart-down { color: var(--down); fill: var(--down); }.chart-line { fill: none; stroke: currentColor; stroke-width: 1.25; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }.chart-area { opacity: .06; }.chart-status { font-size: 8px; color: var(--muted); }.chart-age { position: absolute; right: 0; bottom: -9px; font: 7px 'Outfit','Zen Kaku Gothic New',sans-serif; color: var(--muted); }
+.market-status { margin-top: 14px; padding: 14px; border: 1px solid #ffffff14; border-radius: 12px; display: flex; flex-direction: column; gap: 10px; font-size: 11px; color: var(--muted); }.feed-summary { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }.feed-pill { display: flex; align-items: center; gap: 6px; font-size: 12px; }.feed-pill::before,.status-dot { content: ''; display: inline-block; flex-shrink: 0; width: 4px; height: 4px; border-radius: 50%; background: #b4c5d0; }.feed-pill[data-state=live] { color: var(--up); }.feed-pill[data-state=live]::before,.status-dot.connected { background: var(--up); }.feed-pill[data-state=waiting]::before,.status-dot.stale { background: #e6c797; }.market-coverage { display: flex; align-items: center; gap: 5px; }.chart-caption { display: flex; flex-direction: column; gap: 8px; line-height: 1.6; }#chart-legend i { display: inline-block; width: 12px; border-top: 1px dashed var(--muted); margin-right: 3px; vertical-align: middle; }
+#tradingview { display: flex; flex-direction: column; flex: 1; min-height: 0; }.tradingview-grid { flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; min-height: 0; }#tradingview iframe { width: 100%; height: 100%; border: 0; min-width: 0; border-radius: 16px; }.tradingview-credit { font-size: 10px; text-align: right; color: var(--muted); padding: 5px 0; }
+.side-stack { grid-area: extras; display: grid; grid-template-columns: minmax(0,1.15fr) minmax(0,1fr); gap: 24px; min-height: 0; min-width: 0; }.side-stack>.card { padding: 20px 24px; }.side-stack h2 { font-size: 13px; font-weight: 500; letter-spacing: .5px; }
+.news-card { display: flex; flex-direction: column; }.news-title { margin: auto 0; padding-top: 6px; font-size: 18px; line-height: 1.6; font-weight: 500; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }.news-footer { display: flex; flex-shrink: 0; align-items: center; justify-content: space-between; gap: 12px; padding-top: 10px; }.news-footer .tiny { font-size: 9px; }.news-dots { display: flex; gap: 5px; }.news-dots i { width: 4px; height: 4px; border-radius: 50%; background: #ffffff42; }.news-dots i.active { background: #e4f2ff; }
+.music-card { display: flex; align-items: center; justify-content: center; gap: 22px; }.album { width: 86px; height: 86px; flex-shrink: 0; display: grid; place-items: center; overflow: hidden; border: 1px solid #c7ffde21; border-radius: 20px; background: radial-gradient(ellipse at top left,#9be6c826,#102e2712); box-shadow: inset 0 1px 0 #ffffff18,0 9px 24px #0002; }.album svg { width: 70px; height: 70px; fill: none; stroke: #c7f0df; stroke-width: .8; }.album img { width: 100%; height: 100%; object-fit: cover; }
+.music-details { min-width: 0; width: 100%; display: flex; flex-direction: column; gap: 6px; }.music-details h2 { color: #b3e7d0; font: 500 10px 'Outfit',sans-serif; letter-spacing: 2px; }.music-indicator { color: #b3e7d0; }.track-name { font-size: 18px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }.music-details .secondary { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }.music-details .text-button { font-size: 10px; color: #b3e7d0; margin-top: 2px; }
+.progress { height: 3px; border-radius: 3px; background: #ffffff16; overflow: hidden; }.progress span { display: block; width: 0; height: 100%; background: #b3e7d0; border-radius: inherit; }.music-details .progress { margin-top: 4px; }
+.launcher-footer { display: grid; grid-template-columns: minmax(0,1fr) auto minmax(0,1fr); align-items: end; gap: 40px; }
+.app-list { grid-column: 2; display: flex; align-items: center; justify-content: center; gap: 22px; min-width: 0; margin-bottom: -8px; }
+.app-tile { position: relative; flex: 0 0 var(--app-size); width: var(--app-size); height: var(--app-size); padding: 0; border-radius: 22%; background: transparent; -webkit-tap-highlight-color: transparent; }
+.app-tile:focus { outline: none; border-radius: 22%; z-index: 2; }
+.app-icon { display: grid; place-items: center; width: 100%; height: 100%; overflow: hidden; border: 1px solid #ffffff26; border-radius: inherit; background: linear-gradient(145deg,#ffffff1c,#ffffff04),#24314459; box-shadow: inset 0 1px 0 #ffffff25,0 5px 16px #0003; -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); transform-origin: 50% 65%; transition: transform .38s cubic-bezier(.2,.8,.2,1.12),box-shadow .3s,border-color .3s; }
+.app-tile:focus .app-icon { transform: translateY(-6px) scale(1.12); border-color: #ffffff73; box-shadow: inset 0 1px 0 #ffffff50,0 0 0 1px #ffffff3d,0 14px 30px #0005; }
+.app-tile:active .app-icon { transform: translateY(-2px) scale(1); transition-duration: .1s; }
+.app-label { position: absolute; bottom: calc(100% + 14px); left: 50%; max-width: 180px; width: max-content; padding: 3px 11px; border: 1px solid #ffffff33; border-radius: 999px; background: linear-gradient(120deg,#ffffff17,#ffffff05),#26344659; color: #fff; font-size: 12px; font-weight: 500; line-height: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-shadow: inset 0 1px 0 #ffffff15,0 3px 12px #0002; -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); opacity: 0; transform: translate(-50%,5px); transition: opacity .18s,transform .25s; pointer-events: none; }
+.app-tile:focus .app-label { opacity: 1; transform: translate(-50%,0); }
+.app-icon img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.app-brand-mark { display: block; width: 74%; height: 74%; background: currentColor; -webkit-mask: var(--app-logo) center/contain no-repeat; mask: var(--app-logo) center/contain no-repeat; }
+[data-brand=smarttube] .app-icon { background: #fff; color: #f03; --app-logo: url('assets/apps/youtube.svg'); }
+[data-brand=smarttube] .app-brand-mark { width: 64%; height: 64%; }
+[data-brand=unext] .app-icon { background: #071320; }
+[data-brand=netflix] .app-icon { background: #080808; color: #e50914; --app-logo: url('assets/apps/netflix.svg'); }
+[data-brand=netflix] .app-brand-mark { width: 68%; height: 68%; }
+[data-brand=prime] .app-icon { background: linear-gradient(145deg,#0aa9e8,#0076ba); color: #fff; --app-logo: url('assets/apps/prime-video.svg'); }
+[data-brand=prime] .app-brand-mark { width: 80%; height: 80%; }
+[data-brand=disneyplus] .app-icon { background: #062b38; }
+[data-brand=spotify] .app-icon { background: #121914; color: #1ed760; --app-logo: url('assets/apps/spotify.svg'); }
+[data-brand=spotify] .app-brand-mark { width: 68%; height: 68%; }
+[data-brand=settings] svg { width: 47%; height: 47%; fill: none; stroke: #f3f6fb; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+[data-brand=generic] .app-icon { font: 400 26px 'Outfit',sans-serif; }
+.photo-caption { grid-column: 3; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; min-width: 0; text-align: right; font-size: 17px; }
+.photo-credit { max-width: 520px; font-size: 11px; color: var(--muted); }
+.photo-caption .text-button { color: var(--muted); font-size: 11px; }
+.bottom-line { display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: var(--muted); letter-spacing: .5px; }
+.key-separator { padding: 0 10px; opacity: .4; }
+#bottom-note { font: 10px 'Outfit','Zen Kaku Gothic New',sans-serif; letter-spacing: 1.6px; }
+.launcher-footer:has(.native-apps) { grid-template-columns: minmax(0,1fr) 300px; }
+.native-apps { grid-column: 1; width: 100%; justify-content: flex-start; overflow-x: auto; overflow-y: hidden; padding: 40px 10px 10px; margin-top: -40px; margin-bottom: -18px; scrollbar-width: none; overscroll-behavior-x: contain; }
+.native-apps .app-label { max-width: calc(var(--app-size) + 20px); }.native-apps+.photo-caption { grid-column: 2; }
+.modal-open:not(.tv) { overflow: hidden; }
+.modal-overlay { position: fixed; inset: 0; z-index: 20; display: flex; align-items: center; justify-content: center; padding: 24px; background: rgba(3,8,14,.87); }
+.settings-dialog { width: 100%; max-width: 700px; max-height: 90vh; overflow: auto; padding: 32px 38px; background: linear-gradient(145deg,#ffffff12,#ffffff03),#182936e6; -webkit-backdrop-filter: blur(40px); backdrop-filter: blur(40px); border: 1px solid #ffffff38; border-radius: 32px; box-shadow: inset 0 1px 0 #ffffff28,0 25px 100px #0009; scrollbar-color: #607584 transparent; }
+.dialog-heading { display: flex; align-items: center; justify-content: space-between; gap: 15px; padding-bottom: 24px; margin-bottom: 25px; border-bottom: 1px solid var(--border); }
+.dialog-heading .eyebrow { color: var(--accent); font-size: 10px; }
+.dialog-heading h2 { margin-top: 9px; font-size: 28px; }
+.icon-button { width: 40px; height: 40px; flex-shrink: 0; background: #ffffff0a; border-radius: 50%; font-size: 26px; }
+.settings-dialog fieldset { border: 0; border-bottom: 1px solid var(--border); padding: 0 0 23px; margin: 0 0 25px; }
+.settings-dialog legend { font-size: 18px; font-weight: 700; margin-bottom: 14px; }
+.settings-dialog label { display: block; font-size: 13px; color: var(--secondary); margin: 12px 0 8px; }
+.settings-dialog input:not([type=checkbox]),.settings-dialog select { background: #0a121d; border: 1px solid #ffffff25; border-radius: 9px; padding: 12px 13px; width: 100%; font-size: 15px; color: var(--text); }
+.settings-dialog .help { color: var(--muted); font-size: 13px; line-height: 1.8; margin-top: 10px; }
+.search-row { display: flex; gap: 10px; }
+.small-button,.primary-button,.secondary-button { padding: 12px 18px; border-radius: 9px; font-size: 14px; background: #2b3a49; white-space: nowrap; }
+.primary-button { background: #e7f2fc; color: #1a2b39; font-weight: 700; }
+.secondary-button { background: #ffffff0a; color: var(--secondary); }
+.city-results { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
+.city-results button { border-radius: 8px; padding: 9px 11px; background: #2b3a49; font-size: 13px; }
+.form-two { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: center; margin-top: 8px; }
+.form-two select { margin-top: 7px; }
+.settings-dialog .checkbox-label { display: flex; align-items: center; justify-content: center; gap: 8px; }
+.checkbox-label input { accent-color: var(--accent); width: 18px; height: 18px; }
+.button-row { display: flex; gap: 18px; align-items: center; margin-top: 14px; }
+code { font-size: 12px; overflow-wrap: anywhere; color: var(--secondary); }
+details { margin: 12px 0 16px; }summary { color: var(--secondary); cursor: pointer; font-size: 14px; }
+.setup-guide { padding: 14px 16px; background: #ffffff03; border: 1px solid var(--border); border-radius: 10px; }
+.setup-guide ol { padding-left: 22px; color: var(--secondary); font-size: 13px; line-height: 1.9; }
+.setup-guide li { margin: 8px 0; }.setup-guide a { text-decoration: underline; text-underline-offset: 3px; }
+.dialog-actions { display: flex; justify-content: flex-end; gap: 12px; padding-top: 20px; }
+.form-error { color: var(--down); font-size: 13px; }
+.toast { position: fixed; z-index: 40; bottom: 32px; left: 50%; transform: translateX(-50%); max-width: 90vw; padding: 15px 24px; border: 1px solid #f2bd7a55; border-radius: 13px; background: #1b2836; box-shadow: 0 10px 45px #0008; font-size: 16px; }
+.noscript { position: fixed; inset: 40%; background: #0a0f1a; padding: 20px; }
+@keyframes drift { from { transform: scale(1.015); } to { transform: scale(1.065); } }
+@media(prefers-reduced-motion:reduce) { *,*::before,*::after { animation: none!important; transition: none!important; scroll-behavior: auto!important; } }
+@media(min-width:1001px) and (orientation:landscape) {
+  .calendar-heading { margin-bottom: 8px; }.calendar-heading .eyebrow,.calendar-meta,.calendar-day span { display: none; }.calendar-heading h2 { margin-top: 0; }
+  .calendar-event { padding: 2px 4px; }.calendar-title { line-height: 1.25; }.calendar-day strong,.calendar-time { line-height: 1.2; }
+}
+@media(max-width:1000px),(orientation:portrait) {
+  .app-list:not(.native-apps) { width: max-content; max-width: 100%; align-self: center; justify-content: flex-start; overflow-x: auto; overflow-y: hidden; padding: 40px 16px 10px; margin-top: -24px; margin-bottom: -10px; scroll-padding-inline: 16px; scrollbar-width: none; overscroll-behavior-x: contain; }
+  body { overflow: auto; }#stage { display: flex; flex-direction: column; padding: 32px; gap: 34px; }.masthead { height: 30px; }.wordmark>span:last-child,.wordmark .divider,.utility #connection-status,.quiet-button span { display: none; }.utility { gap: 18px; }
+  .overview { align-items: stretch; padding: 8px 2px 4px; }.clock-line { height: 116px; }.weather-section { padding: 22px 24px; }.weather-line { font-size: 21px; }.hourly-section { margin-top: 16px; padding-top: 14px; }.hourly-heading { margin-bottom: 12px; }.hourly-time { font-size: 12px; }.chips { margin-top: 12px; }
+  .dashboard-grid { display: flex; flex-direction: column; gap: 32px; }.calendar-card { order: 2; min-height: 487px; padding: 24px; }.calendar-events { grid-template-rows: repeat(6,56px); }.calendar-event { grid-template-columns: 70px minmax(0,1fr) 85px; padding: 8px 4px; }.calendar-title { font-size: 18px; }.calendar-time { font-size: 22px; }.calendar-meta { font-size: 10px; }
+  .market-column { order: 1; align-self: stretch; }.market-card { height: auto; padding: 24px; }.stock-grid { flex: auto; grid-template-rows: repeat(6,68px); column-gap: 26px; }.stock-row { grid-template-columns: 26px minmax(62px,1fr) 54px 92px; gap: 8px; }.stock-price-row { font-size: 22px; }.stock-chart,.stock-chart svg { height: 29px; }
+  .side-stack { order: 3; grid-template-columns: 1fr 1fr; grid-template-rows: 190px; gap: 22px; }.side-stack>.card { padding: 22px; }.news-title { font-size: 18px; -webkit-line-clamp: 3; }.news-footer .tiny { font-size: 8px; }.music-card { gap: 15px; }.album { width: 58px; height: 74px; border-radius: 16px; }.album svg { width: 50px; height: 50px; }.track-name { font-size: 16px; }
+  #tradingview { height: 760px; flex: auto; }.tradingview-grid { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; }
+  .launcher-footer { display: flex; flex-direction: column; align-items: stretch; gap: 30px; --app-size: 68px; }.app-list { padding-top: 16px; margin-bottom: 0; }.native-apps { padding-top: 40px; margin-top: -8px; margin-bottom: -10px; }.photo-caption { align-items: flex-start; text-align: left; font-size: 15px; }.bottom-line>span:first-child { display: none; }
+}
+@media(max-width:640px) {
+  #stage { padding: 25px 18px; gap: 30px; }.wordmark { font-size: 13px; letter-spacing: 2px; }.clock-line { height: 94px; gap: 17px; }.clock-line time { font-size: clamp(70px,24vw,100px); letter-spacing: -4px; }.local-time .eyebrow { font-size: 10px; }.date { font-size: 20px; gap: 4px; padding-bottom: 4px; }.date span:last-child { font-size: 14px; }
+  .weather-line { gap: 12px; font-size: 16px; }.weather-icon { width: 28px; font-size: 32px; }.weather-line>.number { font-size: 38px; }.weather-line .secondary { font-size: 12px; }.chips { gap: 10px; font-size: 10px; }.chips span+span { padding-left: 10px; }.source-line { font-size: 9px; }
+  .weather-section { padding: 20px 18px 18px; }.hourly-time { font-size: 10px; }.hourly-heading h3 { font-size: 10px; }.hourly-heading h3 span { margin-left: 5px; font-size: 8px; }.rain-key { font-size: 8px; }.hourly-temperature>span { font-size: 20px; }
+  .calendar-card { padding: 23px 18px 18px; min-height: 497px; border-radius: 28px; }.calendar-heading h2 { font-size: 21px; }.calendar-event { grid-template-columns: 56px minmax(0,1fr) 54px; gap: 10px; padding: 8px 2px; }.calendar-title { font-size: 15px; }.calendar-meta { font-size: 9px; }.calendar-day strong { font-size: 20px; }.calendar-time { font-size: 19px; }.calendar-paging button { width: 36px; height: 36px; }
+  .market-card { padding: 23px 18px 20px; border-radius: 28px; }.stock-grid { grid-template-columns: 1fr; grid-template-rows: repeat(12,64px); column-gap: 0; }.stock-grid::before { display: none; }.stock-row { grid-template-columns: 26px minmax(62px,1fr) 62px 92px; gap: 8px; padding: 10px 0; }.stock-row:nth-last-child(2) { border-bottom: 1px solid #ffffff10; }.symbol-icon { width: 26px; height: 26px; }.stock-symbol { font-size: 16px; }.company-name { font-size: 8px; }.stock-price-row { font-size: 22px; }.stock-change { font-size: 10px; }.stock-chart,.stock-chart svg { height: 28px; }
+  .side-stack { grid-template-columns: 1fr; grid-template-rows: 180px 150px; gap: 24px; }.side-stack>.card { padding: 22px; }.news-title { font-size: 18px; -webkit-line-clamp: 2; }.news-footer .tiny { font-size: 9px; }.music-card { gap: 18px; }.album { width: 76px; height: 86px; border-radius: 20px; }.album svg { width: 60px; height: 60px; }.track-name { font-size: 17px; }.music-details .secondary { font-size: 11px; }
+  .launcher-footer { --app-size: clamp(46px,13vw,68px); }.app-list { gap: clamp(10px,3vw,18px); }.app-label { font-size: 11px; padding-inline: 9px; }.photo-credit { font-size: 9px; }.settings-dialog { padding: 25px 20px; max-height: 92vh; border-radius: 26px; }.modal-overlay { padding: 12px; }.dialog-heading h2 { font-size: 24px; }.button-row { flex-wrap: wrap; gap: 12px; }.toast { font-size: 14px; bottom: 20px; }.form-two { gap: 12px; }
+}
+@media(max-width:360px) {
+  .market-card { padding-left: 16px; padding-right: 16px; }.stock-row { grid-template-columns: 24px minmax(58px,1fr) 48px 86px; gap: 7px; }.symbol-icon { width: 24px; height: 24px; }.stock-price-row { font-size: 21px; }.stock-symbol { font-size: 15px; }
+  .calendar-card { padding-left: 16px; padding-right: 16px; }.calendar-event { grid-template-columns: 54px minmax(0,1fr) 49px; gap: 8px; }.calendar-title { font-size: 14px; }.calendar-time { font-size: 18px; }.weather-line { gap: 10px; font-size: 14px; }
+}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))) { .card { background: #203547f2; }.app-label,[data-brand=settings] .app-icon,[data-brand=generic] .app-icon { background: #2b3e4ff5; } }
+@media(prefers-reduced-transparency:reduce) { .card,.settings-dialog { background: #203547; backdrop-filter: none; -webkit-backdrop-filter: none; }.app-label,[data-brand=settings] .app-icon,[data-brand=generic] .app-icon { background: #2b3e4f; backdrop-filter: none; -webkit-backdrop-filter: none; } }
