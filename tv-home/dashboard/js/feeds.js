@@ -24,6 +24,34 @@ export function parseRSS(xml) {
   }).filter(item => item.title && NHK_LINK.test(item.url) && Number.isFinite(Date.parse(item.publishedAt))).slice(0, 3);
 }
 
+// Background photos: downtowns of world cities, day and night, a few random ones per city each hour.
+// The Access Key stays with the server or the TV app; the page only names the search.
+export const PHOTO_CITIES = [
+  ['new york city skyline', 'ニューヨーク'], ['london city skyline', 'ロンドン'], ['paris city', 'パリ'],
+  ['chicago downtown', 'シカゴ'], ['tokyo city', '東京'], ['hong kong skyline', '香港'],
+  ['singapore skyline', 'シンガポール'], ['dubai downtown', 'ドバイ'],
+];
+export const PHOTOS_PER_CITY = 3;
+export const unsplashRandom = query => `https://api.unsplash.com/photos/random?query=${encodeURIComponent(query)}&count=${PHOTOS_PER_CITY}&orientation=landscape&content_filter=high`;
+export const validPhotoQuery = query => PHOTO_CITIES.some(([q]) => q === query);
+export function unsplashPhotos(photos, title) {
+  return (Array.isArray(photos) ? photos : photos?.results || []).filter(p => p.urls?.regular && p.user?.name && p.user?.links?.html).map(p => {
+    const url = new URL(p.urls.regular); url.searchParams.set('w','1920'); url.searchParams.set('q','85');
+    return { url:url.href, title, photographer:p.user.name, profile:`${p.user.links.html}?utm_source=tv_home&utm_medium=referral`, source:'Unsplash', sourceUrl:'https://unsplash.com/?utm_source=tv_home&utm_medium=referral', photoUrl:`${p.links.html}?utm_source=tv_home&utm_medium=referral` };
+  });
+}
+// fetchCity(query) returns Unsplash's JSON for one city; cities that fail are skipped, and the result is shuffled.
+export async function loadPhotos(fetchCity, random = Math.random) {
+  const results = await Promise.allSettled(PHOTO_CITIES.map(async ([query, title]) => unsplashPhotos(await fetchCity(query), title)));
+  const rows = results.flatMap(r => r.status === 'fulfilled' ? r.value : []);
+  if (!rows.length) {
+    const limited = results.some(r => r.reason?.status === 429);
+    throw Object.assign(new Error(limited ? 'Unsplashの取得回数の上限です' : '写真がありません'), { status: limited ? 429 : 502 });
+  }
+  for (let i = rows.length - 1; i > 0; i--) { const j = Math.floor(random() * (i + 1)); [rows[i], rows[j]] = [rows[j], rows[i]]; }
+  return rows;
+}
+
 export async function loadNews(fetchText) {
   const rows = parseRSS(await fetchText(NHK_RSS));
   if (!rows.length) throw Object.assign(new Error('ニュースがありません'), { status:502 });

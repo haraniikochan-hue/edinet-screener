@@ -1,4 +1,4 @@
-# TV Home 引き継ぎ書 — v0.11.0
+# TV Home 引き継ぎ書 — v0.12.0
 
 引き継ぎ日：2026-10-19。対象：Xiaomi TV用ホーム画面のフェーズ2・Webダッシュボード。
 
@@ -83,7 +83,7 @@ v0.6.0〜v0.9.0はクラウドのセッションで作った。ユーザーが�
 | 経済指標 | 米国の主要指標、日本時間、6件ずつページ送り |
 | 相場 | 暗号資産とその他のマーケットを1つの一覧に統合。BTC/HYPEの重複なし |
 | チャート | 24時間固定。小さなチャートと銘柄アイコンを付ける |
-| 背景写真 | 外部取得を希望。現状はNYの同梱写真、Unsplash自動取得は接続待ち |
+| 背景写真 | 世界の都市のダウンタウン（昼も夜も）のかっこいい写真（2026-10-19のユーザー指示）。Unsplashから自動取得し、テレビで稼働中（第3.4節） |
 | アプリ | SmartTube / U-NEXT / Netflix / Prime Video / Disney+ / Spotify / 設定 |
 | SmartTube | **見た目だけYouTubeアイコン**。名前・TVでの起動対象はSmartTube |
 | 地デジ | ショートカット削除済み。TVのチューナー機能を無効化したわけではない |
@@ -210,7 +210,9 @@ Xiaomi TVのGPU・CPUで滑らかに動くよう最適化した。見た目はv0
 - **Spotifyカード（v0.11.0）**：ユーザーの選択で、**テレビのSpotifyアプリ（`com.spotify.tv.android`）の再生情報**を使う。ログインは不要。アプリはこのMediaSessionを `MediaSessionManager` で読み、Web APIの currently-playing と同じ形（`source:"tv"`、ジャケットは300pxのJPEGのdata URL）で `window.Android.nowPlaying()` から返す。曲や再生状態が変わると、アプリが `window.tvHomeMedia()` を呼ぶので、すぐ反映される（30秒ごとの取得も続ける）。表示はテレビで再生している曲だけで、スマホでの再生は出ない。2026-10-19に、テレビで再生中の曲名・アーティスト・ジャケット・再生中の表示・進行バーが出ることを確認した。
   - 読むには「通知へのアクセス」が必要。ユーザーの確認を得て `adb shell cmd notification allow_listener jp.tvhome.launcher/jp.tvhome.MediaListener` で許可した（`MediaListener` は許可のためだけのサービスで、通知は読まない）。戻すなら `disallow_listener`、またはテレビの設定 → アプリ → 特別なアプリアクセス → 通知へのアクセス。許可がない場合、`nowPlaying()` は空文字を返し、カードはWebログインの方式に戻る。
   - **Webログイン（未完了）**：Spotifyのログイン画面は、ブリッジのない別のWebViewで開き、`https://appassets.androidplatform.net/index.html` へ戻ったらダッシュボードがPKCEを完了する。テレビ版では、ログイン情報をlocalStorageに保存して再起動後も残す。Client ID（ユーザーが作成）は `android/local.properties` の `spotify.clientId`（コミットしない）から `BuildConfig` に入れる。ログイン画面までは表示できたが、メールのリンクをスマホで開くと「別のブラウザでログインしています」となり、ログインは完了していない。テレビの再生情報を使う方式に切り替えたため、今は使っていない。
-- **未対応**：Unsplashはアプリでは未対応（`/api/config` は無効を返す）。広告ブロックの切り替え（`setPrivateDns`）も未実装。ただしテレビのプライベートDNSは、すでに `dns.adguard-dns.com`（hostname）に設定されていた。
+- **背景写真（v0.12.0）**：ユーザーの希望は「ニューヨークやロンドン、パリなど、色々な都市のダウンタウンの昼夜のかっこいい写真」。`dashboard/js/feeds.js` の `PHOTO_CITIES`（ニューヨーク・ロンドン・パリ・シカゴ・東京・香港・シンガポール・ドバイ）から、それぞれUnsplashの `photos/random` で3枚ずつ取り、混ぜて24枚にする（1時間ごと、8リクエスト。デモ段階の上限は1時間50回）。写真の左下には都市名と撮影者を出す。アプリでは `/api/unsplash?query=` をKotlinが代行し、Access Keyを付ける。検索語は `PHOTO_QUERIES` の8つだけ許可する。Access Keyは `android/local.properties` の `unsplash.accessKey`（コミットしない）から `BuildConfig` に入れ、ページには渡さない。テレビの設定で写真の取得元を「Unsplashから自動取得」に保存済み。2026-10-19に、8都市×3枚が取得されて切り替わることをテレビで確認した。Unsplashの本番申請（上限の引き上げ）と、写真の利用時に必要な download エンドポイントの呼び出しは未対応。
+- **ドックの「テレビの設定」**：ユーザーの指示で、ダッシュボードの「設定」と同じiOS風の灰色の歯車にした（`launcher.js` で名前「テレビの設定」を `settings` ブランドに割り当てる）。
+- **未対応**：広告ブロックの切り替え（`setPrivateDns`）も未実装。ただしテレビのプライベートDNSは、すでに `dns.adguard-dns.com`（hostname）に設定されていた。
 
 ビルドと入れ替え：
 
@@ -264,7 +266,7 @@ VIX・ダウ・SILVERは表示しない。現物指数やETFの市場価格そ�
 | FOMC | FRB公式日程の保存JSON | 2026-10-18確認、2027年末まで。変更時は更新が必要 |
 | ニュース | NHK ONE 経済RSS（`news.web.nhk`） | 15分取得。3見出しを20秒で切り替え（詳細を開いている間は止める）。決定でRSSの要約（最大240字）を表示。48時間以上前の配信を明示。旧 `www3.nhk.or.jp` のRSSは2026-08-08で更新が止まっていたため v0.6.0で変更 |
 | Spotify | Currently Playing API | 30秒。実アカウント未接続 |
-| 写真 | 同梱CC0写真／Unsplash | Unsplashは1時間に24枚取得、既定60秒で切り替え。写真ごとにTV用のぼかし画像を1回作る |
+| 写真 | 同梱CC0写真／Unsplash | Unsplashは1時間に8都市×3枚（計24枚）を取得し、既定60秒で切り替え。写真ごとにTV用のぼかし画像を1回作る |
 
 時間別天気は日本時間の次の正時から6時間。日付跨ぎ・昼夜・雨雪雷・降水確率・欠測に対応。気温の線の縦幅は最低6℃で、小変動を誇張しない。3時間超の予報は古い情報として表示。地域変更時に以前の地域の値を使い回さない。
 

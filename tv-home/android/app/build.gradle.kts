@@ -14,12 +14,15 @@ val copyDashboard by tasks.registering(Sync::class) {
     into(webAssets.map { it.dir("www") })
 }
 
-// The Spotify Client ID is read from local.properties (not committed): spotify.clientId=<32 hex>.
+// Credentials are read from local.properties (not committed):
+// spotify.clientId=<32 hex>, unsplash.accessKey=<Unsplash Access Key>.
 val localProperties = Properties().apply {
     rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) }
 }
 val spotifyClientId = localProperties.getProperty("spotify.clientId", "")
     .takeIf { it.matches(Regex("^[a-f0-9]{32}$")) } ?: ""
+val unsplashAccessKey = localProperties.getProperty("unsplash.accessKey", "")
+    .takeIf { it.matches(Regex("^[A-Za-z0-9_-]{20,100}$")) } ?: ""
 
 android {
     namespace = "jp.tvhome"
@@ -28,9 +31,10 @@ android {
         applicationId = "jp.tvhome.launcher"
         minSdk = 28
         targetSdk = 35
-        versionCode = 2
-        versionName = "0.11.0"
+        versionCode = 3
+        versionName = "0.12.0"
         buildConfigField("String", "SPOTIFY_CLIENT_ID", "\"$spotifyClientId\"")
+        buildConfigField("String", "UNSPLASH_ACCESS_KEY", "\"$unsplashAccessKey\"")
     }
     sourceSets["main"].assets.srcDir(webAssets)
     buildTypes {

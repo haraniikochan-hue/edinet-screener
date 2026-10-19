@@ -3,7 +3,7 @@ import { readFile, stat } from 'node:fs/promises';
 import { resolve, dirname, extname, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { SYMBOLS, isNumber } from './dashboard/js/data.js';
-import { decodeXML, parseRSS, loadNews, loadCalendar } from './dashboard/js/feeds.js';
+import { decodeXML, parseRSS, loadNews, loadCalendar, loadPhotos, unsplashRandom } from './dashboard/js/feeds.js';
 
 export { decodeXML, parseRSS };
 
@@ -71,15 +71,7 @@ async function api(pathname) {
   }
   if (pathname === '/api/photos') {
     if (!process.env.UNSPLASH_ACCESS_KEY) throw httpError(503, 'Unsplash APIキー未設定');
-    return memo('photos', 3600000, async () => {
-      const response = await upstream('https://api.unsplash.com/search/photos?query=new%20york%20city%20night&orientation=landscape&per_page=24&content_filter=high', { headers:{ Authorization:`Client-ID ${process.env.UNSPLASH_ACCESS_KEY}`, 'Accept-Version':'v1' } });
-      const rows = (response.results || []).filter(p => p.urls?.regular && p.user?.name && p.user?.links?.html).map(p => {
-        const url = new URL(p.urls.regular); url.searchParams.set('w','1920'); url.searchParams.set('q','85');
-        return { url:url.href, title:'ニューヨーク', photographer:p.user.name, profile:`${p.user.links.html}?utm_source=tv_home&utm_medium=referral`, source:'Unsplash', sourceUrl:'https://unsplash.com/?utm_source=tv_home&utm_medium=referral', photoUrl:`${p.links.html}?utm_source=tv_home&utm_medium=referral` };
-      });
-      if (!rows.length) throw httpError(502, '写真がありません');
-      return rows;
-    });
+    return memo('photos', 3600000, () => loadPhotos(query => upstream(unsplashRandom(query), { headers:{ Authorization:`Client-ID ${process.env.UNSPLASH_ACCESS_KEY}`, 'Accept-Version':'v1' } })));
   }
   throw httpError(404, 'APIがありません');
 }

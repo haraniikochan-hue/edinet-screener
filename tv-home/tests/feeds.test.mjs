@@ -28,3 +28,26 @@ test('calendar uses live feeds and falls back to the snapshot per provider', asy
   assert.deepEqual(result.sources.map(s => [s.source, s.status]), [['BLS','live'],['BEA','stale'],['FRB',undefined]]);
   assert.deepEqual(result.events.map(e => e.indicator).sort(), ['CPI','FOMC','GDP']);
 });
+
+import { PHOTO_CITIES, PHOTOS_PER_CITY, loadPhotos, unsplashRandom, validPhotoQuery } from '../dashboard/js/feeds.js';
+const photo = id => ({ urls:{regular:`https://images.unsplash.com/${id}?ixid=x`}, user:{name:`P${id}`, links:{html:`https://unsplash.com/@${id}`}}, links:{html:`https://unsplash.com/photos/${id}`} });
+
+test('photos mix every city, are titled by city and skip a city that fails', async () => {
+  const rows = await loadPhotos(async query => {
+    if (query === PHOTO_CITIES[1][0]) throw new Error('down');
+    return [photo(query.length), photo(query.length + 100)];
+  }, () => 0);
+  assert.equal(rows.length, (PHOTO_CITIES.length - 1) * 2);
+  assert.ok(!rows.some(r => r.title === PHOTO_CITIES[1][1]));
+  assert.ok(rows.some(r => r.title === 'ニューヨーク'));
+  assert.match(rows[0].url, /w=1920/);
+});
+
+test('photos report the rate limit when every city is refused', async () => {
+  await assert.rejects(loadPhotos(async () => { throw Object.assign(new Error('x'), { status:429 }); }), /上限/);
+});
+
+test('only the listed city searches build a random-photo URL', () => {
+  assert.ok(validPhotoQuery('paris city')); assert.ok(!validPhotoQuery('anything else'));
+  assert.equal(unsplashRandom('paris city'), `https://api.unsplash.com/photos/random?query=paris%20city&count=${PHOTOS_PER_CITY}&orientation=landscape&content_filter=high`);
+});

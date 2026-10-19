@@ -62,6 +62,12 @@ private val UPSTREAM = setOf(
     "https://www.bea.gov/news/schedule/ics/online-calendar-subscription.ics",
 )
 
+// The city searches the page may ask Unsplash for (dashboard/js/feeds.js PHOTO_CITIES).
+private val PHOTO_QUERIES = setOf(
+    "new york city skyline", "london city skyline", "paris city", "chicago downtown",
+    "tokyo city", "hong kong skyline", "singapore skyline", "dubai downtown",
+)
+
 // The Spotify TV app, whose media session feeds the Spotify card without a Spotify login.
 private const val SPOTIFY_TV = "com.spotify.tv.android"
 
@@ -105,6 +111,7 @@ class MainActivity : Activity() {
                 override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse? {
                     val url = request.url
                     if (url.host == HOST && url.path == "/api/upstream") return upstream(url)
+                    if (url.host == HOST && url.path == "/api/unsplash") return unsplash(url.getQueryParameter("query"))
                     return assets.shouldInterceptRequest(url)
                 }
                 // The launcher never leaves its own page: links to other sites are ignored,
@@ -311,6 +318,31 @@ class MainActivity : Activity() {
         return result
     }
 
+    /** A few random photos for one city search (dashboard/js/feeds.js unsplashRandom), with the Access Key added here. */
+    private fun unsplash(query: String?): WebResourceResponse {
+        if (BuildConfig.UNSPLASH_ACCESS_KEY.isEmpty()) return json(503, JSONObject().put("error", "Unsplash APIキー未設定"))
+        if (query !in PHOTO_QUERIES) return json(403, JSONObject().put("error", "許可されていない検索です"))
+        return try {
+            val target = Uri.parse("https://api.unsplash.com/photos/random").buildUpon()
+                .appendQueryParameter("query", query).appendQueryParameter("count", "3")
+                .appendQueryParameter("orientation", "landscape").appendQueryParameter("content_filter", "high")
+                .build().toString()
+            val connection = URL(target).openConnection() as HttpURLConnection
+            connection.connectTimeout = 10000
+            connection.readTimeout = 10000
+            connection.setRequestProperty("Authorization", "Client-ID ${BuildConfig.UNSPLASH_ACCESS_KEY}")
+            connection.setRequestProperty("Accept-Version", "v1")
+            try {
+                val code = connection.responseCode
+                if (code !in 200..299) json(if (code == 429 || code == 403) 429 else 502, JSONObject().put("error", "Unsplashから取得できません ($code)"))
+                else WebResourceResponse("application/json", "utf-8", 200, "OK", mapOf("Cache-Control" to "no-store"),
+                    ByteArrayInputStream(connection.inputStream.readBytes()))
+            } finally { connection.disconnect() }
+        } catch (e: Exception) {
+            json(502, JSONObject().put("error", "Unsplashに接続できません"))
+        }
+    }
+
     private fun json(status: Int, body: JSONObject) = WebResourceResponse(
         "application/json", "utf-8", status, if (status == 200) "OK" else "Error",
         mapOf("Cache-Control" to "no-store"), ByteArrayInputStream(body.toString().toByteArray()),
@@ -341,6 +373,9 @@ class MainActivity : Activity() {
     inner class Bridge {
         @JavascriptInterface
         fun spotifyClientId(): String = BuildConfig.SPOTIFY_CLIENT_ID
+
+        @JavascriptInterface
+        fun hasUnsplash(): Boolean = BuildConfig.UNSPLASH_ACCESS_KEY.isNotEmpty()
 
         /** Empty until notification access is granted; then the Spotify TV app's now playing as JSON. */
         @JavascriptInterface

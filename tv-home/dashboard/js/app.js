@@ -10,7 +10,7 @@ import { mountTradingView } from './tradingview.js';
 import { getMarketSnapshot, getMarketCandles, HyperliquidStream } from './hyperliquid.js';
 import { MARKETS, MARKET_BY_SYMBOL, CHART_RANGES, marketCoins } from './market-definitions.js';
 import { drawMarketChart } from './market-chart.js';
-import { loadNews, loadCalendar } from './feeds.js';
+import { loadNews, loadCalendar, loadPhotos } from './feeds.js';
 import { HOUR, weatherTimestamp, weatherIsStale, hourlyForecast, makeWeatherIcon, renderHourlyForecast } from './weather.js';
 
 const $ = id => document.getElementById(id);
@@ -50,9 +50,11 @@ const appText = async url => (await fetchJSON(`/api/upstream?url=${encodeURIComp
 async function appApi(path) {
   if(path==='config'){
     const spotifyClientId=typeof window.Android?.spotifyClientId==='function' ? String(window.Android.spotifyClientId()) : '';
-    return {backend:true,market:false,unsplash:false,spotifyClientId:/^[a-f0-9]{32}$/.test(spotifyClientId)?spotifyClientId:''};
+    const unsplash=typeof window.Android?.hasUnsplash==='function' && window.Android.hasUnsplash()===true;
+    return {backend:true,market:false,unsplash,spotifyClientId:/^[a-f0-9]{32}$/.test(spotifyClientId)?spotifyClientId:''};
   }
-  const data = path==='news' ? await loadNews(appText) : path==='calendar' ? await loadCalendar(appText,await fetchJSON('data/economic-calendar.json')) : null;
+  // The app adds the Unsplash Access Key itself; the page never sees it.
+  const data = path==='news' ? await loadNews(appText) : path==='calendar' ? await loadCalendar(appText,await fetchJSON('data/economic-calendar.json')) : path==='photos' ? await loadPhotos(query=>fetchJSON(`/api/unsplash?query=${encodeURIComponent(query)}`)) : null;
   if(!data)throw new Error('TV版では使えません');
   return {data,fetchedAt:Date.now(),stale:path==='calendar' && data.sources.some(s=>s.status==='stale')};
 }
