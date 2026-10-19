@@ -99,13 +99,13 @@ class MainActivity : Activity() {
             .build()
         root = FrameLayout(this)
         setContentView(root)
-        showDashboard()
+        showDashboard(HOME_URL)
     }
 
     private lateinit var assets: WebViewAssetLoader
 
     @SuppressLint("SetJavaScriptEnabled")
-    private fun showDashboard() {
+    private fun showDashboard(url: String) {
         web = WebView(this).apply {
             setBackgroundColor(0xFF05070C.toInt())
             settings.javaScriptEnabled = true
@@ -135,14 +135,14 @@ class MainActivity : Activity() {
             isFocusableInTouchMode = true
         }
         root.addView(web, 0, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
-        web.loadUrl(HOME_URL)
+        web.loadUrl(url)
         web.requestFocus(View.FOCUS_DOWN)
     }
 
-    // The TV has 1.8 GB of RAM and Android keeps the home app in memory as if it were in front, so
-    // TV Home frees its own share for the app or cast in front: it stops its timers at once and, after
-    // 30 s away (or as soon as memory runs low), destroys the WebView: about 180 MB is freed (WebView
-    // keeps its renderer process). The dashboard is rebuilt on return and shows its saved data at once.
+    // Home must come back instantly, so the dashboard stays alive while another app or a cast is in
+    // front and only stops its timers. The TV has 1.8 GB of RAM: if Android reports memory running low,
+    // TV Home destroys the WebView (about 180 MB; WebView keeps its renderer process) and rebuilds it
+    // on return without the entrance animation, showing its saved data at once.
     private var unloaded = false
     private val unload = Runnable {
         if (!unloaded) {
@@ -154,18 +154,16 @@ class MainActivity : Activity() {
     }
     override fun onStart() {
         super.onStart()
-        root.removeCallbacks(unload)
-        if (unloaded) { unloaded = false; showDashboard() }
+        if (unloaded) { unloaded = false; showDashboard("$HOME_URL?instant") }
         web.resumeTimers()
     }
     override fun onStop() {
         web.pauseTimers()
-        root.postDelayed(unload, 30_000)
         super.onStop()
     }
     override fun onTrimMemory(level: Int) {
         super.onTrimMemory(level)
-        if (level >= TRIM_MEMORY_RUNNING_LOW && !hasWindowFocus()) { root.removeCallbacks(unload); unload.run() }
+        if (level >= TRIM_MEMORY_RUNNING_LOW && !hasWindowFocus()) unload.run()
     }
     override fun onResume() { super.onResume(); web.onResume(); watchMedia() }
     override fun onPause() { web.onPause(); super.onPause() }

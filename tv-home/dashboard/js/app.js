@@ -726,7 +726,8 @@ let lastInput=Date.now();
 for(const type of ['keydown','pointerdown'])addEventListener(type,()=>{lastInput=Date.now();},{capture:true,passive:true});
 setInterval(()=>{if(!document.hidden && Date.now()-lastInput>IDLE_HOME && $('settings-overlay').hidden && $('detail-overlay').hidden)navigation.focusHome();},10000);
 addEventListener('resize',fit);addEventListener('online',()=>{setFeed('connection','ok');jobs.forEach(job=>void job.run());});addEventListener('offline',()=>{setFeed('connection','error');});
-document.addEventListener('visibilitychange',()=>{if(document.hidden)cryptoStream?.stop();else{cryptoStream?.start();tick();jobs.forEach(job=>void job.run());}});
+// Coming back home must feel instant: the clock updates at once, refreshes follow a little later and one at a time.
+document.addEventListener('visibilitychange',()=>{if(document.hidden)cryptoStream?.stop();else{tick();setTimeout(()=>cryptoStream?.start(),300);jobs.forEach((job,i)=>setTimeout(()=>{if(!document.hidden)void job.run();},600+i*200));}});
 addEventListener('pagehide',()=>cryptoStream?.stop());
 addEventListener('pageshow',event=>{if(event.persisted && !document.hidden)cryptoStream?.start();});
 setInterval(()=>{if(!document.hidden)tick();},1000);
@@ -741,6 +742,8 @@ async function start(){
   fit();buildStocks();tick();setPhotos(SAMPLE_PHOTOS);initializeBridge();void loadCalendarSnapshot();
   // The TV app already runs full screen; the button only helps in a desktop browser.
   $('fullscreen').hidden=Boolean(window.Android) || !document.fullscreenEnabled;
+  // The TV app rebuilds the page after freeing memory; coming back home must not replay the entrance.
+  if(new URLSearchParams(location.search).has('instant')){document.body.classList.add('instant');history.replaceState({},'',location.pathname);}
   document.body.classList.add('ready');
   $('apps').querySelector('button')?.focus({preventScroll:true});
   try{if(await spotify.completeCallback())toast('Spotifyを連携しました');}catch(error){toast(errorText(error));}

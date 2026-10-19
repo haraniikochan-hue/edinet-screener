@@ -455,6 +455,7 @@ body:not(.ready) #stage { opacity: 0; animation: reveal 0s 1.6s forwards; }
 .card,.stock-row { contain: layout paint; }
 .stock-price-row { will-change: transform; }
 .ready .frost { animation: fade .9s var(--ease) .1s backwards; }
+.instant.ready :is(.masthead,.overview,.weather-section,.market-card,.calendar-card,.news-card,.music-card,.app-list,.photo-caption,.frost) { animation: none; }
 
 /* Material fallbacks */
 @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))) {
