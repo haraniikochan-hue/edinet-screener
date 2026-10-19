@@ -9,7 +9,7 @@
     "folder": "tv-home"
   },
   "nextSession": "Runs on the user's PC (Claude Desktop or claude remote-control) so it can reach the home Wi-Fi and TV; see HANDOFF.md section 1.1.",
-  "userStatus": "v0.26.0 running on the Xiaomi TV as its home screen (Android app in android/, stock Google TV home disabled); v0.27.0 (held volume button repeats again and accelerates; TV settings on a double Home press) is in the source and not yet installed; see HANDOFF sections 1 and 3.4",
+  "userStatus": "v0.27.0: running on the Xiaomi TV as its home screen (Android app in android/, stock Google TV home disabled); see HANDOFF sections 1 and 3.4",
   "entryPoint": "START_HERE.md",
   "currentSpecification": "HANDOFF.md",
   "nextSessionPrompt": "NEXT_SESSION_PROMPT.txt",
