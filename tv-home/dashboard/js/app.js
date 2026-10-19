@@ -346,7 +346,7 @@ function showEarnings(rows,focusedId,focusedPage){
   setText($('calendar-title'),'主要企業の決算');
   const info=earningsInfo.data,stale=earningsInfo.stale || info.missing>0;
   $('calendar-source').textContent=`Nasdaq · ${info.companies}社${stale?' · 一部更新待ち':''}`;
-  $('calendar-source').title=`Nasdaqの決算カレンダー（${info.from}〜${info.through}、米国の日付）から市況への影響が大きい${info.companies}社を表示。日付は日本時間。発表日は変更される場合があります。`;
+  $('calendar-source').title=`Nasdaqの決算カレンダー（${info.from}〜${info.through}、米国の日付）から市況への影響が大きい${info.companies}社を表示。日付と時刻は日本時間で、時刻は各社のいつもの発表時刻。発表日は変更される場合があります。`;
   $('calendar-events').replaceChildren();
   if(!rows.length)$('calendar-events').append(el('p','calendar-empty','今後8週間、主要企業の決算予定はありません'));
   const today=jstDay(Date.now()),tomorrow=jstDay(Date.now()+86400000);let previousDay='';
@@ -357,8 +357,11 @@ function showEarnings(rows,focusedId,focusedPage){
     day.append(el('strong','',MONTH_DAY.format(date)),el('span','',eventDay===today?'今日':eventDay===tomorrow?'明日':WEEKDAY_SHORT.format(date)));
     if(eventDay===previousDay)row.classList.add('same-day');previousDay=eventDay;
     const detail=el('div','calendar-detail calendar-company');detail.append(earningsLogo(event.symbol,'calendar-logo'),el('span','calendar-title',event.symbol));
-    row.append(day,detail,el('span','calendar-time calendar-timing',TIMING_LABEL[event.timing]));
-    row.setAttribute('aria-label',`${dated(date)} 日本時間 ${event.symbol}（${event.company}）決算 ${TIMING_LABEL[event.timing]}`);
+    // The usual release time in Japan; when Nasdaq disagrees with it, only the session.
+    const at=event.exact?el('time','calendar-time number',time(date)):el('span','calendar-time calendar-timing',TIMING_LABEL[event.timing]);
+    if(event.exact)at.dateTime=date.toISOString();
+    row.append(day,detail,at);
+    row.setAttribute('aria-label',`${dated(date)} ${event.exact?time(date):TIMING_LABEL[event.timing]} 日本時間 ${event.symbol}（${event.company}）決算`);
     if(index===0 && calendarIndex===1)row.classList.add('next-event');
     $('calendar-events').append(row);
   });
@@ -675,12 +678,13 @@ function openEarningsDetail(row){
   const usd=v=>isNumber(v)?`${v<0?'−':''}$${Math.abs(v).toFixed(2)}`:'';
   const cap=v=>!isNumber(v)?'':v>=1e12?`約${(v/1e12).toFixed(1)}兆ドル`:`約${Math.round(v/1e8).toLocaleString('ja-JP')}億ドル`;
   const us=`${event.date.slice(5).replace('-','/')}（米国）`;
-  const japan=event.timing==='pre'?`${dated(date)}（${WEEKDAY_SHORT.format(date)}）の夜（およそ20〜23時）`:event.timing==='after'?`${dated(date)}（${WEEKDAY_SHORT.format(date)}）の朝（およそ5〜7時）`:'未定';
-  openDetail({eyebrow:`決算発表 · ${event.company||'Nasdaq'}`,title:event.symbol,subtitle:[when,`${dated(date)}（${WEEKDAY_SHORT.format(date)}）${TIMING_LABEL[event.timing]}`].filter(Boolean).join(' · '),
-    facts:[['発表',`${us} ${event.timing==='pre'?'寄り前（取引開始前）':event.timing==='after'?'引け後（取引終了後）':'時刻未定'}`],['日本時間の目安',japan],['対象',event.quarter],
+  const session=event.timing==='pre'?'寄り前（取引開始前）':event.timing==='after'?'引け後（取引終了後）':'時刻未定';
+  const japan=event.exact?FULL_JST.format(date):event.timing==='pre'?`${dated(date)}（${WEEKDAY_SHORT.format(date)}）の夜（およそ20〜23時）`:event.timing==='after'?`${dated(date)}（${WEEKDAY_SHORT.format(date)}）の朝（およそ5〜7時）`:'未定';
+  openDetail({eyebrow:`決算発表 · ${event.company||'Nasdaq'}`,title:event.symbol,subtitle:[when,`${dated(date)}（${WEEKDAY_SHORT.format(date)}）${event.exact?time(date):TIMING_LABEL[event.timing]}`].filter(Boolean).join(' · '),
+    facts:[[event.exact?'日本時間':'日本時間の目安',japan],['米国東部時間',event.exact?`${FULL_ET.format(date)}・${session}`:`${us} ${session}`],['対象',event.quarter],
       ['予想EPS',event.epsForecast===null?'':`${usd(event.epsForecast)}${event.estimates?`（アナリスト${event.estimates}人の平均）`:''}`],
       ['前年同期のEPS',event.lastYearEps===null?'':`${usd(event.lastYearEps)}${event.lastYearDate?`（${event.lastYearDate}発表）`:''}`],
-      ['時価総額',cap(event.marketCap)],['会社名',event.company],['注記','Nasdaqの決算カレンダー。発表日や時刻は会社の都合で変わることがあります。']],
+      ['時価総額',cap(event.marketCap)],['会社名',event.company],['注記',event.exact?'日付と寄り前／引け後はNasdaqの決算カレンダー、時刻はこの会社のいつもの発表時刻（直近の決算から）。会社の都合で変わることがあります。':'Nasdaqの決算カレンダー。いつもの発表時刻と寄り前／引け後が食い違うため、時刻は出していません。発表日や時刻は会社の都合で変わることがあります。']],
     link:{href:row.href,label:'Nasdaqで見る'},accent:getComputedStyle(row).getPropertyValue('--cat').trim()});
   $('detail-title').prepend(earningsLogo(event.symbol,'detail-logo'));
 }

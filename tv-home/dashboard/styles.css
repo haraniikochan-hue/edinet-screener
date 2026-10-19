@@ -197,10 +197,8 @@ html,body { height: 100%; overflow: hidden; }
 .calendar-event:is([data-indicator=CPI],[data-indicator=PPI],[data-indicator=PCE]) { --cat: #ff9f0a; }
 .calendar-event:is([data-indicator=NFP],[data-indicator=JOLTS]) { --cat: #409cff; }
 .calendar-event[data-indicator=GDP] { --cat: #63e6be; }
-/* Earnings pages: indigo before the New York open (that evening in Japan), yellow after the close
-   (the next morning in Japan) */
-.calendar-event[data-indicator=EARNINGS-pre] { --cat: #7d7aff; }
-.calendar-event[data-indicator=EARNINGS-after] { --cat: #ffd60a; }
+/* Earnings pages: the logos carry the colour, so the row marker stays neutral */
+.calendar-event[data-indicator^=EARNINGS] { --cat: rgba(235,240,255,.35); }
 .earnings-event { align-items: center; }
 .calendar-detail.calendar-company { flex-direction: row; align-items: center; gap: 10px; }
 .calendar-logo { width: 24px; height: 24px; flex-shrink: 0; border-radius: 50%; box-shadow: 0 0 0 .5px rgba(255,255,255,.16); }

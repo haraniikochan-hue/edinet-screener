@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync } from 'node:fs';
-import { MAJOR_US, EARNINGS_URL, earningsUrl, earningsDates, newYorkTime, parseEarnings, loadEarnings, upcomingEarnings } from '../dashboard/js/earnings.js';
+import { MAJOR_US, RELEASE_TIMES, EARNINGS_URL, earningsUrl, earningsDates, newYorkTime, parseEarnings, loadEarnings, upcomingEarnings } from '../dashboard/js/earnings.js';
 
 const HOUR = 3600000;
 const row = (symbol, time, extra = {}) => ({ symbol, name:`${symbol} Inc.`, time, marketCap:'$1,234,567,890', fiscalQuarterEnding:'Sep/2026',
@@ -17,7 +17,7 @@ test('only the market movers are kept, with timing, quarter and numbers',()=>{
   assert.equal(meta.company,'META Inc.');assert.equal(meta.timing,'after');assert.equal(meta.id,'META:2026-10-21');
   assert.equal(meta.quarter,'2026年9月までの四半期');assert.equal(meta.epsForecast,1.23);assert.equal(meta.estimates,7);
   assert.equal(meta.lastYearEps,-0.1);assert.equal(meta.marketCap,1234567890);
-  assert.equal(rows[1].timing,'pre');assert.equal(rows[2].timing,'unknown');assert.equal(rows[2].epsForecast,null);
+  assert.equal(rows[1].timing,'pre');assert.equal(rows[2].timing,'after','no session from Nasdaq: the usual time decides');assert.equal(rows[2].epsForecast,null);
   assert.throws(()=>parseEarnings('{}','2026-10-21'),/決算/);
   assert.ok(!MAJOR_US.includes('GOOG'),'Alphabet is listed once (GOOGL)');
   for(const symbol of MAJOR_US)assert.ok(existsSync(new URL(`../dashboard/assets/earnings/${symbol}.png`,import.meta.url)),`${symbol} has a logo`);
@@ -27,8 +27,24 @@ test('report times follow New York, including the end of daylight saving',()=>{
   assert.equal(newYorkTime('2026-10-21',8),Date.parse('2026-10-21T21:00:00+09:00'));
   assert.equal(newYorkTime('2026-11-03',8),Date.parse('2026-11-03T22:00:00+09:00'));
   const [pre]=parseEarnings(page([row('JPM','time-pre-market')]),'2026-10-21'),[after]=parseEarnings(page([row('META','time-after-hours')]),'2026-10-21');
-  assert.equal(pre.timestamp,Date.parse('2026-10-21T21:00:00+09:00'));
+  assert.equal(pre.timestamp,Date.parse('2026-10-21T19:45:00+09:00'),'JPMorgan releases at 6:45 New York');assert.equal(pre.exact,true);
   assert.equal(after.timestamp,Date.parse('2026-10-22T05:05:00+09:00'),'after the close is the next morning in Japan');
+});
+test('each company keeps its usual release time, in its own city, unless Nasdaq disagrees',()=>{
+  assert.deepEqual(Object.keys(RELEASE_TIMES).sort(),[...MAJOR_US].sort(),'every company has a usual time');
+  const at=(symbol,time,date='2026-10-21')=>parseEarnings(page([row(symbol,time)]),date)[0];
+  assert.equal(at('AAPL','time-after-hours').timestamp,Date.parse('2026-10-22T05:30:00+09:00'));
+  assert.equal(at('NVDA','time-after-hours','2026-11-18').timestamp,Date.parse('2026-11-19T06:20:00+09:00'),'standard time in November');
+  // TSMC (Taipei 13:30) and ASML (Amsterdam 07:00) release before New York opens
+  const tsmc=at('TSM','time-pre-market'),asml=at('ASML','time-pre-market');
+  assert.equal(tsmc.timestamp,Date.parse('2026-10-21T14:30:00+09:00'));assert.equal(tsmc.timing,'pre');
+  assert.equal(asml.timestamp,Date.parse('2026-10-21T14:00:00+09:00'));
+  assert.equal(at('ASML','time-pre-market','2026-11-17').timestamp,Date.parse('2026-11-17T15:00:00+09:00'),'Amsterdam back on winter time');
+  // No session from Nasdaq: the usual time decides it
+  const unknown=at('MSFT','time-not-supplied');assert.equal(unknown.timing,'after');assert.equal(unknown.exact,true);
+  // Nasdaq says before the open for a company that releases after the close: only the session is kept
+  const moved=at('NVDA','time-pre-market');assert.equal(moved.exact,false);assert.equal(moved.timing,'pre');
+  assert.equal(moved.timestamp,Date.parse('2026-10-21T21:00:00+09:00'));
 });
 test('the weeks ahead are US weekdays starting from New York\'s today',()=>{
   // 01:00 on Tue 20 Oct in Japan is still Mon 19 Oct in New York
