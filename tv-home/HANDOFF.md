@@ -1,4 +1,4 @@
-# TV Home 引き継ぎ書 — v0.6.1
+# TV Home 引き継ぎ書 — v0.7.0
 
 引き継ぎ日：2026-10-19。対象：Xiaomi TV用ホーム画面のフェーズ2・Webダッシュボード。
 
@@ -10,7 +10,7 @@ v0.5.5はユーザーに「ほぼ完成形」と評価されたが、ユーザ�
 
 ## 1. 現在地と再開方法
 
-- 最新アプリは **0.6.1**。v0.6.0のデザイン刷新（第3節）とNHKニュース配信元の修正に、TV向けの軽量化（第3.1節）を加えた。
+- 最新アプリは **0.7.0**。v0.6.0のデザイン刷新（第3節）とNHKニュース配信元の修正、v0.6.1のTV向け軽量化（第3.1節）に、広告ブロック（第7節）を加えた。
 - Web版は実装済み。12銘柄の実価格・24時間チャート、渋谷の天気、米国経済指標、ニュースを表示する。
 - 配置・余白・透明感はv0.5.5で評価済み。v0.6.0の文字・素材・動きはこのセッションで実装し、ユーザーの評価待ち。
 - APK、TVへのインストール、ADB設定変更、公開ホスティングは未実施。
@@ -199,12 +199,38 @@ Web版の順序：SmartTube（YouTubeの見た目）、U-NEXT、Netflix、Prime 
 - ロゴは `dashboard/assets/apps/` に同梱。[出典](dashboard/assets/apps/SOURCES.md)あり。表示のための外部画像リクエストは不要。
 - 矢印キーで移動、Enterで決定、マウスを重ねても選択。名前のラベルと短い押下アニメーション。
 - Web単独ではネイティブアプリを起動せず、その旨を表示する。インストール済みとは仮定しない。
-- 接続口：`window.Android.getApps()` と `window.Android.launchApp(packageName)`。
+- 接続口：`window.Android.getApps()` と `window.Android.launchApp(packageName)`。広告ブロック用に任意で `getPrivateDns()` と `setPrivateDns(host)`（下記）。
 - `getApps()` は `name` と `packageName` を持つ配列のJSON文字列。実機から得た妥当なパッケージ名を使う。
 - 実一覧が返るとWebの固定ドックを置き換える。現在は **最大12アプリ＋設定**。実機の順序・ピン留め・固定ドックとの統合はフェーズ3で検討する。
 - 表示名に対応する既知ロゴと未知アプリの頭文字表示に対応。起動するパッケージをロゴから推測しない。SmartTubeをYouTubeの起動先にしない。
 
 フェーズ3の想定はKotlinの薄いランチャー＋WebView。`WebViewAssetLoader`等で安全なオリジンを用意する。従来の `addJavascriptInterface` はiframeにも公開されるため、現在はAndroidブリッジ検出中に外部TradingView iframeを無効化している。併用するならオリジン制限付きWebMessage API等で設計する。
+
+### 広告ブロック（v0.7.0）
+
+TV全体の広告は、AndroidのプライベートDNSをAdGuard DNS（`dns.adguard-dns.com`、DNS over TLS）にして遮断する。広告・トラッカーのドメインに `0.0.0.0` を返す。2026-10-19に、広告ドメインが `0.0.0.0` になり、本ダッシュボードの配信元とドックのアプリの主なドメインは通常どおり解決されることをDoHで確認した。YouTubeの広告はDNSでは消えないためSmartTubeが担う。動画・音声に組み込まれた広告（Prime Video・Netflixの広告付きプラン、Spotify無料版）は対象外。ユーザー向けの手順はREADMEの「広告ブロック」。
+
+- **Web（実装済み）**：設定の「広告ブロック」。`js/adblock.js` が広告配信ホスト2つと、遮断されない比較用ホスト（`www.gstatic.com/generate_204`）へ `no-cors`・Cookieなしで接続し、有効／一部／無効／確認不可を表示する。応答は読まない。設定を開いたときに、前回の確認から60秒以上経っていれば自動で確認する。
+- **フェーズ3のブリッジ（Web側は実装済み、制御レスポンスで検証）**：`getPrivateDns()` が `{"mode":"off|opportunistic|hostname","specifier":"…"}` のJSON文字列を返し、`setPrivateDns(host)` がホスト名（空文字でAndroid標準の `opportunistic` に戻す）を受け取り `{"ok":true}` または `{"ok":false,"error":"permission"}` を返す。両方あると設定にスイッチとDNSサーバー欄が出る。Web側はホスト名を検証してから渡す（設定の `adblockDns`、初期値 `dns.adguard-dns.com`）。
+- Kotlin側の想定（未実装）：`Settings.Global` の `private_dns_specifier` と `private_dns_mode` を書く。`WRITE_SECURE_SETTINGS` はインストール後にPCから一度だけ `adb shell pm grant <パッケージ名> android.permission.WRITE_SECURE_SETTINGS` で与える。Kotlin側でもホスト名を検証する。
+
+```kotlin
+@JavascriptInterface fun getPrivateDns(): String = JSONObject()
+  .put("mode", Settings.Global.getString(contentResolver, "private_dns_mode") ?: "opportunistic")
+  .put("specifier", Settings.Global.getString(contentResolver, "private_dns_specifier") ?: "").toString()
+@JavascriptInterface fun setPrivateDns(host: String): String = try {
+  if (host.isEmpty()) Settings.Global.putString(contentResolver, "private_dns_mode", "opportunistic")
+  else {
+    require(Regex("^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\\.)+[a-z][a-z0-9-]{0,61}[a-z0-9]$").matches(host))
+    Settings.Global.putString(contentResolver, "private_dns_specifier", host)
+    Settings.Global.putString(contentResolver, "private_dns_mode", "hostname")
+  }
+  "{\"ok\":true}"
+} catch (e: SecurityException) { "{\"ok\":false,\"error\":\"permission\"}" }
+  catch (e: IllegalArgumentException) { "{\"ok\":false,\"error\":\"invalid\"}" }
+```
+
+- **安全上の注意**：このブリッジはTVのシステム設定を書き換えられる。従来の `addJavascriptInterface` はiframeを含む全フレームに公開されるため、`WebViewAssetLoader` で配信するアプリ自身のオリジンだけに公開する（WebMessageの許可オリジン指定など）。外部ページを同じWebViewで開かない。DNSの変更は元に戻せる設定変更で、システムアプリの無効化ではないが、実機へのコマンド実行は従来どおりユーザーの確認を取ってから行う。
 
 ## 8. 実行構成とファイルの役割
 
@@ -295,6 +321,7 @@ PLAYWRIGHT_MODULE=/absolute/path/to/playwright/index.mjs CHROMIUM_PATH=/path/to/
 - 今回の梱包確認は別の記録として保存し、ブラウザ検証の日時を今回実施したかのように書き換えない。
 - **v0.6.0（2026-10-19）**：単体テスト39件（NHK ONEのリンク許可と類似ドメイン拒否を追加）、`npm run build`、実APIの `browser-check.mjs`（全6画面サイズ・ドック・設定・通信断キャッシュ・TradingView）、`browser-integrations-check.mjs`、`browser-weather-check.mjs` が成功。`browser-check.mjs` の下端ヒント行の判定は「ドックが下端から40px以上内側」に置き換えた。
 - **v0.6.1（2026-10-19）**：単体テスト41件（frostの切り抜き形状を追加）、`npm run build`、`browser-integrations-check.mjs`、`browser-weather-check.mjs` が成功。`browser-check.mjs` には「TVステージはfrostを使い、カードに `backdrop-filter` がない」「frostはTVステージだけ」「ゆっくりズームは初期オフで、設定でオンにできる」の確認を追加し、最終コードで2回連続成功（直前のほぼ同じコードでも5回成功）。Open-Meteoの予報APIがこの環境から一時的に応答しなかった間の2回は天気の取得待ちでタイムアウト。それとは別に、最初の1回だけ失敗メッセージを記録できなかったアサーション失敗があり、その後の7回では再現していない。
+- **v0.7.0（2026-10-19）**：単体テスト47件（広告ブロックのホスト名検証・判定・ブリッジ・設定の6件を追加）、実APIの `browser-check.mjs`、`browser-weather-check.mjs`、`browser-integrations-check.mjs` が成功。統合検証に、広告ドメインの遮断あり／なしの判定と、模擬ブリッジへ検証済みホスト名と空文字（自動に戻す）だけが渡ること、不正なDNSサーバーを保存時に拒否することを追加した。実機のプライベートDNS変更とAPKのブリッジは未検証。
 - `browser-market-check.mjs` は冒頭の1件（WebSocketの82,000を期待するが、同時刻のHTTPスナップショット81,000が後から描画される）が失敗する。**同じ失敗が未変更のv0.5.5でも再現**するため既存のテストの競合で、今回の変更によるものではない。その1件だけを飛ばした一時コピーでは、上場廃止・切断時のHTTP切り替え・古い値の表示・CoinGecko切り替えがすべて成功した（`artifacts/market-check.json` はv0.4.0の記録のまま）。
 
 スクリーンショットの価格・時刻は撮影当時の実データ。現在価格の保証や固定表示のサンプルではない。

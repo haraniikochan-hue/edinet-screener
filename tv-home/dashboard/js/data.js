@@ -1,9 +1,11 @@
 import { MARKETS } from './market-definitions.js';
+import { DEFAULT_ADBLOCK_DNS, validDnsHost } from './adblock.js';
 export const SYMBOLS = MARKETS.map(m=>[m.symbol,m.name,m.symbol]);
+
 export const DEFAULT_CONFIG = {
   location: { name: '渋谷区', latitude: 35.6589, longitude: 139.70665 },
   timeZone: 'Asia/Tokyo', marketMode: 'custom', cryptoSource: 'hyperliquid', photoMode: 'sample',
-  photoInterval: 60, motion: false, apiBase: '', spotifyClientId: '', chartRange: '1d',
+  photoInterval: 60, motion: false, apiBase: '', spotifyClientId: '', chartRange: '1d', adblockDns: DEFAULT_ADBLOCK_DNS,
 };
 export const isNumber = n => typeof n === 'number' && Number.isFinite(n);
 // toLocaleString builds a new NumberFormat on every call; prices update every second.
@@ -36,6 +38,7 @@ export function normalizeConfig(input = {}) {
   if (['sample','unsplash'].includes(input.photoMode)) result.photoMode = input.photoMode;
   if (isNumber(input.photoInterval)) result.photoInterval = Math.min(600, Math.max(30, input.photoInterval));
   if (typeof input.motion === 'boolean') result.motion = input.motion;
+  if (validDnsHost(input.adblockDns)) result.adblockDns = input.adblockDns.toLowerCase();
   if (typeof input.spotifyClientId === 'string' && /^[a-f0-9]{32}$/.test(input.spotifyClientId)) result.spotifyClientId = input.spotifyClientId;
   // Optional backend origin. Secrets must remain on that server.
   if (input.apiBase && safeUrl(input.apiBase)) result.apiBase = input.apiBase.replace(/\/$/, '');

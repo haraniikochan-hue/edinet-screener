@@ -4,7 +4,9 @@
 
 `HANDOFF.md` のフェーズ2を実装した、ビルド不要のHTML/CSS/JavaScript＋小さなNode.jsデータサーバーです。時計・天気・経済指標を左、マーケット・ニュース・Spotifyを右にまとめ、Apple TV／iOSのクリアなガラス素材・Inter＋Noto Sans JP・iOSのシステムカラーで統一しています。
 
-## 現在の仕様（v0.6.1）
+## 現在の仕様（v0.7.0）
+
+- **広告ブロック（v0.7.0）**：設定に「広告ブロック」を追加。TVで広告が遮断されているかを確認でき、手順は下の「広告ブロック」にあります。フェーズ3のAPKでは、AdGuard DNSへの切り替えをスイッチ1つで行えます。
 
 - **TV向けの軽量化（v0.6.1）**：カードのぼかしを写真ごとに1回だけ作る方式に変え、常時動くアニメーションをなくし、毎秒の処理を変化した部分だけにしました。計測では待機中のChromium CPUが103%→3%、描画は13fps→60fps。ゆっくりズームは初期設定オフです。詳細は `HANDOFF.md` 第3.1節、計測は `scripts/perf-bench.mjs`。
 
@@ -158,6 +160,36 @@ Pexelsも候補ですが、APIドキュメントには壁紙アプリを含む�
 キー未設定・取得失敗時は保存済み写真、または同梱写真を表示します。画像URLの直接利用と撮影者/Unsplashへのリンクは実装済みです。手動ダウンロード・壁紙への保存機能はありません。追加する場合はUnsplashのdownload tracking要件も実装してください。
 
 参考：[Unsplash API](https://unsplash.com/documentation) / [Pexels API](https://www.pexels.com/api/documentation/) / [同梱写真のライセンス](dashboard/assets/ATTRIBUTION.txt)
+
+### 広告ブロック
+
+TV Home自体には広告がありません。TV全体の広告とトラッカーは、Androidの**プライベートDNS**に [AdGuard DNS](https://adguard-dns.io/) を設定して遮断します。広告配信ドメインの名前解決に `0.0.0.0` を返す仕組みで、アプリの追加は不要です。2026-10-19に、AdGuard DNSが広告ドメインを遮断し、このダッシュボードの配信元（Open-Meteo・NHK・Hyperliquid・Spotify・Unsplash・BLS/BEA）とドックのアプリ（YouTube・Netflix・Prime Video・Disney+・U-NEXT）の主なドメインは遮断しないことを確認しました。
+
+**効果を確認する**：画面の **設定 → 広告ブロック → 確認する**。広告配信ドメインに接続できるかだけを調べ、「広告ブロック 有効／無効」を表示します（内容は読み込まず、Cookieも送りません）。
+
+**設定する（どれか1つ）**
+
+1. **TVの設定画面**：設定 → ネットワークとインターネット → プライベートDNS に `dns.adguard-dns.com`。Google TVでは項目がない機種が多く、その場合は次の方法を使います。
+2. **PCからADB**（TVの設定をコマンドで変更します。システムアプリの無効化はしません）
+   1. TVの設定でデバイス情報の「ビルド」を7回押して開発者向けオプションを出し、USBデバッグまたはワイヤレスデバッグをオンにする。
+   2. 同じWi-FiのPCで `adb connect <TVのIPアドレス>`（ワイヤレスデバッグは先に `adb pair`）。TVに出る確認を許可する。
+   3. 次を実行する。
+
+      ```sh
+      adb shell settings put global private_dns_specifier dns.adguard-dns.com
+      adb shell settings put global private_dns_mode hostname
+      ```
+
+   元に戻すときは `adb shell settings put global private_dns_mode opportunistic`（Android標準の「自動」）。
+3. **ルーター**：DNSを `94.140.14.14` / `94.140.15.15`（AdGuard DNS）にする。家の全端末に効きます。
+
+**フェーズ3のAPK**では、設定画面の「TV全体で広告をブロック」スイッチ1つで切り替えられるようにします（Web側は実装済み、`HANDOFF.md` 第7節）。
+
+**できないこと**
+- YouTubeの広告は動画と同じドメインから届くためDNSでは消えません。ドックのSmartTubeが広告を除去します。
+- Prime Videoの広告付きプラン、Netflixの広告付きプラン、Spotify無料版の広告は、動画・音声そのものに組み込まれているため消せません。無理に遮断すると再生できなくなることがあります。
+- アプリやサイトが動かなくなったら、上の「元に戻す」でAndroid標準に戻してください。
+- 遮断する範囲を変えたい場合は [NextDNS](https://nextdns.io/) なども使えます。設定の「DNSサーバー」にホスト名（例：`xxxxxx.dns.nextdns.io`）を入れます。
 
 ## 操作
 

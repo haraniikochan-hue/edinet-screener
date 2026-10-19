@@ -357,6 +357,8 @@ details.about { padding: 16px 20px; border-radius: 22px; background: rgba(255,25
 .feed-pill[data-state=live] { color: var(--up); }.feed-pill[data-state=live]::before,.status-dot.connected { background: var(--up); }
 .feed-pill[data-state=waiting]::before,.status-dot.stale { background: var(--warn); }
 .market-coverage { display: flex; align-items: center; gap: 6px; }
+.adblock-status { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 12px; }
+#adblock-native .checkbox-label { margin-top: 14px; }
 .chart-caption { display: flex; flex-direction: column; gap: 6px; line-height: 1.6; }
 #chart-legend i { display: inline-block; width: 14px; border-top: 1px dashed var(--label-3); margin-right: 4px; vertical-align: middle; }
 .dialog-actions { display: flex; justify-content: flex-end; gap: 12px; padding-top: 22px; }

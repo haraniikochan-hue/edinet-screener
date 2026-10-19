@@ -63,6 +63,28 @@ try{
   await native.getByRole('button',{name:'SmartTube',exact:true}).click();
   assert.equal(await native.locator('[data-package="org.fixture.playback"] .app-icon').evaluate(e=>e.getAnimations().length),0);
   report.push('Android bridge fixture: Disney+ and Spotify branding and supplied package launches verified; YouTube artwork still launches the supplied SmartTube package; unknown apps retained; all 13 buttons reachable through scrolling; reduced-motion disables press animation; external TradingView frames disabled.');await nativeContext.close();
+  // Ad blocking: reachability against fixtures, and the optional launcher bridge for Private DNS.
+  const adContext=await browser.newContext({viewport:{width:1920,height:1080}});
+  await adContext.addInitScript(()=>{
+    window.__dns={mode:'opportunistic',specifier:''};window.__dnsCalls=[];
+    window.Android={getPrivateDns:()=>JSON.stringify(window.__dns),setPrivateDns:host=>{window.__dnsCalls.push(host);window.__dns=host?{mode:'hostname',specifier:host}:{mode:'opportunistic',specifier:''};return JSON.stringify({ok:true});}};
+  });
+  const ads=await adContext.newPage();let adsBlocked=true;
+  await ads.route(/googlesyndication\.com|doubleclick\.net/,route=>adsBlocked?route.abort():route.fulfill({status:200,body:''}));
+  await ads.route('https://www.gstatic.com/generate_204',route=>route.fulfill({status:204,body:''}));
+  await ads.goto(base,{waitUntil:'domcontentloaded'});await ads.locator('[data-open-settings="general"]').click();
+  await ads.locator('#adblock-state').filter({hasText:'広告ブロック 有効'}).waitFor();
+  assert.equal(await ads.locator('#adblock-native').isVisible(),true);assert.equal(await ads.locator('#adblock-toggle').isChecked(),false);
+  await ads.locator('#adblock-toggle').check();
+  assert.deepEqual(await ads.evaluate(()=>window.__dnsCalls),['dns.adguard-dns.com']);
+  await ads.locator('#adblock-message').filter({hasText:'dns.adguard-dns.com'}).waitFor();
+  await ads.locator('#adblock-toggle').uncheck();
+  assert.deepEqual(await ads.evaluate(()=>window.__dnsCalls),['dns.adguard-dns.com','']);
+  await ads.locator('#adblock-dns').fill('bad host');await ads.getByRole('button',{name:'設定を保存',exact:true}).click();
+  assert.match(await ads.locator('#settings-error').textContent(),/DNSサーバー/);
+  adsBlocked=false;await ads.locator('#adblock-check').click();await ads.locator('#adblock-state').filter({hasText:'広告ブロック 無効'}).waitFor();
+  report.push('Ad blocking fixture: blocked ad hosts read as active and reachable ones as inactive; the launcher bridge receives only the validated AdGuard DNS hostname, an empty value to restore automatic DNS, and a malformed server is rejected on save.');
+  await adContext.close();
   await mkdir('artifacts',{recursive:true});await writeFile('artifacts/integration-check.json',JSON.stringify({checkedAt:new Date().toISOString(),scope:'Mock responses only; real credentials and TV hardware not tested',report},null,2));
   console.log(report.join('\n'));
 }finally{await browser.close();}

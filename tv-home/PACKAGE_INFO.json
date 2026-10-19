@@ -1,9 +1,9 @@
 {
   "project": "TV Home",
-  "appVersion": "0.6.1",
-  "handoffRevision": "2026-10-19.3",
+  "appVersion": "0.7.0",
+  "handoffRevision": "2026-10-19.4",
   "createdAt": "2026-10-19",
-  "userStatus": "v0.6.1: v0.6.0 design plus TV performance work; awaiting the user's review on the TV.",
+  "userStatus": "v0.7.0: design refresh, TV performance and ad blocking; awaiting the user's review on the TV.",
   "entryPoint": "START_HERE.md",
   "currentSpecification": "HANDOFF.md",
   "nextSessionPrompt": "NEXT_SESSION_PROMPT.txt",
@@ -38,5 +38,5 @@
   "published": false,
   "apkBuilt": false,
   "tvConnected": false,
-  "verification": "HANDOFF.md sections 3.1 and 10 (v0.6.1)"
+  "verification": "HANDOFF.md sections 3.1, 7 and 10 (v0.7.0)"
 }

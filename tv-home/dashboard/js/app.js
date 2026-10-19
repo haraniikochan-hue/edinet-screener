@@ -4,6 +4,7 @@ import { installNavigation } from './navigation.js';
 import { nativeAppTile, pressApp } from './launcher.js';
 import { Slideshow, SAMPLE_PHOTOS } from './slideshow.js';
 import { Frost, frostSupported } from './frost.js';
+import { DEFAULT_ADBLOCK_DNS, adBlockStatus, nativePrivateDns, setNativePrivateDns, validDnsHost } from './adblock.js';
 import * as spotify from './spotify.js';
 import { mountTradingView } from './tradingview.js';
 import { getMarketSnapshot, getMarketCandles, HyperliquidStream } from './hyperliquid.js';
@@ -401,6 +402,21 @@ function applyConfig() {
   document.body.classList.toggle('motion',config.motion && !matchMedia('(prefers-reduced-motion: reduce)').matches);
   configureMarket();slideshow.setPhotos(SAMPLE_PHOTOS);slideshow.schedule(config.photoInterval);restartJobs();tick();
 }
+const ADBLOCK = {checking:['確認中…',''],active:['広告ブロック 有効','live'],partial:['一部の広告のみ遮断','waiting'],inactive:['広告ブロック 無効',''],unknown:['確認できません（オフライン）','']};
+let adblockCheckedAt=0, adblockStatus='', adblockVersion=0;
+function showAdBlock(status){adblockStatus=status;const [label,state]=ADBLOCK[status];$('adblock-state').textContent=label;$('adblock-state').dataset.state=state;}
+async function checkAdBlock(){
+  const version=++adblockVersion;showAdBlock('checking');
+  const status=await adBlockStatus();
+  if(version===adblockVersion){adblockCheckedAt=Date.now();showAdBlock(status);}
+}
+// With the Phase 3 launcher bridge, the switch changes the TV's Private DNS directly.
+function renderNativeAdBlock(){
+  const state=nativePrivateDns();$('adblock-native').hidden=!state;if(!state)return;
+  const host=state.mode==='hostname'?state.host:'';
+  $('adblock-toggle').checked=Boolean(host);if(host)$('adblock-dns').value=host;
+  $('adblock-help').textContent=`オンにすると、TVのプライベートDNSを上のサーバー（初期値は広告とトラッカーを遮断するAdGuard DNS）に切り替えます。オフでAndroid標準の「自動」に戻ります。アプリが動かなくなったらオフにしてください。YouTubeの広告はSmartTubeが除去します。動画や音声に組み込まれた広告は消せません。`;
+}
 function closeSettings(){ $('settings-overlay').hidden=true;$('stage').inert=false;document.body.classList.remove('modal-open');returnFocus?.focus({preventScroll:true}); }
 function openSettings(section='general') {
   returnFocus=document.activeElement;selectedLocation={...config.location};
@@ -409,6 +425,8 @@ function openSettings(section='general') {
   $('market-mode').querySelector('[value="tradingview"]').disabled=Boolean(window.Android);
   $('spotify-client-id').value=config.spotifyClientId || backend.spotifyClientId || '';$('api-base').value=config.apiBase;$('spotify-redirect').textContent=spotify.redirectUri();
   $('photo-help').textContent=backend.unsplash?'Unsplash APIキー設定済み。NYの風景を1時間ごとに取得します。':'Unsplashはサーバー側のUNSPLASH_ACCESS_KEY設定後に利用できます。';
+  $('adblock-dns').value=config.adblockDns;$('adblock-message').textContent='';renderNativeAdBlock();
+  if(Date.now()-adblockCheckedAt>60000 || !adblockStatus)void checkAdBlock();
   $('spotify-message').textContent='';$('settings-error').textContent='';$('settings-overlay').hidden=false;$('stage').inert=true;document.body.classList.add('modal-open');
   (section==='market' ? $('market-mode') : section==='spotify' ? $('spotify-client-id') : $('close-settings')).focus();
 }
@@ -416,7 +434,12 @@ async function saveSettings({close=true}={}) {
   const clientId=$('spotify-client-id').value.trim(), apiBase=$('api-base').value.trim();
   if(clientId && !/^[a-f0-9]{32}$/.test(clientId))throw new Error('Spotify Client IDは32文字の英数字です');
   if(apiBase && !safeUrl(apiBase))throw new Error('データサーバーにはHTTPSのURLを指定してください');
-  const next=normalizeConfig({...config,location:selectedLocation,marketMode:$('market-mode').value,cryptoSource:$('crypto-source-select').value,photoMode:$('photo-mode').value,photoInterval:Number($('photo-interval').value),motion:$('motion').checked,spotifyClientId:clientId,apiBase});
+  const adblockDns=$('adblock-dns').value.trim().toLowerCase()||DEFAULT_ADBLOCK_DNS;
+  if(!validDnsHost(adblockDns))throw new Error('広告ブロックのDNSサーバーの形式を確認してください');
+  // A new server is applied straight away when the TV is already blocking through the old one.
+  const native=nativePrivateDns();
+  if(native?.mode==='hostname' && native.host && native.host!==adblockDns){const result=setNativePrivateDns(adblockDns);if(!result.ok)throw new Error(result.error);}
+  const next=normalizeConfig({...config,location:selectedLocation,marketMode:$('market-mode').value,cryptoSource:$('crypto-source-select').value,photoMode:$('photo-mode').value,photoInterval:Number($('photo-interval').value),motion:$('motion').checked,spotifyClientId:clientId,apiBase,adblockDns});
   if(config.spotifyClientId && config.spotifyClientId!==next.spotifyClientId)spotify.disconnect();
   const locationChanged=config.location.latitude!==next.location.latitude || config.location.longitude!==next.location.longitude;
   if(config.apiBase!==next.apiBase){quotes.clear();renderStocks();}
@@ -476,6 +499,13 @@ $('refresh').onclick=async()=>{const button=$('refresh');button.disabled=true;tr
 $('fullscreen').onclick=async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else if(document.documentElement.requestFullscreen)await document.documentElement.requestFullscreen();else toast('このブラウザでは全画面表示を利用できません');}catch{toast('全画面表示を開始できませんでした');}};
 document.addEventListener('fullscreenchange',()=>{$('fullscreen').setAttribute('aria-label',document.fullscreenElement?'全画面を終了':'全画面に切り替え');});
 $('spotify-connect').onclick=()=>openSettings('spotify');
+$('adblock-check').onclick=()=>void checkAdBlock();
+$('adblock-toggle').onchange=()=>{
+  const on=$('adblock-toggle').checked,host=$('adblock-dns').value.trim().toLowerCase()||DEFAULT_ADBLOCK_DNS;
+  const result=setNativePrivateDns(on?host:'');
+  $('adblock-message').textContent=!result.ok?result.error:on?`プライベートDNSを ${host} にしました。反映まで少し時間がかかることがあります。`:'プライベートDNSをAndroid標準の「自動」に戻しました。';
+  renderNativeAdBlock();if(result.ok)setTimeout(()=>void checkAdBlock(),2500);
+};
 $('connect-in-settings').onclick=async()=>{try{await saveSettings({close:false});await spotify.connect(config.spotifyClientId || backend.spotifyClientId);}catch(error){$('spotify-message').textContent=errorText(error);}};
 $('disconnect-spotify').onclick=()=>{spotify.disconnect();renderMusic({connected:false});$('spotify-message').textContent='このブラウザの連携情報を削除しました';};
 installNavigation({modal:$('settings-overlay'),closeModal:closeSettings});
