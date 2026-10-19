@@ -5,8 +5,6 @@ const brands = new Map([
   ['primevideo', 'prime'], ['amazonprimevideo', 'prime'], ['プライムビデオ', 'prime'],
   ['disney+', 'disneyplus'], ['disneyplus', 'disneyplus'], ['ディズニープラス', 'disneyplus'],
   ['spotify', 'spotify'], ['spotifymusic', 'spotify'], ['スポティファイ', 'spotify'],
-  // Android's own settings get the same iOS-style gear tile as the dashboard settings.
-  ['テレビの設定', 'settings'],
 ]);
 
 // Only the supplied Android package is used to launch; the display name selects artwork.
@@ -22,10 +20,6 @@ export function nativeAppTile({name, packageName, icon: iconData}) {
   if (brand === 'unext' || brand === 'disneyplus') {
     const image = document.createElement('img'); image.src = `assets/apps/${brand}.png`; image.alt = '';
     icon.append(image);
-  } else if (brand === 'settings') {
-    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); svg.setAttribute('viewBox', '0 0 24 24');
-    const use = document.createElementNS('http://www.w3.org/2000/svg', 'use'); use.setAttribute('href', '#i-gear');
-    svg.append(use); icon.append(svg);
   } else if (brand !== 'generic') {
     const mark = document.createElement('span'); mark.className = 'app-brand-mark'; icon.append(mark);
   } else if (appIcon(iconData)) {

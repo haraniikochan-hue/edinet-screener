@@ -2,6 +2,7 @@ import { DEFAULT_CONFIG, normalizeConfig, readStorage, writeStorage, fetchJSON, 
 import { eventPage, jstDay } from './calendar.js';
 import { installNavigation } from './navigation.js';
 import { nativeAppTile, pressApp } from './launcher.js';
+import { DOCK_KEY, arrangeDock, moveInDock, setOnDock, normalizeDock } from './dock.js';
 import { Slideshow, SAMPLE_PHOTOS } from './slideshow.js';
 import { Frost, frostSupported } from './frost.js';
 import { DEFAULT_ADBLOCK_DNS, adBlockStatus, nativePrivateDns, setNativePrivateDns, validDnsHost } from './adblock.js';
@@ -563,17 +564,111 @@ async function searchCity() {
     rows.forEach(row=>{const button=el('button','',`${row.name} · ${row.admin1 || ''} ${row.admin2 || ''}`);button.type='button';button.onclick=()=>{selectedLocation={name:row.admin2 || row.name,latitude:row.latitude,longitude:row.longitude};$('selected-city').textContent=`選択：${selectedLocation.name}`;$('city-results').replaceChildren();$('search-city').focus();};$('city-results').append(button);});
   }catch{$('city-results').textContent='地域を検索できませんでした。再度お試しください。';}finally{if(version===searchVersion)$('search-city').disabled=false;}
 }
+// TV app: the dock shows the installed apps in the user's order, then the app list and settings.
+let nativeApps=[], dockPrefs=normalizeDock(readStorage(storage,DOCK_KEY,{})), movingPackage=null;
+const settingsTile=$('apps').querySelector('[data-open-settings]');
+const appListTile=(()=>{
+  const button=el('button','app-tile');button.type='button';button.dataset.brand='applist';button.dataset.openApps='';button.setAttribute('aria-label','アプリ');
+  const icon=el('span','app-icon');icon.setAttribute('aria-hidden','true');
+  icon.innerHTML='<svg viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="2.4" fill="currentColor"/><rect x="13" y="3" width="8" height="8" rx="2.4" fill="currentColor"/><rect x="3" y="13" width="8" height="8" rx="2.4" fill="currentColor"/><rect x="13" y="13" width="8" height="8" rx="2.4" fill="currentColor"/></svg>';
+  const label=el('span','app-label','アプリ');label.setAttribute('aria-hidden','true');button.append(icon,label);return button;
+})();
+const dockPackages=()=>[...$('apps').querySelectorAll('[data-package]')].map(tile=>tile.dataset.package);
+function renderDock(focusPackage){
+  const {dock}=arrangeDock(nativeApps,dockPrefs);
+  $('apps').replaceChildren(...dock.map(app=>nativeAppTile(app)),appListTile,settingsTile);
+  const tile=focusPackage && $('apps').querySelector(`[data-package="${CSS.escape(focusPackage)}"]`);
+  if(tile){tile.focus({preventScroll:true});tile.scrollIntoView({block:'nearest',inline:'nearest'});}
+  return tile;
+}
+function saveDock(prefs){dockPrefs=normalizeDock(prefs);writeStorage(storage,DOCK_KEY,dockPrefs);}
 function initializeBridge() {
   try{
     if(!window.Android || typeof window.Android.getApps!=='function')return;
     const apps=JSON.parse(window.Android.getApps());if(!Array.isArray(apps))return;
-    const valid=apps.filter(a=>typeof a.name==='string' && /^[a-zA-Z0-9_]+(?:\.[a-zA-Z0-9_]+)+$/.test(a.packageName)).slice(0,16);
-    if(!valid.length)return;
-    const settings=$('apps').querySelector('[data-open-settings]');$('apps').replaceChildren();
-    for(const app of valid)$('apps').append(nativeAppTile(app));
-    $('apps').append(settings);$('apps').classList.add('native-apps');
+    nativeApps=apps.filter(a=>typeof a.name==='string' && /^[a-zA-Z0-9_]+(?:\.[a-zA-Z0-9_]+)+$/.test(a.packageName));
+    if(!nativeApps.length)return;
+    renderDock();$('apps').classList.add('native-apps');
+    $('tv-settings-group').hidden=typeof window.Android.openTvSettings!=='function';
   }catch{toast('アプリ一覧を取得できません。Web版の一覧を表示します。');}
 }
+// App list: every installed TV app by name. OK opens it; a long press adds it to or takes it off the dock.
+let appsReturn=null;
+function openAppList(){
+  appsReturn=document.activeElement;
+  const onDock=new Set(arrangeDock(nativeApps,dockPrefs).dock.map(app=>app.packageName));
+  $('app-grid').replaceChildren(...arrangeDock(nativeApps,dockPrefs).all.map(app=>{
+    const item=el('button','grid-app');item.type='button';item.dataset.package=app.packageName;item.setAttribute('aria-label',app.name);
+    if(!onDock.has(app.packageName))item.dataset.offDock='';
+    item.append(nativeAppTile(app).querySelector('.app-icon'),el('span','grid-name',app.name));return item;
+  }));
+  $('apps-overlay').hidden=false;$('stage').inert=true;document.body.classList.add('modal-open');
+  $('app-grid').querySelector('button')?.focus();
+}
+function closeAppList(){ $('apps-overlay').hidden=true;$('stage').inert=false;document.body.classList.remove('modal-open');(appsReturn?.isConnected?appsReturn:appListTile).focus({preventScroll:true}); }
+// Long-press menu, like iOS: reorder or take an app off the dock (nothing is uninstalled).
+let menuReturn=null;
+function openAppMenu(packageName){
+  const app=nativeApps.find(a=>a.packageName===packageName);if(!app)return;
+  const inList=!$('apps-overlay').hidden,onDock=arrangeDock(nativeApps,dockPrefs).dock.some(a=>a.packageName===packageName);
+  menuReturn=document.activeElement;
+  const action=(label,run,className='')=>{const button=el('button',className,label);button.type='button';button.onclick=()=>{closeMenu();run();};return button;};
+  const actions=[];
+  if(!inList)actions.push(action('並べ替え',()=>startMove(packageName)));
+  actions.push(onDock
+    ? action('ドックから外す',()=>{saveDock(setOnDock(dockPrefs,packageName,false));renderDock();if(inList)openAppList();else navigation.focusHome();},'destructive')
+    : action('ドックに追加',()=>{saveDock(setOnDock(dockPrefs,packageName,true));renderDock();if(inList)openAppList();}));
+  actions.push(action('キャンセル',()=>{}));
+  $('menu-title').textContent=app.name;$('menu-actions').replaceChildren(...actions);
+  $('menu-overlay').hidden=false;$('stage').inert=true;document.body.classList.add('modal-open');
+  actions[0].focus();
+}
+function closeMenu(){
+  $('menu-overlay').hidden=true;
+  if($('apps-overlay').hidden){$('stage').inert=false;document.body.classList.remove('modal-open');}
+  if(menuReturn?.isConnected)menuReturn.focus({preventScroll:true});
+}
+// Reordering: ←→ move the lifted app, OK or Back puts it down.
+function startMove(packageName){
+  movingPackage=packageName;renderDock(packageName)?.classList.add('moving');document.body.classList.add('dock-editing');
+  toast('←→で移動　決定で完了');
+}
+function endMove(){
+  const packageName=movingPackage;movingPackage=null;document.body.classList.remove('dock-editing');
+  renderDock(packageName);$('toast').hidden=true;
+}
+let press=null;
+document.addEventListener('keydown',event=>{
+  if(movingPackage){
+    event.preventDefault();event.stopImmediatePropagation();
+    if(event.key==='ArrowLeft' || event.key==='ArrowRight'){
+      saveDock(moveInDock(dockPrefs,dockPackages(),movingPackage,event.key==='ArrowLeft'?-1:1));
+      renderDock(movingPackage)?.classList.add('moving');
+    }else if(['Enter','Escape','BrowserBack','GoBack'].includes(event.key))endMove();
+    return;
+  }
+  // The held OK key keeps repeating after the menu opens; none of it may press a menu button.
+  // A repeat is the remote's own long-press signal, so it opens the menu at once.
+  if(event.key==='Enter' && press){
+    event.preventDefault();event.stopImmediatePropagation();
+    if(event.repeat && !press.long){clearTimeout(press.timer);press.long=true;openAppMenu(press.tile.dataset.package);}
+    return;
+  }
+  const tile=event.key==='Enter' && !event.repeat && event.target.closest?.('#apps [data-package],#app-grid [data-package]');
+  if(!tile)return;
+  // OK on an app waits for the key to come up: a short press opens it, a long press shows the menu.
+  event.preventDefault();event.stopImmediatePropagation();
+  press={tile,long:false,timer:setTimeout(()=>{if(press){press.long=true;openAppMenu(tile.dataset.package);}},550)};
+},{capture:true});
+document.addEventListener('keyup',event=>{
+  if(event.key!=='Enter' || !press)return;
+  clearTimeout(press.timer);const {tile,long}=press;press=null;
+  if(!long)tile.click();
+},{capture:true});
+document.addEventListener('contextmenu',event=>{
+  const tile=event.target.closest('#apps [data-package],#app-grid [data-package]');
+  if(tile){event.preventDefault();openAppMenu(tile.dataset.package);}
+});
 
 if(frostSupported())frost=new Frost(document.querySelector('.frost'),[...document.querySelectorAll('.frost-layer')]);
 const slideshow=new Slideshow({layers:[...document.querySelectorAll('.photo-layer')],caption:$('photo-credit'),title:$('photo-title'),frost,onFrost:updateFrost,onError:()=>{setFeed('photos','error');$('photo-title').textContent='背景写真を読み込めませんでした';}});
@@ -581,6 +676,9 @@ const slideshow=new Slideshow({layers:[...document.querySelectorAll('.photo-laye
 function setPhotos(photos){slideshow.setPhotos(photos);$('next-photo').hidden=slideshow.photos.length<2;}
 document.addEventListener('click',event=>{
   const open=event.target.closest('[data-open-settings]');if(open){openSettings(open.dataset.openSettings);return;}
+  if(event.target.closest('[data-open-apps]')){openAppList();return;}
+  // Opening an app from the list leaves the list closed behind it.
+  if(event.target.closest('#app-grid [data-package]'))closeAppList();
   // OK on a row or headline shows details in place: following a link would leave the launcher.
   const row=event.target.closest('#stage .stock-row');if(row){openMarketDetail(row.dataset.symbol);return;}
   const release=event.target.closest('#stage .calendar-event');if(release){event.preventDefault();openEventDetail(release);return;}
@@ -618,7 +716,11 @@ $('adblock-toggle').onchange=()=>{
 };
 $('connect-in-settings').onclick=async()=>{try{await saveSettings({close:false});await spotify.connect(config.spotifyClientId || backend.spotifyClientId);}catch(error){$('spotify-message').textContent=errorText(error);}};
 $('disconnect-spotify').onclick=()=>{spotify.disconnect();renderMusic({connected:false});$('spotify-message').textContent='このブラウザの連携情報を削除しました';};
-const navigation=installNavigation({modals:[{element:$('settings-overlay'),close:closeSettings},{element:$('detail-overlay'),close:closeDetail}],home:()=>$('apps'),onEdge:calendarEdge});
+const navigation=installNavigation({modals:[{element:$('menu-overlay'),close:closeMenu},{element:$('apps-overlay'),close:closeAppList},{element:$('settings-overlay'),close:closeSettings},{element:$('detail-overlay'),close:closeDetail}],home:()=>$('apps'),onEdge:calendarEdge});
+$('close-apps').onclick=closeAppList;
+$('apps-overlay').addEventListener('click',event=>{if(event.target===$('apps-overlay'))closeAppList();});
+$('menu-overlay').addEventListener('click',event=>{if(event.target===$('menu-overlay'))closeMenu();});
+$('open-tv-settings').onclick=()=>{try{window.Android?.openTvSettings?.();}catch{toast('テレビの設定を開けませんでした');}};
 // A passive dashboard rests with focus on the dock, so a forgotten highlight never lingers on a card.
 let lastInput=Date.now();
 for(const type of ['keydown','pointerdown'])addEventListener(type,()=>{lastInput=Date.now();},{capture:true,passive:true});

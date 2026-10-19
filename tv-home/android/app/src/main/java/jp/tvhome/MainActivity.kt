@@ -49,9 +49,6 @@ private val PINNED = listOf(
     "com.disney.disneyplus" to "Disney+",
     "com.spotify.tv.android" to "Spotify",
 )
-// Opens the Android TV settings, which the stock home screen used to provide.
-private const val TV_SETTINGS = "android.settings"
-private const val MAX_APPS = 16
 // Left out of the dock: the terrestrial TV shortcut the user removed, and Xiaomi's system tools.
 private val HIDDEN = Regex("^(com\\.mitv\\.livetv|com\\.xiaomi\\.mitv\\..*)$")
 
@@ -384,7 +381,7 @@ class MainActivity : Activity() {
         mapOf("Cache-Control" to "no-store"), ByteArrayInputStream(body.toString().toByteArray()),
     )
 
-    /** Installed TV apps: the pinned dock first, then TV settings, then the rest by name. */
+    /** Installed TV apps: the pinned dock first, then the rest by name. The page arranges the dock from these. */
     private fun installedApps(): List<Pair<String, String>> {
         val pm = packageManager
         val launchable = launchableActivities()
@@ -392,7 +389,7 @@ class MainActivity : Activity() {
         val pinned = PINNED.filter { it.first in launchable }
         val others = launchable.filterKeys { key -> PINNED.none { it.first == key } }
             .toList().sortedBy { it.second }
-        return (pinned + (TV_SETTINGS to "テレビの設定") + others).take(MAX_APPS)
+        return pinned + others
     }
 
     private fun launchableActivities() = packageManager.queryIntentActivities(
@@ -401,14 +398,19 @@ class MainActivity : Activity() {
 
     /** The app's own icon as a PNG data URL; the page shows it for apps without bundled artwork. */
     private fun icon(pkg: String): String? = icons[pkg] ?: try {
-        val drawable = if (pkg == TV_SETTINGS) packageManager.getApplicationIcon("com.android.tv.settings")
-        else launchableActivities().first { it.activityInfo.packageName == pkg }.loadIcon(packageManager)
+        val drawable = launchableActivities().first { it.activityInfo.packageName == pkg }.loadIcon(packageManager)
         pngDataUrl(drawable).also { icons[pkg] = it }
     } catch (e: Exception) { null }
 
     inner class Bridge {
         @JavascriptInterface
         fun spotifyClientId(): String = BuildConfig.SPOTIFY_CLIENT_ID
+
+        /** The Android TV settings, which the stock home screen used to open; reached from the Settings sheet. */
+        @JavascriptInterface
+        fun openTvSettings() = runOnUiThread {
+            try { startActivity(Intent(Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) } catch (e: Exception) { }
+        }
 
         @JavascriptInterface
         fun hasUnsplash(): Boolean = BuildConfig.UNSPLASH_ACCESS_KEY.isNotEmpty()
@@ -427,8 +429,7 @@ class MainActivity : Activity() {
             // Only apps this launcher listed can be started from the page.
             if (installedApps().none { it.first == packageName }) return
             runOnUiThread {
-                val intent = if (packageName == TV_SETTINGS) Intent(Settings.ACTION_SETTINGS)
-                else packageManager.getLeanbackLaunchIntentForPackage(packageName)
+                val intent = packageManager.getLeanbackLaunchIntentForPackage(packageName)
                     ?: packageManager.getLaunchIntentForPackage(packageName)
                 // A system screen may refuse other apps; the tile then simply does nothing.
                 try { intent?.let { startActivity(it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) } } catch (e: Exception) { }

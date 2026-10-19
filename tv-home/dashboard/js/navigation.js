@@ -104,7 +104,8 @@ export function installNavigation({ modals, home, onEdge = () => false }) {
     else {
       const group = open ? null : groupOf(current);
       // Dialogs are vertical forms: the next control below wins even when it sits at the row's far end.
-      if (!group) next = directionalTarget(current, elements, direction, open && (direction === 'up' || direction === 'down') ? { crossWeight:.15, alignedFirst:false } : undefined);
+      // A grid in a dialog (the app list) moves by column and row like the dock does.
+      if (!group) next = directionalTarget(current, elements, direction, open && (direction === 'up' || direction === 'down') && !current.closest('[data-nav-grid]') ? { crossWeight:.15, alignedFirst:false } : undefined);
       else {
         next = directionalTarget(current, elements.filter(el => groupOf(el) === group), direction);
         if (!next) {
