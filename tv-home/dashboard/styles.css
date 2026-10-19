@@ -275,6 +275,8 @@ a.news-title[href]:hover { background: rgba(255,255,255,.07); }
 [data-brand=prime] .app-icon { background: linear-gradient(160deg,#1fb6f2,#0074b8); color: #fff; --app-logo: url('assets/apps/prime-video.svg'); }
 [data-brand=prime] .app-brand-mark { width: 80%; height: 80%; }
 [data-brand=disneyplus] .app-icon { background: #062b38; }
+[data-brand=playstore] .app-icon { background: #fff; }
+[data-brand=playstore] .app-icon img.app-logo { width: 54%; height: 54%; object-fit: contain; transform: translateX(4%); }
 [data-brand=spotify] .app-icon { background: #121212; color: var(--spotify); --app-logo: url('assets/apps/spotify.svg'); }
 [data-brand=spotify] .app-brand-mark { width: 66%; height: 66%; }
 [data-brand=settings] .app-icon { background: linear-gradient(180deg,#9a9ca6,#5f616b); }
@@ -453,6 +455,9 @@ body:not(.ready) #stage { opacity: 0; animation: reveal 0s 1.6s forwards; }
    progress) stay inside their own boxes */
 .frosted .card { -webkit-backdrop-filter: none; backdrop-filter: none; }
 .card,.stock-row { contain: layout paint; }
+/* Rows and dock icons that lift on focus keep their own compositor layer, so the lift animates on the
+   GPU instead of repainting the row and its chart each frame (TV frame drops 10 → 1 in a focus walk). */
+.stock-row,.calendar-event,.app-icon { will-change: transform; }
 .stock-price-row { will-change: transform; }
 .ready .frost { animation: fade .9s var(--ease) .1s backwards; }
 .instant.ready :is(.masthead,.overview,.weather-section,.market-card,.calendar-card,.news-card,.music-card,.app-list,.photo-caption,.frost) { animation: none; }

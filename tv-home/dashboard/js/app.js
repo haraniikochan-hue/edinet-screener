@@ -592,6 +592,8 @@ function initializeBridge() {
     $('tv-settings-group').hidden=typeof window.Android.openTvSettings!=='function';
   }catch{toast('アプリ一覧を取得できません。Web版の一覧を表示します。');}
 }
+// The app calls this when an app is installed, updated or removed.
+window.tvHomeAppsChanged=()=>initializeBridge();
 // App list: every installed TV app by name. OK opens it; a long press adds it to or takes it off the dock.
 let appsReturn=null;
 function openAppList(){

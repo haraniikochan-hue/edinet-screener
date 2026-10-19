@@ -2,7 +2,10 @@ package jp.tvhome
 
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.content.BroadcastReceiver
 import android.content.ComponentName
+import android.content.Context
+import android.content.IntentFilter
 import android.content.Intent
 import android.net.Uri
 import android.graphics.Bitmap
@@ -13,6 +16,7 @@ import android.media.MediaMetadata
 import android.media.session.MediaController
 import android.media.session.MediaSessionManager
 import android.media.session.PlaybackState
+import android.os.Build
 import android.os.Bundle
 import android.os.SystemClock
 import android.util.Base64
@@ -86,7 +90,6 @@ class MainActivity : Activity() {
         override fun onSessionDestroyed() { attach(null); notifyMedia() }
     }
     private val sessionsChanged = MediaSessionManager.OnActiveSessionsChangedListener { attach(it) }
-    private val icons = HashMap<String, String>()
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -97,6 +100,11 @@ class MainActivity : Activity() {
             .setDomain(HOST)
             .addPathHandler("/", WwwHandler(WebViewAssetLoader.AssetsPathHandler(this)))
             .build()
+        Thread { installedApps() }.start()
+        registerReceiver(packagesChanged, IntentFilter().apply {
+            addAction(Intent.ACTION_PACKAGE_ADDED); addAction(Intent.ACTION_PACKAGE_REMOVED)
+            addAction(Intent.ACTION_PACKAGE_CHANGED); addDataScheme("package")
+        })
         root = FrameLayout(this)
         setContentView(root)
         showDashboard(HOME_URL)
@@ -168,6 +176,7 @@ class MainActivity : Activity() {
     override fun onResume() { super.onResume(); web.onResume(); watchMedia() }
     override fun onPause() { web.onPause(); super.onPause() }
     override fun onDestroy() {
+        unregisterReceiver(packagesChanged)
         sessions?.removeOnActiveSessionsChangedListener(sessionsChanged)
         spotify?.unregisterCallback(mediaCallback)
         closeLogin(); if (!unloaded) web.destroy(); super.onDestroy()
@@ -384,25 +393,43 @@ class MainActivity : Activity() {
     )
 
     /** Installed TV apps: the pinned dock first, then the rest by name. The page arranges the dock from these. */
-    private fun installedApps(): List<Pair<String, String>> {
-        val pm = packageManager
-        val launchable = launchableActivities()
-            .associate { it.activityInfo.packageName to it.loadLabel(pm).toString() }
-        val pinned = PINNED.filter { it.first in launchable }
-        val others = launchable.filterKeys { key -> PINNED.none { it.first == key } }
-            .toList().sortedBy { it.second }
-        return pinned + others
+    // Reading every app's label and icon takes over a second on this TV, so the list is built once,
+    // off the main thread at start-up, and again only when an app is installed, updated or removed.
+    private class TvApp(val packageName: String, val name: String, val icon: String?)
+    private val appsLock = Any()
+    @Volatile private var apps: List<TvApp>? = null
+    @Volatile private var appsJson: String? = null
+    private fun installedApps(): List<TvApp> = apps ?: synchronized(appsLock) {
+        apps ?: run {
+            val pm = packageManager
+            val found = launchableActivities().associateBy { it.activityInfo.packageName }
+            val labels = found.mapValues { it.value.loadLabel(pm).toString() }
+            val pinned = PINNED.filter { it.first in found }
+            val others = labels.filterKeys { key -> PINNED.none { it.first == key } }.toList().sortedBy { it.second }
+            (pinned + others).map { (pkg, name) ->
+                TvApp(pkg, name, try { iconDataUrl(found.getValue(pkg).loadIcon(pm)) } catch (e: Exception) { null })
+            }.also { list ->
+                appsJson = JSONArray(list.map {
+                    JSONObject().put("name", it.name).put("packageName", it.packageName).put("icon", it.icon ?: JSONObject.NULL)
+                }).toString()
+                apps = list
+            }
+        }
+    }
+    private val packagesChanged = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            synchronized(appsLock) { apps = null; appsJson = null }
+            Thread {
+                installedApps()
+                runOnUiThread { web.evaluateJavascript("window.tvHomeAppsChanged&&window.tvHomeAppsChanged()", null) }
+            }.start()
+        }
     }
 
     private fun launchableActivities() = packageManager.queryIntentActivities(
         Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LEANBACK_LAUNCHER), 0,
     ).filter { it.activityInfo.packageName != packageName && !HIDDEN.matches(it.activityInfo.packageName) }
 
-    /** The app's own icon as a PNG data URL; the page shows it for apps without bundled artwork. */
-    private fun icon(pkg: String): String? = icons[pkg] ?: try {
-        val drawable = launchableActivities().first { it.activityInfo.packageName == pkg }.loadIcon(packageManager)
-        pngDataUrl(drawable).also { icons[pkg] = it }
-    } catch (e: Exception) { null }
 
     inner class Bridge {
         @JavascriptInterface
@@ -420,14 +447,12 @@ class MainActivity : Activity() {
         fun nowPlaying(): String = this@MainActivity.nowPlaying()
 
         @JavascriptInterface
-        fun getApps(): String = JSONArray(installedApps().map { (pkg, name) ->
-            JSONObject().put("name", name).put("packageName", pkg).put("icon", icon(pkg) ?: JSONObject.NULL)
-        }).toString()
+        fun getApps(): String = appsJson ?: run { installedApps(); appsJson ?: "[]" }
 
         @JavascriptInterface
         fun launchApp(packageName: String) {
             // Only apps this launcher listed can be started from the page.
-            if (installedApps().none { it.first == packageName }) return
+            if (installedApps().none { it.packageName == packageName }) return
             runOnUiThread {
                 val intent = packageManager.getLeanbackLaunchIntentForPackage(packageName)
                     ?: packageManager.getLaunchIntentForPackage(packageName)
@@ -440,7 +465,8 @@ class MainActivity : Activity() {
 
 // Adaptive icons are drawn full bleed (their 108dp canvas cropped to the 72dp visible area);
 // the page clips every tile to the same squircle, so no launcher mask is applied here.
-private fun pngDataUrl(drawable: Drawable, size: Int = 192): String {
+// Lossy WebP with alpha keeps each icon a few KB, so the whole list crosses the bridge quickly.
+private fun iconDataUrl(drawable: Drawable, size: Int = 160): String {
     val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
     val canvas = Canvas(bitmap)
     if (drawable is AdaptiveIconDrawable) {
@@ -452,8 +478,10 @@ private fun pngDataUrl(drawable: Drawable, size: Int = 192): String {
         drawable.setBounds(0, 0, size, size); drawable.draw(canvas)
     }
     val out = ByteArrayOutputStream()
-    bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
-    return "data:image/png;base64," + Base64.encodeToString(out.toByteArray(), Base64.NO_WRAP)
+    @Suppress("DEPRECATION")
+    val format = if (Build.VERSION.SDK_INT >= 30) Bitmap.CompressFormat.WEBP_LOSSY else Bitmap.CompressFormat.WEBP
+    bitmap.compress(format, 90, out)
+    return "data:image/webp;base64," + Base64.encodeToString(out.toByteArray(), Base64.NO_WRAP)
 }
 
 // Album art for the card: 300px is plenty for the 120px artwork and the 24px colour wash.
