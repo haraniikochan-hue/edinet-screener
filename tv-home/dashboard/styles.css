@@ -278,6 +278,10 @@ a.news-title[href]:hover { background: rgba(255,255,255,.07); }
 [data-brand=spotify] .app-icon { background: #121212; color: var(--spotify); --app-logo: url('assets/apps/spotify.svg'); }
 [data-brand=spotify] .app-brand-mark { width: 66%; height: 66%; }
 [data-brand=settings] .app-icon { background: linear-gradient(180deg,#9a9ca6,#5f616b); }
+[data-brand=googlecast] .app-icon { background: linear-gradient(180deg,#fff,#e5e5ea); color: #1a73e8; --app-logo: url('assets/apps/googlecast.svg'); }
+[data-brand=googlecast] .app-brand-mark { width: 56%; height: 56%; }
+[data-brand=airplay] .app-icon { background: linear-gradient(180deg,#5ac8fa,#007aff); color: #fff; --app-logo: url('assets/apps/airplay.svg'); }
+[data-brand=airplay] .app-brand-mark { width: 58%; height: 58%; }
 [data-brand=settings] .app-icon svg { width: 60%; height: 60%; color: #f2f3f6; filter: drop-shadow(0 1px 1px rgba(0,0,0,.25)); }
 [data-brand=generic] .app-icon { background: linear-gradient(180deg,#4a5062,#2a2e3a); font-size: 26px; font-weight: 500; }
 

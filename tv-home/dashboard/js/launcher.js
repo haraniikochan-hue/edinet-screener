@@ -7,6 +7,8 @@ const brands = new Map([
   ['spotify', 'spotify'], ['spotifymusic', 'spotify'], ['スポティファイ', 'spotify'],
   // Android's own settings get the same iOS-style gear tile as the dashboard settings.
   ['テレビの設定', 'settings'],
+  // The TV's built-in receivers, which open their settings screens.
+  ['googlecast', 'googlecast'], ['airplay', 'airplay'],
 ]);
 
 // Only the supplied Android package is used to launch; the display name selects artwork.

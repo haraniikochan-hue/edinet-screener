@@ -14,6 +14,10 @@
         <intent>
             <action android:name="android.settings.SETTINGS" />
         </intent>
+        <intent>
+            <action android:name="com.google.android.settings.CAST_RECEIVER_SETTINGS" />
+        </intent>
+        <package android:name="com.mediatek.partner.airplay_sys" />
     </queries>
 
     <application

@@ -1,4 +1,4 @@
-# TV Home 引き継ぎ書 — v0.12.0
+# TV Home 引き継ぎ書 — v0.13.0
 
 引き継ぎ日：2026-10-19。対象：Xiaomi TV用ホーム画面のフェーズ2・Webダッシュボード。
 
@@ -211,6 +211,7 @@ Xiaomi TVのGPU・CPUで滑らかに動くよう最適化した。見た目はv0
   - 読むには「通知へのアクセス」が必要。ユーザーの確認を得て `adb shell cmd notification allow_listener jp.tvhome.launcher/jp.tvhome.MediaListener` で許可した（`MediaListener` は許可のためだけのサービスで、通知は読まない）。戻すなら `disallow_listener`、またはテレビの設定 → アプリ → 特別なアプリアクセス → 通知へのアクセス。許可がない場合、`nowPlaying()` は空文字を返し、カードはWebログインの方式に戻る。
   - **Webログイン（未完了）**：Spotifyのログイン画面は、ブリッジのない別のWebViewで開き、`https://appassets.androidplatform.net/index.html` へ戻ったらダッシュボードがPKCEを完了する。テレビ版では、ログイン情報をlocalStorageに保存して再起動後も残す。Client ID（ユーザーが作成）は `android/local.properties` の `spotify.clientId`（コミットしない）から `BuildConfig` に入れる。ログイン画面までは表示できたが、メールのリンクをスマホで開くと「別のブラウザでログインしています」となり、ログインは完了していない。テレビの再生情報を使う方式に切り替えたため、今は使っていない。
 - **背景写真（v0.12.0）**：ユーザーの希望は「ニューヨークやロンドン、パリなど、色々な都市のダウンタウンの昼夜のかっこいい写真」。`dashboard/js/feeds.js` の `PHOTO_CITIES`（ニューヨーク・ロンドン・パリ・シカゴ・東京・香港・シンガポール・ドバイ）から、それぞれUnsplashの `photos/random` で3枚ずつ取り、混ぜて24枚にする（1時間ごと、8リクエスト。デモ段階の上限は1時間50回）。写真の左下には都市名と撮影者を出す。アプリでは `/api/unsplash?query=` をKotlinが代行し、Access Keyを付ける。検索語は `PHOTO_QUERIES` の8つだけ許可する。Access Keyは `android/local.properties` の `unsplash.accessKey`（コミットしない）から `BuildConfig` に入れ、ページには渡さない。テレビの設定で写真の取得元を「Unsplashから自動取得」に保存済み。2026-10-19に、8都市×3枚が取得されて切り替わることをテレビで確認した。Unsplashの本番申請（上限の引き上げ）と、写真の利用時に必要な download エンドポイントの呼び出しは未対応。
+- **キャスト（v0.13.0）**：テレビはGoogle Cast（`com.google.android.apps.mediashell`）とAirPlay（MediaTekの `com.mediatek.partner.airplay_sys`、HomeKit対応）を内蔵しており、どちらも常に受信している（mDNSで `_googlecast._tcp` と `_airplay._tcp` が「リビングルームのテレビ」として見える）。ユーザーの指示で、ドックのSpotifyの後ろに **Google Cast** と **AirPlay** のタイルを置いた（説明シートは不要とのこと）。押すとそれぞれテレビ側の画面を開く：Google Castは `com.google.android.settings.CAST_RECEIVER_SETTINGS`、AirPlayは `AirPlayAwarenessActivity`（「Apple AirPlay and HomeKit」。AirPlayの設定画面 `Show.Settings.AirplayAPK` は他アプリから開けない）。アイコンは同梱の `airplay.svg`／`googlecast.svg`。Androidの「画面ミラーリング」（Miracast、`com.xiaomi.mitv.smartshare`）は、開くとテレビのWi-Fiが切り替わり、IPアドレスが `192.168.0.178` から `192.168.0.17` に変わってADBが切れたため、ドックに置かない（Androidからは「画面のキャスト」＝Google Castを使う）。
 - **ドックの「テレビの設定」**：ユーザーの指示で、ダッシュボードの「設定」と同じiOS風の灰色の歯車にした（`launcher.js` で名前「テレビの設定」を `settings` ブランドに割り当てる）。
 - **未対応**：広告ブロックの切り替え（`setPrivateDns`）も未実装。ただしテレビのプライベートDNSは、すでに `dns.adguard-dns.com`（hostname）に設定されていた。
 
@@ -222,7 +223,7 @@ JAVA_HOME=<JDK17> ANDROID_HOME=<Android SDK> ./gradlew assembleRelease
 adb install -r app/build/outputs/apk/release/app-release.apk
 ```
 
-このPCでは JDK 17 が `~/.local/jdk17/Contents/Home`、Android SDK が `~/.local/android-sdk`、adb が `~/.local/android-sdk/platform-tools/adb`。テレビとはワイヤレスデバッグでペア設定済み（`adb mdns services` で接続ポートが分かる。`192.168.0.178:5555` のADBも出ている）。
+テレビのIPアドレスはDHCPで変わる（2026-10-19に `192.168.0.17` になった）。`adb mdns services` で今のアドレスを確認する。このPCでは JDK 17 が `~/.local/jdk17/Contents/Home`、Android SDK が `~/.local/android-sdk`、adb が `~/.local/android-sdk/platform-tools/adb`。テレビとはワイヤレスデバッグでペア設定済み（`adb mdns services` で接続ポートが分かる。`192.168.0.178:5555` のADBも出ている）。
 
 ## 4. 12銘柄と価格の意味
 

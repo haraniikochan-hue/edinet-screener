@@ -51,7 +51,13 @@ private val PINNED = listOf(
 )
 // Opens the Android TV settings, which the stock home screen used to provide.
 private const val TV_SETTINGS = "android.settings"
-private const val MAX_APPS = 16
+// The TV's built-in receivers. They always listen; their tiles open the receivers' own screens.
+private val RECEIVERS = linkedMapOf(
+    "cast.googlecast" to ("Google Cast" to Intent("com.google.android.settings.CAST_RECEIVER_SETTINGS")),
+    "cast.airplay" to ("AirPlay" to Intent(Intent.ACTION_MAIN).setComponent(
+        ComponentName("com.mediatek.partner.airplay_sys", "com.mediatek.partner.airplay_sys.AirPlayAwarenessActivity"))),
+)
+private const val MAX_APPS = 18
 // Left out of the dock: the terrestrial TV shortcut the user removed, and Xiaomi's system tools.
 private val HIDDEN = Regex("^(com\\.mitv\\.livetv|com\\.xiaomi\\.mitv\\..*)$")
 
@@ -348,7 +354,7 @@ class MainActivity : Activity() {
         mapOf("Cache-Control" to "no-store"), ByteArrayInputStream(body.toString().toByteArray()),
     )
 
-    /** Installed TV apps: the pinned dock first, then TV settings, then the rest by name. */
+    /** Installed TV apps: the pinned dock, the cast receivers, TV settings, then the rest by name. */
     private fun installedApps(): List<Pair<String, String>> {
         val pm = packageManager
         val launchable = launchableActivities()
@@ -356,7 +362,8 @@ class MainActivity : Activity() {
         val pinned = PINNED.filter { it.first in launchable }
         val others = launchable.filterKeys { key -> PINNED.none { it.first == key } }
             .toList().sortedBy { it.second }
-        return (pinned + (TV_SETTINGS to "テレビの設定") + others).take(MAX_APPS)
+        val receivers = RECEIVERS.filter { (_, entry) -> entry.second.resolveActivity(pm) != null }.map { (key, entry) -> key to entry.first }
+        return (pinned + receivers + (TV_SETTINGS to "テレビの設定") + others).take(MAX_APPS)
     }
 
     private fun launchableActivities() = packageManager.queryIntentActivities(
@@ -364,7 +371,7 @@ class MainActivity : Activity() {
     ).filter { it.activityInfo.packageName != packageName && !HIDDEN.matches(it.activityInfo.packageName) }
 
     /** The app's own icon as a PNG data URL; the page shows it for apps without bundled artwork. */
-    private fun icon(pkg: String): String? = icons[pkg] ?: try {
+    private fun icon(pkg: String): String? = if (pkg in RECEIVERS) null else icons[pkg] ?: try {
         val drawable = if (pkg == TV_SETTINGS) packageManager.getApplicationIcon("com.android.tv.settings")
         else launchableActivities().first { it.activityInfo.packageName == pkg }.loadIcon(packageManager)
         pngDataUrl(drawable).also { icons[pkg] = it }
@@ -392,9 +399,11 @@ class MainActivity : Activity() {
             if (installedApps().none { it.first == packageName }) return
             runOnUiThread {
                 val intent = if (packageName == TV_SETTINGS) Intent(Settings.ACTION_SETTINGS)
+                else if (packageName in RECEIVERS) Intent(RECEIVERS.getValue(packageName).second)
                 else packageManager.getLeanbackLaunchIntentForPackage(packageName)
                     ?: packageManager.getLaunchIntentForPackage(packageName)
-                intent?.let { startActivity(it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
+                // A system screen may refuse other apps; the tile then simply does nothing.
+                try { intent?.let { startActivity(it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) } } catch (e: Exception) { }
             }
         }
     }
