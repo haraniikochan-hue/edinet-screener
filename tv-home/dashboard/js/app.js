@@ -10,6 +10,7 @@ import { mountTradingView } from './tradingview.js';
 import { getMarketSnapshot, getMarketCandles, HyperliquidStream } from './hyperliquid.js';
 import { MARKETS, MARKET_BY_SYMBOL, CHART_RANGES, marketCoins } from './market-definitions.js';
 import { drawMarketChart } from './market-chart.js';
+import { loadNews, loadCalendar } from './feeds.js';
 import { HOUR, weatherTimestamp, weatherIsStale, hourlyForecast, makeWeatherIcon, renderHourlyForecast } from './weather.js';
 
 const $ = id => document.getElementById(id);
@@ -42,7 +43,18 @@ const setAttr = (node, name, value) => {if(node.getAttribute(name)!==value)node.
 const stamp = ts => `${dated(new Date(ts))} ${time(new Date(ts))}`;
 const el = (tag, className='', content='') => {const node=document.createElement(tag);node.className=className;node.textContent=content;return node;};
 const errorText = error => error.message || 'データを取得できません';
-const api = path => fetchJSON(`${config.apiBase}/api/${path}`);
+// The TV app serves this page from its own origin with no Node server: news and the calendar are
+// parsed here, and the feeds (which send no CORS headers) are fetched by the app's native proxy.
+const IN_APP = location.hostname==='appassets.androidplatform.net';
+const appText = async url => (await fetchJSON(`/api/upstream?url=${encodeURIComponent(url)}`)).text;
+async function appApi(path) {
+  if(path==='config')return {backend:true,market:false,unsplash:false,spotifyClientId:''};
+  const data = path==='news' ? await loadNews(appText) : path==='calendar' ? await loadCalendar(appText,await fetchJSON('data/economic-calendar.json')) : null;
+  if(!data)throw new Error('TV版では使えません');
+  return {data,fetchedAt:Date.now(),stale:path==='calendar' && data.sources.some(s=>s.status==='stale')};
+}
+const apiAt = (base, path) => IN_APP && !base ? appApi(path) : fetchJSON(`${base}/api/${path}`);
+const api = path => apiAt(config.apiBase, path);
 const reducedMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 const EASE = 'cubic-bezier(.2,.8,.2,1)';
 const greeting = date => {const hour=Number(HOUR_OF_DAY.format(date));return hour>=4 && hour<10?'おはようございます':hour>=10 && hour<17?'こんにちは':'こんばんは';};
@@ -339,7 +351,7 @@ function restartJobs() {
   jobs.forEach(job=>job.stop());jobs=[];generation++;chartVersion++;cryptoStream?.stop();cryptoStream=null;streamStatus='connecting';activeDexCoins.clear();metadata.clear();
   feedState.clear();setFeed('connection','ok');
   const location={...config.location};
-  const base=config.apiBase, apiForJob=path=>fetchJSON(`${base}/api/${path}`);
+  const base=config.apiBase, apiForJob=path=>apiAt(base,path);
   const sameLocation=()=>location.latitude===config.location.latitude && location.longitude===config.location.longitude;
   jobs.push(makeJob('weather',15*60000,cachedTask('weather',()=>getWeather(location),result=>{if(sameLocation())renderWeather(result);}),error=>{if(sameLocation())clearWeather(error);}));
   jobs.push(makeJob('air',30*60000,cachedTask('air',()=>getAir(location),renderAir),()=>{$('air').textContent='空気 未取得';}));
@@ -541,7 +553,7 @@ function initializeBridge() {
   try{
     if(!window.Android || typeof window.Android.getApps!=='function')return;
     const apps=JSON.parse(window.Android.getApps());if(!Array.isArray(apps))return;
-    const valid=apps.filter(a=>typeof a.name==='string' && /^[a-zA-Z0-9_]+(?:\.[a-zA-Z0-9_]+)+$/.test(a.packageName)).slice(0,12);
+    const valid=apps.filter(a=>typeof a.name==='string' && /^[a-zA-Z0-9_]+(?:\.[a-zA-Z0-9_]+)+$/.test(a.packageName)).slice(0,16);
     if(!valid.length)return;
     const settings=$('apps').querySelector('[data-open-settings]');$('apps').replaceChildren();
     for(const app of valid)$('apps').append(nativeAppTile(app));

@@ -2,6 +2,7 @@
 
 This project builds a custom home screen (launcher) and dashboard for a Xiaomi TV (assumed Google TV / Android TV).
 
+- Since v0.10.0 the TV's home screen is the Android app in `android/` (WebView over `dashboard/`); the stock Google TV home is disabled on the TV. See HANDOFF section 3.4, including how to undo it.
 - Read **`START_HERE.md`** and **`HANDOFF.md`** first. The current app is v0.9.0: a design refresh of the v0.5.5 layout, TV performance work, ad blocking, remote-control UX, and TV-only layout. Keep it light on a TV (HANDOFF section 3.1) and fully usable with a D-pad (section 3.2). It is TV only: the user said no mobile version is needed, so everything (sheets and toast included) lives in the one scaled 1920×1080 `#screen` (section 3.3); do not add phone or portrait layouts. The user likes Apple/iOS design and wants the UI to keep getting more refined.
 - Use `dashboard/` and `artifacts/dashboard-desktop.png` as the current design baseline. `mockups/`, `references/`, and `docs/HANDOFF_HISTORY.md` are historical context.
 - Preserve the accepted layout, spacing, unified market and seven-app dock unless the user requests a change. SmartTube uses YouTube artwork only; its launch target remains SmartTube.

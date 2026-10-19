@@ -1,4 +1,4 @@
-# TV Home 引き継ぎ書 — v0.9.0
+# TV Home 引き継ぎ書 — v0.10.0
 
 引き継ぎ日：2026-10-19。対象：Xiaomi TV用ホーム画面のフェーズ2・Webダッシュボード。
 
@@ -13,7 +13,7 @@ v0.5.5はユーザーに「ほぼ完成形」と評価されたが、ユーザ�
 - 最新アプリは **0.9.0**。v0.6.0のデザイン刷新（第3節）とNHKニュース配信元の修正、v0.6.1のTV向け軽量化（第3.1節）、v0.7.0の広告ブロック（第7節）、v0.8.0のリモコン操作の改善（第3.2節）に、v0.9.0の**TV専用化**（第3.3節）を加えた。**ユーザーは「モバイル版は作らなくていい、テレビ専用」と明言**している。スマホ・縦画面の配置を戻さない。
 - Web版は実装済み。12銘柄の実価格・24時間チャート、渋谷の天気、米国経済指標、ニュースを表示する。
 - 配置・余白・透明感はv0.5.5で評価済み。v0.6.0の文字・素材・動きはこのセッションで実装し、ユーザーの評価待ち。
-- APK、TVへのインストール、ADB設定変更、公開ホスティングは未実施。
+- **v0.10.0でAPKを作り、テレビのホーム画面を置き換えた**（第3.4節）。標準ホームはユーザーの確認を得て無効化済み。公開ホスティングは未実施（アプリ単体で動くため不要）。
 - Spotifyの実認証、Unsplashの実Access Keyは未接続。設定画面と接続処理は実装済み。
 - ソースはGitHubの `haraniikochan-hue/edinet-screener`、ブランチ `ccr-123aaf7c-88ru7c` の `tv-home/` フォルダ（v0.5.5の基準から全履歴あり）。引き継ぎZIPも同じ内容。プルリクエストは未作成で、ユーザーの依頼があるまで作らない。作業は同じブランチで続ける。
 - 前セッションの開発サーバーは終了済み。新しい環境で起動する。前の環境やURLが存続するとは限らない。
@@ -192,6 +192,30 @@ Xiaomi TVのGPU・CPUで滑らかに動くよう最適化した。見た目はv0
 - **Castの受信ブラウザで見つかった問題（2026-10-19修正）**：Chrome 92（CrKey 1.56、Android 14）の受信ブラウザで計測すると、表示領域・`clientWidth`・`visualViewport`・`screen` はすべて960×540、`devicePixelRatio` は2。一方で `innerWidth`/`innerHeight` だけが読み込みの約2秒後に3840×2160へ変わり、`fit()` の縮尺が4倍になって画面が大きく拡大されていた。`fit()` は `document.documentElement.clientWidth/clientHeight` で測るように変更した。テレビで全体がちょうど収まることをユーザーが目視で確認した。960×540・2倍密度という想定は、このCast受信ブラウザについては実測で正しかった（WebViewは未計測）。
 - **Chrome 92で使えない機能（未対応）**：`AbortSignal.timeout`（Chrome 103以降）は `js/adblock.js` と `js/spotify.js` で使っている。広告ブロックの確認では例外が「接続不可」と判定され、結果が誤りになりうる。Spotifyは取得に失敗する。CSSの `:has()`（Chrome 105以降）は3か所あり、効かないと見た目が少し変わるだけ。`checkVisibility()` には代わりの処理がある。テレビのWebViewの版を調べたうえで、必要なら直す。
 
+## 3.4 TVアプリ＝ホーム画面（v0.10.0、フェーズ3、2026-10-19）
+
+ユーザーの依頼「正式にこっちに変えたい」により、ダッシュボードをAndroidアプリにしてテレビのホーム画面へ置き換えた。方針はユーザーが選んだ：**アプリ単体で動かす**（PC不要）、**標準ホームは完全に置き換える**。
+
+- **実機の状態（ユーザーの確認を得て実施）**：`jp.tvhome.launcher`（TV Home、v0.10.0）をADBでインストール。標準ホーム `com.google.android.apps.tv.launcherx` と、代わりにホームに出てくる初期設定ウィザード `com.google.android.tungsten.setupwraith` を `pm disable-user --user 0` で無効化。ホームボタンでTV Homeが開くことを確認した。先に試した `cmd package set-home-activity`（無効化なし）はGoogle TVに無視された。
+- **戻し方**：PCから `adb shell pm enable com.google.android.apps.tv.launcherx` と `adb shell pm enable com.google.android.tungsten.setupwraith`。アプリを消すなら `adb uninstall jp.tvhome.launcher`。テレビ単体でも、ドックの「テレビの設定」→ アプリ → システムアプリ → Google TV Home →「有効にする」で戻せる。
+- **ソース**：`android/`（Kotlin、Gradle 8.10.2、AGP 8.7.3、compileSdk 35、minSdk 28）。`MainActivity.kt` 1ファイル。ビルド時に `dashboard/` をAPKの `assets/www/` へコピーし、`WebViewAssetLoader` で `https://appassets.androidplatform.net/` から配信する。`dist/` は使わない。
+- **ニュース・経済指標**：Nodeサーバーの処理を `dashboard/js/feeds.js`（NHKのRSS解析、BLS/BEAの日程と同梱日程の統合）と `dashboard/js/economic-calendar.js`（`lib/` から移動。`lib/economic-calendar.mjs` は再エクスポート）に移し、`server.mjs` とアプリで共用する。アプリでは `app.js` が自分で解析し、配信元にCORSがないため、取得だけをアプリの `/api/upstream?url=` が代行する。代行できるのは `UPSTREAM_FEEDS` の3つのURLだけ（Kotlin側にも同じ一覧）。
+- **ドック**：`window.Android.getApps()` が固定の順（SmartTube → U-NEXT → Netflix → Prime Video → Disney+ → Spotify）のうちインストール済みのもの、「テレビの設定」（Androidの設定を開く）、残りのTVアプリ（名前順）を最大16件返し、最後にダッシュボードの「設定」が付く。標準ホームがないため、他のアプリへの入口として残りも並べた。地デジ（`com.mitv.livetv`、削除済みの確定事項）とXiaomiのシステムツール（`com.xiaomi.mitv.*`）は出さない。起動できるのは一覧に出したパッケージだけ。
+- **実機のパッケージ名（ADBで確認）**：U-NEXT `jp.unext.tv.player`、Netflix `com.netflix.ninja`、Prime Video `com.amazon.amazonvideo.livingroom`、Disney+ `com.disney.disneyplus`、Spotify `com.spotify.tv.android`。**SmartTubeはテレビに入っていない**（公式YouTube `com.google.android.youtube.tv` はある）。`MainActivity.kt` の `PINNED` は `com.teamsmart.videomanager.tv` を想定しており、SmartTubeを入れたら、実際のパッケージ名を確認して合わせる。それまでSmartTubeのタイルは出ない。YouTubeを代わりにしない。
+- **リモコン**：戻るはページへ `Escape` として届く。ホームのときはアプリを閉じない。TV Homeの表示中にホームを押すと `Escape` を送り、シートを閉じてドックへ戻る。外部サイトへの移動は無視する。
+- **デバッグ**：デバッグビルド（`assembleDebug`）だけ、WebViewのDevToolsをADB経由で開ける（`adb forward tcp:9333 localabstract:webview_devtools_remote_<pid>`）。テレビに入っているのはリリースビルド（開発用の鍵で署名）。
+- **既知の問題**：BLS（`www.bls.gov`）は通信の特徴でボットを判定しており、Androidからの取得が403になる（PCのNodeは成功、curlも403）。アプリではBLSが同梱日程（2026年12月まで）になり、「一部更新待ち」が常に出る。BEAとNHKは取得できる。Unsplash・Spotify認証はアプリでは未対応（`/api/config` は無効を返す）。広告ブロックの切り替え（`setPrivateDns`）も未実装。ただしテレビのプライベートDNSは、すでに `dns.adguard-dns.com`（hostname）に設定されていた。
+
+ビルドと入れ替え：
+
+```sh
+cd android
+JAVA_HOME=<JDK17> ANDROID_HOME=<Android SDK> ./gradlew assembleRelease
+adb install -r app/build/outputs/apk/release/app-release.apk
+```
+
+このPCでは JDK 17 が `~/.local/jdk17/Contents/Home`、Android SDK が `~/.local/android-sdk`、adb が `~/.local/android-sdk/platform-tools/adb`。テレビとはワイヤレスデバッグでペア設定済み（`adb mdns services` で接続ポートが分かる。`192.168.0.178:5555` のADBも出ている）。
+
 ## 4. 12銘柄と価格の意味
 
 順序と対応は [market-definitions.js](dashboard/js/market-definitions.js) が正本。
@@ -329,7 +353,10 @@ dashboard/                     編集する公開ソース
   data/                        公式日程の保存データ
   assets/                      背景・ロゴ・アイコンと出典
 server.mjs                     dashboard配信と固定API
-lib/economic-calendar.mjs      公式ICSの解析・日程の統合
+  js/feeds.js                 ニュースと経済指標の取得・解析（サーバーとアプリで共用）
+  js/economic-calendar.js      公式ICSの解析・日程の統合
+android/                       TVアプリ（Kotlin＋WebView、第3.4節）
+lib/economic-calendar.mjs      js/economic-calendar.js の再エクスポート
 dist/                          buildで再生成するWebView用静的成果物
 scripts/                       ビルド・ブラウザ検証
 tests/                         Node.jsの単体テスト
@@ -404,8 +431,8 @@ PLAYWRIGHT_MODULE=/absolute/path/to/playwright/index.mjs CHROMIUM_PATH=/path/to/
 | --- | --- | --- |
 | TV型番・OS | 一部確認（2026-10-19、Castから） | 65インチ、Cast上の型番 `MiTV-MZTU0`、Android 14（Build UKN1.240806.017）、Cast受信ブラウザはChrome 92・960×540・密度2。Google TVかPatchWallか、WebViewの版は未確認（ADBで調べる） |
 | 作業端末と接続経路 | 未確認 | PC利用可否、スマホ/Termux、同一LAN・ADB接続を確認 |
-| APK | 未作成 | Kotlin/WebView、ランチャー宣言、アプリ列挙と起動、リモコン・戻る・復帰を実装 |
-| サーバー運用 | ローカルのみ | TVから届くNodeの配置とHTTPSを決める。静的配信だけでは全API機能を維持できない |
+| APK | v0.10.0をテレビにインストール済み・ホームに設定済み（第3.4節） | ドックの見た目（ロゴのないアプリは頭文字だけ）、SmartTubeの導入、BLSの取得、アプリ内の広告ブロック切り替え、スリープ復帰・長時間稼働の確認 |
+| サーバー運用 | アプリでは不要 | ニュース・経済指標はアプリが自分で取得する。Unsplashを使う場合だけ、キーを置く場所を決める |
 | Spotify | フロー実装、実認証なし | Client ID・リダイレクト先・利用ユーザーを設定し実接続 |
 | Unsplash | フロー実装、実キーなし | サーバーにAccess Key設定、実画像切り替えとクレジット確認 |
 | TVでの認証・保存 | 未設計 | 初回ログイン・長期保存・端末間の受け渡しを設計 |
@@ -421,7 +448,7 @@ PLAYWRIGHT_MODULE=/absolute/path/to/playwright/index.mjs CHROMIUM_PATH=/path/to/
 - 接続情報がない部分は必要な情報を明示する。実接続・実機確認・公開を済ませたことにしない。
 - 仮価格・架空チャート・推測の指標値を本番表示に加えない。テストの制御レスポンスと実データの証拠を分ける。
 - キーやトークンを `dashboard/`・`dist/`・ZIP・スクリーンショットへ含めない。秘密情報はサーバー側で管理する。
-- 現在はTVのシステム設定を変更していない。システムアプリの無効化は対象と影響を説明してユーザーに確認してから行う。Google Play開発者サービス・システムUI・チューナー関連を安易に止めず、標準ランチャーは代替の動作確認前に無効化しない。
+- 2026-10-19に、ユーザーの確認を得てTV Homeをインストールし、標準ホーム（launcherx）と初期設定ウィザード（setupwraith）を無効化した（戻し方は第3.4節）。それ以外のシステム設定は変更していない。システムアプリの無効化は対象と影響を説明してユーザーに確認してから行う。Google Play開発者サービス・システムUI・チューナー関連を安易に止めず、標準ランチャーは代替の動作確認前に無効化しない。
 - 引き継ぎ作成の依頼を、TV変更・デプロイ・インストールの許可とみなさない。
 - この環境ではSites公開ヘルパーがなく未公開だった。次の環境も同じとは限らない。localhostを外部公開URLとして案内しない。
 - レイアウト変更時は文字・価格・チャート・選択ラベルの衝突と複数画面幅を確認。完成形の意図を保つ小さな修正を優先する。

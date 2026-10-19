@@ -3,7 +3,9 @@ import { readFile, stat } from 'node:fs/promises';
 import { resolve, dirname, extname, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { SYMBOLS, isNumber } from './dashboard/js/data.js';
-import { CALENDAR_FEEDS, parseEconomicICS, mergeCalendar } from './lib/economic-calendar.mjs';
+import { decodeXML, parseRSS, loadNews, loadCalendar } from './dashboard/js/feeds.js';
+
+export { decodeXML, parseRSS };
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), 'dashboard');
 const cache = new Map();
@@ -31,23 +33,6 @@ export async function memo(key, ttl, loader, staleLimit = 86400000) {
   })();
   pending.set(key, work); return work;
 }
-export function decodeXML(value) {
-  return value.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1').replace(/<[^>]*>/g, '')
-    .replace(/&#(x[\da-f]+|\d+);/gi, (_, n) => {
-      const code = n[0].toLowerCase() === 'x' ? parseInt(n.slice(1),16) : Number(n);
-      return code > 0 && code <= 0x10ffff ? String.fromCodePoint(code) : '';
-    }).replace(/&(amp|lt|gt|quot|apos);/g, (_, e) => ({ amp:'&',lt:'<',gt:'>',quot:'"',apos:"'" })[e]).trim();
-}
-// NHK ONE (news.web.nhk) replaced the www3.nhk.or.jp feeds, which stopped updating in August 2026.
-const NHK_RSS = 'https://news.web.nhk/n-data/conf/na/rss/cat5.xml';
-const NHK_LINK = /^https:\/\/(?:(?:[a-z0-9-]+\.)*nhk\.(?:or\.jp|jp)|news\.web\.nhk)\//;
-export function parseRSS(xml) {
-  return [...xml.matchAll(/<item(?:\s[^>]*)?>([\s\S]*?)<\/item>/g)].map(([,item]) => {
-    const tag = name => decodeXML(item.match(new RegExp(`<${name}(?:\\s[^>]*)?>([\\s\\S]*?)<\\/${name}>`))?.[1] || '');
-    // The feed's description is a one- or two-sentence lead; the TV shows it when a headline is opened.
-    return { title: tag('title').slice(0,180), summary: tag('description').slice(0,240), url: tag('link').replace(/^http:/, 'https:'), publishedAt: tag('pubDate'), source:'NHK 経済' };
-  }).filter(item => item.title && NHK_LINK.test(item.url) && Number.isFinite(Date.parse(item.publishedAt))).slice(0, 3);
-}
 export function parseYieldCSV(csv) {
   return csv.trim().split(/\r?\n/).slice(1).map(line => {
     const [date, value, thirty] = line.split(',');
@@ -61,28 +46,9 @@ async function api(pathname) {
     spotifyClientId: /^[a-f0-9]{32}$/.test(process.env.SPOTIFY_CLIENT_ID || '') ? process.env.SPOTIFY_CLIENT_ID : '',
     backend: true,
   };
-  if (pathname === '/api/news') return memo('news', 900000, async () => {
-    const rows = parseRSS(await upstream(NHK_RSS, { json:false }));
-    if (!rows.length) throw httpError(502, 'ニュースがありません');
-    return rows;
-  });
+  if (pathname === '/api/news') return memo('news', 900000, () => loadNews(url => upstream(url, { json:false })));
   if (pathname === '/api/calendar') {
-    const result=await memo('calendar',6*3600000,async()=>{
-      const snapshot=JSON.parse(await readFile(resolve(root,'data/economic-calendar.json'),'utf8'));
-      const providers=Object.keys(CALENDAR_FEEDS),sources=[],lists=[];
-      const results=await Promise.allSettled(providers.map(async source=>parseEconomicICS(await upstream(CALENDAR_FEEDS[source],{json:false}),source)));
-      for(const [i,item] of results.entries()){
-        const source=providers[i];
-        if(item.status==='fulfilled'){
-          lists.push(item.value);sources.push({source,status:'live',verifiedAt:new Date().toISOString(),coverageThrough:new Date(item.value.at(-1).timestamp).toISOString(),url:CALENDAR_FEEDS[source]});
-        }else{
-          lists.push(snapshot.events.filter(e=>e.source===source));
-          sources.push({...snapshot.sources.find(s=>s.source===source),status:'stale'});
-        }
-      }
-      lists.push(snapshot.events.filter(e=>e.source==='FRB'));sources.push(snapshot.sources.find(s=>s.source==='FRB'));
-      return {events:mergeCalendar(lists),sources};
-    });
+    const result=await memo('calendar',6*3600000,async()=>loadCalendar(url=>upstream(url,{json:false}),JSON.parse(await readFile(resolve(root,'data/economic-calendar.json'),'utf8'))));
     return {...result,stale:result.stale || result.data.sources.some(s=>s.status==='stale')};
   }
   if (pathname === '/api/yield') return memo('yield', 3600000, async () => {

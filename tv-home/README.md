@@ -259,7 +259,10 @@ dashboard/             WebViewに同梱する公開ファイル
   js/tradingview.js    外部オリジンに隔離した公式埋め込み
   data/events.json     確認済みFOMC原本
   data/economic-calendar.json  公式配信から作成した保存用日程
-lib/economic-calendar.mjs  BLS/BEAのICS解析、取消・変更と時刻の処理
+  js/feeds.js          ニュースと経済指標の取得・解析（サーバーとTVアプリで共用）
+  js/economic-calendar.js  BLS/BEAのICS解析、取消・変更と時刻の処理
+android/               TVアプリ（ホーム画面）。ビルドと入れ替えはHANDOFF第3.4節
+lib/economic-calendar.mjs  dashboard/js/economic-calendar.js の再エクスポート
 server.mjs             静的配信と固定APIのサーバー処理
 tests/                 時刻・取得失敗・RSS/CSV・秘密ファイル保護のテスト
 scripts/               静的ビルドと任意のブラウザ検証
