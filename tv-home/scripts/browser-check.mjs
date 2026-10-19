@@ -16,7 +16,7 @@ try{
   page.on('websocket',socket=>socket.on('framereceived',event=>{try{const message=JSON.parse(String(event.payload));if(message.channel==='activeAssetCtx')streamedCoins.add(message.data.coin);}catch{}}));
   const calendarResponse=page.waitForResponse(response=>new URL(response.url()).pathname==='/api/calendar');
   await page.goto(url,{waitUntil:'domcontentloaded'});
-  await page.waitForFunction(()=>document.querySelector('#temperature').textContent!=='—°',{timeout:20000});
+  await page.waitForFunction(()=>document.querySelector('#temperature').textContent!=='--°',{timeout:20000});
   await page.waitForFunction(()=>document.querySelectorAll('.hourly-item').length===6,{timeout:15000});
   assert.equal(await page.locator('.hourly-icon svg').count(),6);
   assert.equal(await page.locator('.hourly-trend .hourly-point').count(),6);
@@ -116,8 +116,7 @@ try{
       const overlaps=(a,b)=>a.left<b.right-1 && a.right>b.left+1 && a.top<b.bottom-1 && a.bottom>b.top+1;
       if(overlaps(labels,chart) || overlaps(chart,values) || overlaps(labels,values))failures.push('labels/chart/prices overlap');
     }
-    if(box('.launcher-footer').bottom>box('.bottom-line').top)failures.push('launcher overlap footer');
-    if(box('#apps').bottom>box('.bottom-line').top-8)failures.push('app dock overlaps bottom hints');
+    if(box('#apps').bottom>box('#stage').bottom-40)failures.push('app dock lost its bottom safe margin');
     return failures;
   });assert.deepEqual(collision,[]);
   for(const viewport of [{width:1366,height:768},{width:768,height:1024},{width:660,height:1000},{width:390,height:844},{width:320,height:720}]){
@@ -146,7 +145,7 @@ try{
   await page.routeWebSocket('wss://api.hyperliquid.xyz/ws',socket=>socket.close());
   await page.reload({waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>document.querySelector('#weather-source').textContent.includes('更新待ち'));
-  assert.notEqual(await page.locator('#temperature').textContent(),'—°');
+  assert.notEqual(await page.locator('#temperature').textContent(),'--°');
   assert.match(await page.locator('#hourly-status').textContent(),/更新待ち/);
   assert.equal(await page.locator('.hourly-item').count(),6);
   await page.locator('[data-symbol="BTC"] .company-name').filter({hasText:'更新待ち'}).waitFor();

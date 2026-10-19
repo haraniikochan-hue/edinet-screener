@@ -38,11 +38,14 @@ export function decodeXML(value) {
       return code > 0 && code <= 0x10ffff ? String.fromCodePoint(code) : '';
     }).replace(/&(amp|lt|gt|quot|apos);/g, (_, e) => ({ amp:'&',lt:'<',gt:'>',quot:'"',apos:"'" })[e]).trim();
 }
+// NHK ONE (news.web.nhk) replaced the www3.nhk.or.jp feeds, which stopped updating in August 2026.
+const NHK_RSS = 'https://news.web.nhk/n-data/conf/na/rss/cat5.xml';
+const NHK_LINK = /^https:\/\/(?:(?:[a-z0-9-]+\.)*nhk\.(?:or\.jp|jp)|news\.web\.nhk)\//;
 export function parseRSS(xml) {
   return [...xml.matchAll(/<item(?:\s[^>]*)?>([\s\S]*?)<\/item>/g)].map(([,item]) => {
     const tag = name => decodeXML(item.match(new RegExp(`<${name}(?:\\s[^>]*)?>([\\s\\S]*?)<\\/${name}>`))?.[1] || '');
     return { title: tag('title').slice(0,180), url: tag('link').replace(/^http:/, 'https:'), publishedAt: tag('pubDate'), source:'NHK 経済' };
-  }).filter(item => item.title && /^https:\/\/[^/]*nhk\.(or\.jp|jp)\//.test(item.url) && Number.isFinite(Date.parse(item.publishedAt))).slice(0, 3);
+  }).filter(item => item.title && NHK_LINK.test(item.url) && Number.isFinite(Date.parse(item.publishedAt))).slice(0, 3);
 }
 export function parseYieldCSV(csv) {
   return csv.trim().split(/\r?\n/).slice(1).map(line => {
@@ -58,7 +61,7 @@ async function api(pathname) {
     backend: true,
   };
   if (pathname === '/api/news') return memo('news', 900000, async () => {
-    const rows = parseRSS(await upstream('https://www3.nhk.or.jp/rss/news/cat5.xml', { json:false }));
+    const rows = parseRSS(await upstream(NHK_RSS, { json:false }));
     if (!rows.length) throw httpError(502, 'ニュースがありません');
     return rows;
   });

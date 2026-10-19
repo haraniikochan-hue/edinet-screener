@@ -29,17 +29,22 @@ export function drawMarketChart(container,series,id,label) {
   const defs=svgNode('defs');
   for(const side of ['up','down']){
     const clip=svgNode('clipPath',{id:`chart-${id}-${side}`});
-    clip.append(svgNode('rect',{x:0,y:side==='up'?0:g.baseline,width:g.width,height:side==='up'?g.baseline:g.height-g.baseline}));defs.append(clip);
+    clip.append(svgNode('rect',{x:0,y:side==='up'?0:g.baseline,width:g.width,height:side==='up'?g.baseline:g.height-g.baseline}));
+    // Each side's fill fades from the outer edge to nothing at the baseline.
+    const fill=svgNode('linearGradient',{id:`chart-${id}-${side}-fill`,class:`chart-fill chart-${side}`,gradientUnits:'userSpaceOnUse',x1:0,x2:0,y1:side==='up'?0:g.height,y2:g.baseline});
+    fill.append(svgNode('stop',{offset:0,'stop-opacity':.34}),svgNode('stop',{offset:1,'stop-opacity':0}));
+    defs.append(clip,fill);
   }
   svg.append(defs,svgNode('line',{x1:0,x2:g.width,y1:g.baseline,y2:g.baseline,class:'chart-baseline'}));
   for(const side of ['up','down']){
     const group=svgNode('g',{'clip-path':`url(#chart-${id}-${side})`,class:`chart-${side}`});
     for(const path of g.paths){
-      group.append(svgNode('path',{d:path.area,class:'chart-area'}),svgNode('path',{d:path.line,class:'chart-line'}));
+      group.append(svgNode('path',{d:path.area,class:'chart-area',fill:`url(#chart-${id}-${side}-fill)`}),svgNode('path',{d:path.line,class:'chart-line'}));
       if(path.points.length===1)group.append(svgNode('circle',{cx:path.points[0].x,cy:path.points[0].y,r:1.4}));
     }
     svg.append(group);
   }
-  svg.append(svgNode('circle',{cx:g.last.x,cy:g.last.y,r:2,class:g.last.value>=series.baseline?'chart-up':'chart-down'}));
+  const lastSide=g.last.value>=series.baseline?'chart-up':'chart-down';
+  svg.append(svgNode('circle',{cx:g.last.x,cy:g.last.y,r:5,class:`chart-halo ${lastSide}`}),svgNode('circle',{cx:g.last.x,cy:g.last.y,r:2.4,class:lastSide}));
   container.replaceChildren(svg);return true;
 }

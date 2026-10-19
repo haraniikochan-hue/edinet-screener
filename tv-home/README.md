@@ -1,10 +1,13 @@
 # TV Home — フェーズ2 Webダッシュボード
 
-次セッションへの引き継ぎは [START_HERE.md](START_HERE.md) から。現行仕様と未対応事項は [HANDOFF.md](HANDOFF.md)、最新の見た目は [プレビュー](artifacts/dashboard-desktop.png) を参照してください。v0.5.5はユーザーが「ほぼ完成形」と評価した基準です。
+次セッションへの引き継ぎは [START_HERE.md](START_HERE.md) から。現行仕様と未対応事項は [HANDOFF.md](HANDOFF.md)、最新の見た目は [プレビュー](artifacts/dashboard-desktop.png) を参照してください。v0.6.0でApple／iOSの考え方に沿ってデザインを刷新しました（配置と内容はv0.5.5のまま）。デザインの基準は `HANDOFF.md` 第3節です。
 
-`HANDOFF.md` のフェーズ2を実装した、ビルド不要のHTML/CSS/JavaScript＋小さなNode.jsデータサーバーです。時計・天気・経済指標を左、マーケット・ニュース・Spotifyを右にまとめた、iOS風の透過UIを採用しています。
+`HANDOFF.md` のフェーズ2を実装した、ビルド不要のHTML/CSS/JavaScript＋小さなNode.jsデータサーバーです。時計・天気・経済指標を左、マーケット・ニュース・Spotifyを右にまとめ、Apple TV／iOSのクリアなガラス素材・Inter＋Noto Sans JP・iOSのシステムカラーで統一しています。
 
-## 現在の仕様（v0.5.5）
+## 現在の仕様（v0.6.0）
+
+- **v0.6.0のデザイン刷新**：Apple Weather型の天気、Apple株価アプリ型の相場、カテゴリー色付きの経済指標、iOSの連続曲線アイコンとtvOS型のフォーカス、iOS型の設定画面。TVで読めるよう最小文字を12pxに。正常時は状態表示を出さず、更新待ちのときだけ琥珀色で表示。詳細は `HANDOFF.md` 第3節。
+- **ニュース配信元を修正**：旧 `www3.nhk.or.jp` のRSSは2026-08-08で更新が止まっていたため、NHK ONE（`news.web.nhk`）の経済RSSへ切り替えました。
 
 - **朝・夜とも同じフル版**。渋谷区の天気、Spotify。スポーツ欄なし。
 - **6時間先までの時間別天気**。時刻、昼夜に合った天気アイコン、気温のライン、降水確率と小さなバーを、現在の天気と同じガラスカードに表示。
@@ -51,7 +54,7 @@ HTTPプロキシが必要なNode.js 24環境では、継承したプロキシ変
 | 空気 | Open-Meteo / 30分 | CAMSモデルの米国AQI。日本の花粉は未対応 |
 | 米国経済指標 | BLS・BEA公式ICS / 6時間 | CPI、雇用統計、PPI、JOLTS、GDP、PCE。日本時間で表示 |
 | FOMC | FRB公式2026〜2027年カレンダー | 通常の14:00 ETを予定時刻としてJST変換。2026-10-18確認。日程変更時はJSON更新 |
-| ニュース | NHK経済RSS / 15分 | 見出し3本を20秒で切替。48時間以上前の配信を明示 |
+| ニュース | NHK ONE 経済RSS / 15分 | 見出し3本を20秒で切替。48時間以上前の配信を明示 |
 | Spotify | OAuth PKCE / 30秒 | Client IDとユーザー認証が必要。実アカウントは未検証 |
 | 背景 | 同梱CC0写真 / Unsplash API | キー設定後24枚を1時間ごとに取得、既定1分で切替 |
 | アプリ一覧 | Android JS Bridge | Web版のアプリ起動は未対応。APK接続はフェーズ3 |

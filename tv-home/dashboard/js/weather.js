@@ -73,6 +73,15 @@ export function temperatureTrend(rows) {
   return {points,segments};
 }
 
+// Apple Weather–style temperature colours: cold blue through mint and yellow to hot red.
+const TEMPERATURE_COLORS = [[-10,[122,167,255]],[0,[90,200,250]],[10,[99,230,190]],[17,[181,230,85]],[22,[255,214,10]],[27,[255,159,10]],[32,[255,107,61]],[38,[255,55,95]]];
+export function temperatureColor(celsius) {
+  const stops = TEMPERATURE_COLORS, value = Math.min(stops.at(-1)[0],Math.max(stops[0][0],celsius));
+  const upper = stops.findIndex(([t])=>t>=value), [t1,c1] = stops[Math.max(0,upper-1)], [t2,c2] = stops[upper];
+  const ratio = t2===t1 ? 0 : (value-t1)/(t2-t1);
+  return `rgb(${c1.map((c,i)=>Math.round(c+(c2[i]-c)*ratio)).join(',')})`;
+}
+
 function svgNode(tag, attributes = {}) {
   const node = document.createElementNS(NS,tag);
   for (const [key,value] of Object.entries(attributes)) node.setAttribute(key,String(value));
@@ -121,11 +130,21 @@ export function renderHourlyForecast(container, rows) {
   }
   const {points,segments} = temperatureTrend(rows);
   const graph = svgNode('svg',{viewBox:'0 0 600 52',preserveAspectRatio:'none',class:'hourly-trend','aria-hidden':'true'});
+  const gradient = svgNode('linearGradient',{id:'hourly-temperature',gradientUnits:'userSpaceOnUse',x1:0,x2:600,y1:0,y2:0});
+  rows.forEach((row,index)=>{
+    if (points[index]) gradient.append(svgNode('stop',{offset:(points[index].x/600).toFixed(4),'stop-color':temperatureColor(row.temperature)}));
+  });
+  // The fill under the line fades out downwards instead of forming a flat band.
+  const fade = svgNode('linearGradient',{id:'hourly-fade',x1:0,x2:0,y1:0,y2:1});
+  fade.append(svgNode('stop',{offset:0,'stop-color':'#fff','stop-opacity':.9}),svgNode('stop',{offset:1,'stop-color':'#fff','stop-opacity':0}));
+  const mask = svgNode('mask',{id:'hourly-area-mask',maskUnits:'userSpaceOnUse',x:0,y:0,width:600,height:52});
+  mask.append(svgNode('rect',{x:0,y:0,width:600,height:52,fill:'url(#hourly-fade)'}));
+  const defs = svgNode('defs');defs.append(gradient,fade,mask);graph.append(defs);
   for (const segment of segments) {
     if (segment.length < 2) continue;
     const d = segment.map((p,i)=>`${i?'L':'M'}${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(' ');
-    graph.append(svgNode('path',{d:`${d} L${segment.at(-1).x},52 L${segment[0].x},52 Z`,class:'hourly-area'}));
-    graph.append(svgNode('path',{d,class:'hourly-line'}));
+    graph.append(svgNode('path',{d:`${d} L${segment.at(-1).x},52 L${segment[0].x},52 Z`,class:'hourly-area',fill:'url(#hourly-temperature)',mask:'url(#hourly-area-mask)'}));
+    graph.append(svgNode('path',{d,class:'hourly-line',stroke:'url(#hourly-temperature)'}));
   }
   points.filter(Boolean).forEach(p=>graph.append(svgNode('circle',{cx:p.x,cy:p.y,r:2.2,class:'hourly-point'})));
   const list = node('ol','hourly-grid');

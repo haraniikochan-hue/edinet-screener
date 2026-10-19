@@ -34,8 +34,8 @@ export function pressApp(button) {
   if (!icon?.animate) return;
   for (const animation of icon.getAnimations()) animation.cancel();
   icon.animate([
-    {transform:'translateY(-6px) scale(1.12)'},
-    {transform:'translateY(-2px) scale(1)'},
-    {transform:'translateY(-6px) scale(1.12)'},
-  ], {duration:280, easing:'ease-out'});
+    {transform:'translateY(-8px) scale(1.14)'},
+    {transform:'translateY(-3px) scale(1.02)', offset:.35},
+    {transform:'translateY(-8px) scale(1.14)'},
+  ], {duration:420, easing:'cubic-bezier(.25,1.25,.4,1)'});
 }

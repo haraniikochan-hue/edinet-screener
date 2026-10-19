@@ -1,9 +1,9 @@
 {
   "project": "TV Home",
-  "appVersion": "0.5.5",
-  "handoffRevision": "2026-10-19.1",
-  "createdAt": "2026-10-19T01:25:40.328652+00:00",
-  "userStatus": "Current UI accepted as almost complete; next work not yet specified.",
+  "appVersion": "0.6.0",
+  "handoffRevision": "2026-10-19.2",
+  "createdAt": "2026-10-19",
+  "userStatus": "v0.6.0 design refresh delivered; awaiting the user's review.",
   "entryPoint": "START_HERE.md",
   "currentSpecification": "HANDOFF.md",
   "nextSessionPrompt": "NEXT_SESSION_PROMPT.txt",
@@ -12,8 +12,8 @@
   "localUrl": "http://127.0.0.1:4173/",
   "nodeRequirement": "22.9+; validated with Node.js 24.19.0",
   "runtimeNpmDependencies": [],
-  "acceptedBaselineArchive": "tv-home-phase2-v11.zip",
-  "appCodeUnchanged": true,
+  "acceptedBaselineArchive": "tv-home-handoff-complete-v0.5.5.zip (v0.5.5 layout)",
+  "appCodeUnchanged": false,
   "contents": [
     "source",
     "built dist",
@@ -34,9 +34,9 @@
     "node_modules and browser binaries",
     "old intermediate screenshots/videos and nested ZIP copies"
   ],
-  "verification": "artifacts/handoff-check.json",
   "integrityManifest": "MANIFEST.sha256",
   "published": false,
   "apkBuilt": false,
-  "tvConnected": false
+  "tvConnected": false,
+  "verification": "HANDOFF.md section 10 (v0.6.0)"
 }

@@ -2,35 +2,56 @@
 <html lang="ja">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#0A0F1A">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#05070c">
   <meta name="description" content="渋谷の天気とニューヨークのマーケットを、リビングの一画面に。TV Home ダッシュボード。">
   <title>TV Home — 街と、いま。</title>
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;600&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,100..700&family=Noto+Sans+JP:wght@300..700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
   <script type="module" src="js/app.js"></script>
 </head>
 <body>
+  <svg class="icon-sprite" aria-hidden="true" focusable="false">
+    <symbol id="i-location" viewBox="0 0 24 24"><path fill="currentColor" stroke="none" d="M20.4 3.6 3.9 10.5c-.7.3-.6 1.2.1 1.4l7 1.4 1.4 7c.2.7 1.1.8 1.4.1l6.9-16.5c.2-.4-.2-.8-.3-.3Z"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.6"/><path d="M12 7.4V12l3.1 2"/></symbol>
+    <symbol id="i-drop" viewBox="0 0 24 24"><path fill="currentColor" stroke="none" d="M12 2.8c-2.7 3.8-6.2 7.4-6.2 11.2a6.2 6.2 0 0 0 12.4 0c0-3.8-3.5-7.4-6.2-11.2Z"/></symbol>
+    <symbol id="i-sunrise" viewBox="0 0 24 24"><path d="M3 19.5h18M7 19.5a5 5 0 0 1 10 0M12 3v6.2M9.4 5.6 12 3l2.6 2.6M4.3 14.6l1.5.9M19.7 14.6l-1.5.9"/></symbol>
+    <symbol id="i-sunset" viewBox="0 0 24 24"><path d="M3 19.5h18M7 19.5a5 5 0 0 1 10 0M12 3v6.2M9.4 6.6 12 9.2l2.6-2.6M4.3 14.6l1.5.9M19.7 14.6l-1.5.9"/></symbol>
+    <symbol id="i-air" viewBox="0 0 24 24"><path d="M3 8.5c2-1.6 4-1.6 6 0s4 1.6 6 0 4-1.6 6 0M3 13c2-1.6 4-1.6 6 0s4 1.6 6 0 4-1.6 6 0M3 17.5c2-1.6 4-1.6 6 0s4 1.6 6 0"/></symbol>
+    <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="3.4"/><path d="M3.5 10h17M8 3v3.6M16 3v3.6"/></symbol>
+    <symbol id="i-news" viewBox="0 0 24 24"><path d="M5.6 4.5h9.8a2 2 0 0 1 2 2v13H6.6a3 3 0 0 1-3-3v-10a2 2 0 0 1 2-2ZM17.4 9h1.9a1.2 1.2 0 0 1 1.2 1.2v6.8a2.5 2.5 0 0 1-2.5 2.5M7.4 8.6h6.4M7.4 12h6.4M7.4 15.4h3.8"/></symbol>
+    <symbol id="i-chevron-left" viewBox="0 0 24 24"><path d="M14.6 5.6 8.2 12l6.4 6.4"/></symbol>
+    <symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="m9.4 5.6 6.4 6.4-6.4 6.4"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M19.6 12.4a7.6 7.6 0 1 1-2.3-5.9l2.2 2.1M19.6 3.9v4.8h-4.8"/></symbol>
+    <symbol id="i-fullscreen" viewBox="0 0 24 24"><path d="M4.2 9.2V5.6c0-.8.6-1.4 1.4-1.4h3.6M14.8 4.2h3.6c.8 0 1.4.6 1.4 1.4v3.6M19.8 14.8v3.6c0 .8-.6 1.4-1.4 1.4h-3.6M9.2 19.8H5.6c-.8 0-1.4-.6-1.4-1.4v-3.6"/></symbol>
+    <symbol id="i-arrow-up-right" viewBox="0 0 24 24"><path d="M7.5 16.5 16.5 7.5M9 7.5h7.5V15"/></symbol>
+    <symbol id="i-xmark" viewBox="0 0 24 24"><path d="m6.6 6.6 10.8 10.8M17.4 6.6 6.6 17.4"/></symbol>
+    <symbol id="i-note" viewBox="0 0 24 24"><path fill="currentColor" stroke="none" d="M15.6 3.4c.5-.1.9.3.9.8v11.6a3.4 2.9 0 1 1-1.8-2.6V8.1l-5.8 1.4v8.3a3.4 2.9 0 1 1-1.8-2.6V6.4c0-.4.3-.8.7-.9Z"/></symbol>
+    <symbol id="i-gear" viewBox="0 0 24 24"><path fill="currentColor" stroke="none" fill-rule="evenodd" d="M19.14 9.11 22.04 10.21 22.04 13.79 19.14 14.89 19.09 15 20.37 17.83 17.83 20.37 15 19.09 14.89 19.14 13.79 22.04 10.21 22.04 9.11 19.14 9 19.09 6.17 20.37 3.63 17.83 4.91 15 4.86 14.89 1.96 13.79 1.96 10.21 4.86 9.11 4.91 9 3.63 6.17 6.17 3.63 9 4.91 9.11 4.86 10.21 1.96 13.79 1.96 14.89 4.86 15 4.91 17.83 3.63 20.37 6.17 19.09 9ZM12 8.3a3.7 3.7 0 1 0 0 7.4 3.7 3.7 0 1 0 0-7.4Z"/></symbol>
+  </svg>
   <div class="background" aria-hidden="true"><div class="photo-layer is-active"></div><div class="photo-layer"></div></div>
   <div class="shade" aria-hidden="true"></div>
   <main id="stage" aria-label="TV Home ダッシュボード">
-    <header class="masthead"><span class="wordmark"><i></i> HOME <span class="divider">/</span><span>街と、いま。</span></span><div class="utility"><span id="connection-status" class="subtle">接続中</span><button id="refresh" class="quiet-button" aria-label="データを更新">↻ <span>更新</span></button><button id="fullscreen" class="quiet-button" aria-label="全画面に切り替え">⛶ <span>全画面</span></button></div></header>
+    <header class="masthead"><div class="utility"><span id="connection-status" class="status-pill" data-state="ok">接続中</span><button id="refresh" class="glass-button" aria-label="データを更新"><svg class="icon"><use href="#i-refresh"/></svg></button><button id="fullscreen" class="glass-button" aria-label="全画面に切り替え"><svg class="icon"><use href="#i-fullscreen"/></svg></button></div></header>
 
     <div class="dashboard-grid">
       <section class="overview" aria-label="時計と日付">
-        <div class="local-time"><span class="eyebrow">TOKYO <span class="city-divider">/</span> JAPAN</span><div class="clock-line"><time id="clock">--:--</time><div class="date"><span id="date">—月—日</span><span id="weekday">—曜日</span></div></div></div>
+        <p class="greeting"><span id="greeting">こんにちは</span><span class="greeting-place">東京</span></p>
+        <div class="clock-line"><time id="clock">--:--</time><div class="date"><span id="date">—月—日</span><span id="weekday">—曜日</span></div></div>
       </section>
       <section class="card weather-section" aria-label="現在の天気と時間別予報">
-          <div class="weather-line"><span id="weather-icon" class="weather-icon" aria-hidden="true"></span><span id="temperature" class="number">—°</span><div><div><span id="location-name">渋谷区</span><span class="weather-separator"> / </span><span id="weather-label">取得中</span></div><div id="tomorrow" class="secondary">明日の予報を取得しています</div></div></div>
-          <section class="hourly-section" aria-labelledby="hourly-heading">
-            <div class="hourly-heading"><h3 id="hourly-heading">時間別天気 <span id="hourly-status">取得中</span></h3><span class="rain-key"><svg viewBox="0 0 16 20" aria-hidden="true"><path d="M8 1C6 5 2 9 2 12a6 6 0 0 0 12 0C14 9 10 5 8 1Z"></path></svg>降水確率</span></div>
-            <div id="hourly-forecast" class="hourly-forecast"><p class="hourly-empty">時間別予報を取得しています</p></div>
-          </section>
-          <div class="chips"><span id="sunrise">日の出 —</span><span id="sunset">日の入 —</span><span id="air">空気 —</span></div>
-          <div class="source-line" id="weather-source">Open-Meteo · モデル予測</div>
+        <div class="weather-now">
+          <div class="weather-primary"><div class="weather-place"><span id="location-name">渋谷区</span><svg class="icon" aria-hidden="true"><use href="#i-location"/></svg></div><span id="temperature" class="number">--°</span></div>
+          <div class="weather-summary"><span id="weather-icon" class="weather-icon" aria-hidden="true"></span><span id="weather-label">取得中</span><span id="tomorrow">明日の予報を取得しています</span></div>
+        </div>
+        <section class="hourly-section" aria-labelledby="hourly-heading">
+          <div class="hourly-heading"><h3 id="hourly-heading" class="card-title"><svg class="icon" aria-hidden="true"><use href="#i-clock"/></svg>時間別天気<span id="hourly-status">取得中</span></h3><span class="rain-key"><svg class="icon" aria-hidden="true"><use href="#i-drop"/></svg>降水確率</span></div>
+          <div id="hourly-forecast" class="hourly-forecast"><p class="hourly-empty">時間別予報を取得しています</p></div>
+        </section>
+        <div class="weather-footer"><div class="chips"><span id="sunrise">日の出 —</span><span id="sunset">日の入 —</span><span id="air">空気 —</span></div><div class="source-line" id="weather-source">Open-Meteo · モデル予測</div></div>
       </section>
 
       <div class="market-column">
@@ -40,13 +61,28 @@
         </section>
       </div>
       <section class="card calendar-card" aria-labelledby="calendar-heading">
-        <div class="calendar-heading"><div><span class="eyebrow">UNITED STATES</span><h2 id="calendar-heading">米国経済指標</h2></div><span class="calendar-zone">JST <span>日本時間</span></span></div>
+        <div class="card-header"><h2 id="calendar-heading" class="card-title"><svg class="icon" aria-hidden="true"><use href="#i-calendar"/></svg>米国経済指標</h2><span class="calendar-zone">日本時間</span></div>
         <p class="sr-only">これからの主要な発表</p>
-        <div id="calendar-events" class="calendar-events"><p class="secondary">公式日程を確認しています</p></div>
-        <div class="calendar-footer"><span id="calendar-page" class="number"></span><div class="calendar-paging"><button id="calendar-prev" aria-label="前の経済指標の予定">‹</button><button id="calendar-next" aria-label="次の経済指標の予定">›</button></div></div>
-        <div id="calendar-source" class="source-line">BLS · BEA · FRB</div>
+        <div id="calendar-events" class="calendar-events"><p class="calendar-empty">公式日程を確認しています</p></div>
+        <div class="calendar-footer"><span id="calendar-source" class="source-line">BLS · BEA · FRB</span><div class="calendar-paging"><span id="calendar-page" class="number"></span><button id="calendar-prev" class="round-button" aria-label="前の経済指標の予定"><svg class="icon"><use href="#i-chevron-left"/></svg></button><button id="calendar-next" class="round-button" aria-label="次の経済指標の予定"><svg class="icon"><use href="#i-chevron-right"/></svg></button></div></div>
       </section>
-      <div class="side-stack"><section class="card news-card" aria-labelledby="news-heading"><div class="card-heading"><h2 id="news-heading">ニュース</h2><button id="next-news" class="text-button" aria-label="次のニュース">— / — →</button></div><a id="news-title" class="news-title" target="_blank" rel="noopener noreferrer">ニュースを取得しています</a><div class="news-footer"><span id="news-source" class="tiny">NHK 経済</span><span class="news-dots" id="news-dots" aria-hidden="true"></span></div></section><section class="card music-card" aria-labelledby="music-heading"><div class="album" id="album"><svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="25"></circle><circle cx="32" cy="32" r="9"></circle><circle cx="32" cy="32" r="2"></circle></svg></div><div class="music-details"><div class="card-heading"><h2 id="music-heading">SPOTIFY</h2><span id="music-state" class="music-indicator" aria-hidden="true">♫</span></div><a id="track-name" class="track-name" target="_blank" rel="noopener noreferrer">音楽を、この画面に。</a><span id="artist-name" class="secondary">再生中の曲を表示</span><div id="music-progress" class="progress" hidden><span></span></div><button id="spotify-connect" class="text-button">Spotifyを連携 ↗</button></div></section></div>
+      <div class="side-stack">
+        <section class="card news-card" aria-labelledby="news-heading">
+          <div class="card-header"><h2 id="news-heading" class="card-title"><svg class="icon" aria-hidden="true"><use href="#i-news"/></svg>ニュース</h2><div class="news-controls"><span class="news-dots" id="news-dots" aria-hidden="true"></span><button id="next-news" class="round-button" aria-label="次のニュース"><svg class="icon"><use href="#i-chevron-right"/></svg></button></div></div>
+          <a id="news-title" class="news-title" target="_blank" rel="noopener noreferrer">ニュースを取得しています</a>
+          <div class="news-footer"><span id="news-source" class="tiny">NHK 経済</span></div>
+        </section>
+        <section class="card music-card" aria-labelledby="music-heading">
+          <div class="album" id="album"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-note"/></svg></div>
+          <div class="music-details">
+            <div class="card-header"><h2 id="music-heading" class="card-title"><span class="spotify-mark" aria-hidden="true"></span>Spotify</h2><span id="music-state" class="equalizer" data-state="idle" aria-hidden="true"><i></i><i></i><i></i></span></div>
+            <a id="track-name" class="track-name" target="_blank" rel="noopener noreferrer">音楽を、この画面に。</a>
+            <span id="artist-name" class="secondary">再生中の曲を表示</span>
+            <div id="music-progress" class="progress" hidden><span></span></div>
+            <button id="spotify-connect" class="tinted-button">Spotifyと連携<svg class="icon" aria-hidden="true"><use href="#i-arrow-up-right"/></svg></button>
+          </div>
+        </section>
+      </div>
     </div>
 
     <footer class="launcher-footer">
@@ -57,22 +93,21 @@
         <button class="app-tile" data-app="prime" data-brand="prime" aria-label="Prime Video"><span class="app-icon" aria-hidden="true"><span class="app-brand-mark"></span></span><span class="app-label" aria-hidden="true">Prime Video</span></button>
         <button class="app-tile" data-app="disneyplus" data-brand="disneyplus" aria-label="Disney+"><span class="app-icon" aria-hidden="true"><img src="assets/apps/disneyplus.png" alt=""></span><span class="app-label" aria-hidden="true">Disney+</span></button>
         <button class="app-tile" data-app="spotify" data-brand="spotify" aria-label="Spotify"><span class="app-icon" aria-hidden="true"><span class="app-brand-mark"></span></span><span class="app-label" aria-hidden="true">Spotify</span></button>
-        <button class="app-tile" data-brand="settings" data-open-settings="general" aria-label="設定"><span class="app-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m9.8 3-.5 2.1-1.5.9-2.1-.6-2.2 3.8 1.6 1.5v1.7l-1.6 1.5 2.2 3.8 2.1-.6 1.5.9.5 2.1h4.4l.5-2.1 1.5-.9 2.1.6 2.2-3.8-1.6-1.5v-1.7l1.6-1.5-2.2-3.8-2.1.6-1.5-.9-.5-2.1Z"></path><circle cx="12" cy="11.5" r="3"></circle></svg></span><span class="app-label" aria-hidden="true">設定</span></button>
+        <button class="app-tile" data-brand="settings" data-open-settings="general" aria-label="設定"><span class="app-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#i-gear"/></svg></span><span class="app-label" aria-hidden="true">設定</span></button>
       </nav>
-      <div class="photo-caption"><div id="photo-title">ニューヨーク · ミッドタウン</div><div class="photo-credit" id="photo-credit"></div><button id="next-photo" class="text-button">写真を切り替え →</button></div>
+      <div class="photo-caption"><div id="photo-title">ニューヨーク · ミッドタウン</div><div class="photo-credit" id="photo-credit"></div><button id="next-photo" class="text-button">写真を切り替え<svg class="icon" aria-hidden="true"><use href="#i-chevron-right"/></svg></button></div>
     </footer>
-    <div class="bottom-line"><span>← → ↑ ↓ 移動 <span class="key-separator">·</span> Enter 決定 <span class="key-separator">·</span> Esc 戻る</span><span id="bottom-note">WEB PREVIEW <span class="key-separator">·</span> アプリ起動はTV版で対応</span></div>
   </main>
 
   <div id="settings-overlay" class="modal-overlay" hidden>
     <section id="settings-dialog" class="settings-dialog" role="dialog" aria-modal="true" aria-labelledby="settings-title" tabindex="-1">
-      <div class="dialog-heading"><div><span class="eyebrow">MAKE YOURSELF AT HOME</span><h2 id="settings-title">ホームの設定</h2></div><button id="close-settings" class="icon-button" aria-label="設定を閉じる">×</button></div>
+      <div class="dialog-heading"><div><span class="eyebrow">MAKE YOURSELF AT HOME</span><h2 id="settings-title">ホームの設定</h2></div><button id="close-settings" class="icon-button" aria-label="設定を閉じる"><svg class="icon"><use href="#i-xmark"/></svg></button></div>
       <form id="settings-form">
         <fieldset><legend>天気の地域</legend><div class="search-row"><label class="sr-only" for="city-search">市区町村</label><input id="city-search" type="search" placeholder="市区町村を検索" autocomplete="off"><button type="button" id="search-city" class="small-button">検索</button></div><div id="city-results" class="city-results" aria-live="polite"></div><p id="selected-city" class="help">現在：渋谷区</p></fieldset>
         <fieldset><legend>マーケット</legend><label for="market-mode">表示方式</label><select id="market-mode"><option value="custom">TV Home / Hyperliquid・HIP-3</option><option value="tradingview">TradingView参考ウィジェット（別の配信元）</option></select><label for="crypto-source-select">BTC・HYPEの価格（TV Home表示）</label><select id="crypto-source-select"><option value="hyperliquid">Hyperliquid / 無期限先物のマーク価格</option><option value="coingecko">CoinGecko / USD参考価格</option></select><p id="market-help" class="help">12銘柄をHyperliquid・HIP-3から取得します。APIキーは不要です。価格は各契約のマーク価格、変化率は24時間比。指数やETFそのものの現物価格とは異なります。BTCはUSDT建て、HYPEはUSDC建てです。</p><p class="help">チャートは直近24時間の取引価格（15分足の終値）です。点線は期間最初の足の始値。約定のない時間は空白のまま表示します。CoinGeckoに切り替えたBTC・HYPEにはチャートを表示しません。</p><div class="market-status" aria-label="マーケットのデータ状態"><div class="feed-summary"><span class="feed-pill" id="crypto-feed">Hyperliquid · 接続中</span><span class="market-coverage"><span class="status-dot" id="market-dot"></span><span id="stock-source">接続中</span></span></div><div class="chart-caption"><span id="crypto-note">価格：無期限先物のマーク価格 · 変化率：24h · チャート：取引価格</span><span id="chart-legend"><i></i> 点線：期間最初の足の始値</span></div></div></fieldset>
-        <fieldset><legend>背景写真</legend><label for="photo-mode">写真の取得元</label><select id="photo-mode"><option value="sample">同梱のNY写真（出典付き）</option><option value="unsplash">Unsplashから自動取得</option></select><div class="form-two"><label for="photo-interval">切替間隔<select id="photo-interval"><option value="30">30秒</option><option value="60">1分</option><option value="180">3分</option><option value="300">5分</option></select></label><label class="checkbox-label"><input type="checkbox" id="motion">ゆっくりズーム</label></div><p id="photo-help" class="help">Unsplashはサーバー側のAPIキー設定後に利用できます。</p><details class="setup-guide"><summary>Unsplashの接続方法</summary><ol><li><a href="https://unsplash.com/oauth/applications" target="_blank" rel="noopener noreferrer">Unsplash Developers ↗</a> で「New Application」を作成。</li><li>表示されたAccess Keyをサーバーの <code>.env.local</code> の <code>UNSPLASH_ACCESS_KEY</code> に設定して再起動。</li><li>取得元を「Unsplashから自動取得」にして保存。</li></ol><p class="help">Secret Keyは不要です。キーはこの画面やチャットには入力しません。NYの写真をまとめて取得し、指定した間隔で切り替えます。</p></details></fieldset>
+        <fieldset><legend>背景写真</legend><label for="photo-mode">写真の取得元</label><select id="photo-mode"><option value="sample">同梱のNY写真（出典付き）</option><option value="unsplash">Unsplashから自動取得</option></select><div class="form-two"><label for="photo-interval">切替間隔<select id="photo-interval"><option value="30">30秒</option><option value="60">1分</option><option value="180">3分</option><option value="300">5分</option></select></label><label class="checkbox-label"><input type="checkbox" id="motion" role="switch">ゆっくりズーム</label></div><p id="photo-help" class="help">Unsplashはサーバー側のAPIキー設定後に利用できます。</p><details class="setup-guide"><summary>Unsplashの接続方法</summary><ol><li><a href="https://unsplash.com/oauth/applications" target="_blank" rel="noopener noreferrer">Unsplash Developers ↗</a> で「New Application」を作成。</li><li>表示されたAccess Keyをサーバーの <code>.env.local</code> の <code>UNSPLASH_ACCESS_KEY</code> に設定して再起動。</li><li>取得元を「Unsplashから自動取得」にして保存。</li></ol><p class="help">Secret Keyは不要です。キーはこの画面やチャットには入力しません。NYの写真をまとめて取得し、指定した間隔で切り替えます。</p></details></fieldset>
         <fieldset><legend>Spotify</legend><label for="spotify-client-id">Client ID</label><input id="spotify-client-id" type="text" autocomplete="off" spellcheck="false" placeholder="Spotify Developer DashboardのClient ID"><p class="help">Client Secretは不要です。連携画面で「再生中の曲」の読み取りを許可してください。</p><p class="help">登録するリダイレクトURI：<code id="spotify-redirect"></code></p><div class="button-row"><button type="button" id="connect-in-settings" class="small-button">保存してSpotifyを連携</button><button type="button" id="disconnect-spotify" class="text-button">連携を解除</button></div><p id="spotify-message" class="help" aria-live="polite"></p></fieldset>
-        <details><summary>データソースと表示について</summary><p class="help">マーケット：BTC・HYPEはHyperliquid、SP500・JP225・SOXL・XYZ100・JPY・DRAM・GOLD・CLはtrade.xyz、10Y・30YはparaのHIP-3契約。WebSocketを最大毎秒描画し、切断時は30秒ごとのHTTP取得に切り替えます。時刻は受信時刻です。履歴は5分ごとに更新。XYZ100は独自の米国100銘柄指数です。JPYは1米ドルあたりの円。10Y・30Yは契約の数値をそのまま表示します。</p><p class="help">経済指標カレンダーはBLS・BEAの公式配信を6時間ごとに確認。CPI、雇用統計、PPI、JOLTS、GDP、PCEを表示します。FOMCはFRB公式日程（2026年10月18日確認、2027年まで）で、通常の14:00 ETを予定時刻としています。すべて夏時間を反映して日本時間に変換。予想値・実績値は未接続です。天気・空気はOpen-Meteo / CAMSのモデル予測。ニュースはNHK経済（15分更新）。日程は変更される場合があります。保存済み日程を使う場合は確認日を表示します。</p><p class="help">設定はこのブラウザに保存されます。APIキーはブラウザに保存せず、.env.localで設定します。朝晩とも同じフル版を表示します。スポーツは表示しません。</p><label for="api-base">別サーバーのURL（必要な場合のみ）</label><input id="api-base" type="url" placeholder="https://your-dashboard.example"><p class="help">静的配信・WebViewから使うAPIサーバー。HTTPSと適切なCORS設定が必要です。</p></details>
+        <details class="about"><summary>データソースと表示について</summary><p class="help">マーケット：BTC・HYPEはHyperliquid、SP500・JP225・SOXL・XYZ100・JPY・DRAM・GOLD・CLはtrade.xyz、10Y・30YはparaのHIP-3契約。WebSocketを最大毎秒描画し、切断時は30秒ごとのHTTP取得に切り替えます。時刻は受信時刻です。履歴は5分ごとに更新。XYZ100は独自の米国100銘柄指数です。JPYは1米ドルあたりの円。10Y・30Yは契約の数値をそのまま表示します。</p><p class="help">経済指標カレンダーはBLS・BEAの公式配信を6時間ごとに確認。CPI、雇用統計、PPI、JOLTS、GDP、PCEを表示します。FOMCはFRB公式日程（2026年10月18日確認、2027年まで）で、通常の14:00 ETを予定時刻としています。すべて夏時間を反映して日本時間に変換。予想値・実績値は未接続です。天気・空気は<a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Open-Meteo.com</a>（CC BY 4.0）/ CAMSのモデル予測。ニュースはNHK経済（15分更新）。日程は変更される場合があります。保存済み日程を使う場合は確認日を表示します。</p><p class="help">設定はこのブラウザに保存されます。APIキーはブラウザに保存せず、.env.localで設定します。朝晩とも同じフル版を表示します。スポーツは表示しません。</p><label for="api-base">別サーバーのURL（必要な場合のみ）</label><input id="api-base" type="url" placeholder="https://your-dashboard.example"><p class="help">静的配信・WebViewから使うAPIサーバー。HTTPSと適切なCORS設定が必要です。</p></details>
         <div id="settings-error" class="form-error" role="alert"></div><div class="dialog-actions"><button type="button" id="cancel-settings" class="secondary-button">キャンセル</button><button type="submit" class="primary-button">設定を保存</button></div>
       </form>
     </section>

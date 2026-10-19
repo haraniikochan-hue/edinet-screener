@@ -10,6 +10,11 @@ test('RSS returns headlines, source timestamps, and NHK links without article bo
   const xml='<rss><item><title><![CDATA[経済 &amp; IT <script>test</script>]]></title><link>http://www3.nhk.or.jp/news/1</link><pubDate>Sun, 18 Oct 2026 14:00:00 +0900</pubDate><description>full article</description></item><item><title>unsafe</title><link>javascript:alert(1)</link><pubDate>Sun, 18 Oct 2026 14:00:00 +0900</pubDate></item></rss>';
   const rows=parseRSS(xml);assert.equal(rows.length,1);assert.equal(rows[0].title,'経済 & IT test');assert.equal(rows[0].url,'https://www3.nhk.or.jp/news/1');assert.equal(rows[0].description,undefined);
 });
+test('RSS accepts NHK ONE article links and rejects look-alike hosts',()=>{
+  const item=(link)=>`<item><title>見出し</title><link>${link}</link><pubDate>Sun, 18 Oct 2026 23:44:18 +0900</pubDate></item>`;
+  const rows=parseRSS(`<rss>${item('https://news.web.nhk/newsweb/na/nd-20261018de61309')}${item('https://evilnhk.jp/news/1')}${item('https://news.web.nhk.example.com/x')}</rss>`);
+  assert.deepEqual(rows.map(row=>row.url),['https://news.web.nhk/newsweb/na/nd-20261018de61309']);
+});
 test('server coalesces concurrent upstream requests',async()=>{
   let calls=0;let finish;const gate=new Promise(r=>{finish=r;});
   const loader=async()=>{calls++;await gate;return 42;};

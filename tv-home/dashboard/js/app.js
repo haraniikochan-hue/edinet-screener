@@ -11,7 +11,7 @@ import { drawMarketChart } from './market-chart.js';
 import { HOUR, weatherTimestamp, weatherIsStale, hourlyForecast, makeWeatherIcon, renderHourlyForecast } from './weather.js';
 
 const $ = id => document.getElementById(id);
-const CALENDAR_PAGE_SIZE = 6;
+const CALENDAR_PAGE_SIZE = 6, NEWS_INTERVAL = 20000;
 const storage = { getItem:key => { try{return localStorage.getItem(key);}catch{return null;} }, setItem:(key,value) => localStorage.setItem(key,value) };
 let config = normalizeConfig(readStorage(storage,'tv-home-config',DEFAULT_CONFIG));
 let backend = {backend:false,market:false,unsplash:false};
@@ -29,6 +29,20 @@ const stamp = ts => `${dated(new Date(ts))} ${time(new Date(ts))}`;
 const el = (tag, className='', content='') => {const node=document.createElement(tag);node.className=className;node.textContent=content;return node;};
 const errorText = error => error.message || 'データを取得できません';
 const api = path => fetchJSON(`${config.apiBase}/api/${path}`);
+const reducedMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+const EASE = 'cubic-bezier(.2,.8,.2,1)';
+const greeting = date => {const hour=Number(new Intl.DateTimeFormat('en-US',{timeZone:'Asia/Tokyo',hour:'numeric',hourCycle:'h23'}).format(date));return hour>=4 && hour<10?'おはようございます':hour>=10 && hour<17?'こんにちは':'こんばんは';};
+// Like iOS numeric text transitions, only the digits that changed blur and rise in.
+function renderClock(text) {
+  const clock=$('clock'),previous=clock.dataset.text||'';if(previous===text)return;
+  const animate=previous.length===text.length && !reducedMotion();
+  clock.replaceChildren(...[...text].map((char,index)=>{
+    const digit=el('span','',char);
+    if(animate && previous[index]!==char)digit.animate?.([{opacity:0,transform:'translateY(.14em)',filter:'blur(8px)'},{opacity:1,transform:'none',filter:'blur(0)'}],{duration:700,easing:EASE});
+    return digit;
+  }));
+  clock.dataset.text=text;
+}
 function toast(message) { clearTimeout(toastTimer);$('toast').textContent=message;$('toast').hidden=false;toastTimer=setTimeout(() => {$('toast').hidden=true;},5500); }
 function setFeed(key, state) {
   feedState.set(key,state);
@@ -45,7 +59,8 @@ function fit() {
 }
 function tick() {
   const now=new Date();
-  $('clock').textContent=time(now);$('clock').dateTime=now.toISOString();
+  renderClock(time(now));$('clock').dateTime=now.toISOString();
+  const hello=greeting(now);if($('greeting').textContent!==hello)$('greeting').textContent=hello;
   $('date').textContent=new Intl.DateTimeFormat('ja-JP',{timeZone:config.timeZone,month:'long',day:'numeric'}).format(now);
   $('weekday').textContent=new Intl.DateTimeFormat('ja-JP',{timeZone:config.timeZone,weekday:'long'}).format(now);
   if(calendarNextTime && now.getTime()>=calendarNextTime)showCalendar();
@@ -73,7 +88,7 @@ function renderStocks() {
     item.row.classList.toggle('unavailable',!q);item.row.classList.toggle('quote-stale',Boolean(q?.stale));
     if(!q){item.price.textContent='—';item.change.className='stock-unavailable';item.change.textContent=unavailable.get(symbol)||'取得待ち';item.source.textContent=item.name;item.row.removeAttribute('title');item.row.removeAttribute('aria-label');continue;}
     item.price.textContent=money(q.price,market.digits);
-    item.change.textContent=isNumber(q.change)?`${q.change>0?'▴ ':q.change<0?'▾ ':''}${Math.abs(q.change).toFixed(2)}%`:'—';item.change.className=`stock-change ${tone(q.change)}`;
+    item.change.textContent=isNumber(q.change)?`${q.change>0?'+':q.change<0?'−':''}${Math.abs(q.change).toFixed(2)}%`:'—';item.change.className=`stock-change ${tone(q.change)}`;
     item.source.textContent=q.stale?`更新待ち · ${stamp(q.timestamp)}`:item.name;
     item.row.title=`${item.name} / ${q.source} / ${stamp(q.timestamp)} JST受信 / ${q.note || '24時間変化率'}${q.stale?' / 最終取得値':''}`;
     item.row.setAttribute('aria-label',`${symbol} ${item.row.title} ${item.price.textContent} ${item.change.textContent}`);
@@ -137,7 +152,10 @@ function renderWeather(result) {
   const available=renderHourlyForecast($('hourly-forecast'),hourlyForecast(result.data));
   $('hourly-status').textContent=!available?'未取得':stale?'保存した予報 · 更新待ち':'この先6時間';
   $('hourly-status').classList.toggle('forecast-stale',stale || !available);
-  $('weather-source').textContent=`Open-Meteo · ${Number.isFinite(observed)?stamp(observed):'時刻不明'} 予測${stale?' · 更新待ち':''}`;
+  // A fresh forecast only needs the time; a stale one keeps its date.
+  $('weather-source').textContent=`Open-Meteo · ${Number.isFinite(observed)?stale?stamp(observed):time(new Date(observed)):'時刻不明'} 予測${stale?' · 更新待ち':''}`;
+  $('weather-source').title=Number.isFinite(observed)?`Open-Meteo（CC BY 4.0）· ${stamp(observed)} JSTのモデル予測`:'Open-Meteo';
+  $('weather-source').dataset.state=stale?'stale':'ok';
   setFeed('weather',stale || !available?'stale':'ok');
 }
 function renderAir(result) {
@@ -175,26 +193,32 @@ function updateCryptoStatus() {
 function renderNews(result) {news=result.data;newsIndex=Math.min(newsIndex,news.length-1);showNews();setFeed('news',result.stale || news.every(n=>Date.now()-Date.parse(n.publishedAt)>2*86400000)?'stale':'ok');}
 function showNews() {
   if(!news.length){$('news-title').textContent='ニュースがありません';$('news-title').removeAttribute('href');return;}
-  const current=news[newsIndex];$('news-title').textContent=current.title;
-  const url=safeUrl(current.url);if(url)$('news-title').href=url;else $('news-title').removeAttribute('href');
+  const current=news[newsIndex],title=$('news-title'),changed=title.textContent!==current.title;title.textContent=current.title;
+  if(changed && !reducedMotion())title.animate?.([{opacity:0,transform:'translateY(8px)'},{opacity:1,transform:'none'}],{duration:600,easing:EASE});
+  const url=safeUrl(current.url);if(url)title.href=url;else title.removeAttribute('href');
   const old=Date.now()-Date.parse(current.publishedAt)>2*86400000;
   $('news-source').textContent=`${current.source} · ${stamp(Date.parse(current.publishedAt))}${old?' · 過去の配信':''}`;
-  $('next-news').textContent=`${newsIndex+1} / ${news.length} →`;
+  $('next-news').setAttribute('aria-label',`次のニュース（${newsIndex+1} / ${news.length}）`);
   $('news-dots').replaceChildren(...news.map((_,i)=>el('i',i===newsIndex?'active':'')));
+  $('news-dots').style.setProperty('--news-interval',`${NEWS_INTERVAL}ms`);$('news-dots').classList.toggle('rotating',news.length>1);
 }
 function renderMusic(data) {
   music=data;$('spotify-connect').hidden=Boolean(data.connected);$('music-progress').hidden=!data.item;
-  if(!data.connected){$('track-name').textContent='音楽を、この画面に。';$('artist-name').textContent='再生中の曲を表示';$('music-state').textContent='♫';$('track-name').removeAttribute('href');resetAlbum();return;}
-  if(!data.item){$('track-name').textContent='再生していません';$('artist-name').textContent='Spotifyで音楽を再生してください';$('music-state').textContent='♫';$('track-name').removeAttribute('href');resetAlbum();return;}
+  if(!data.connected){$('track-name').textContent='音楽を、この画面に。';$('artist-name').textContent='再生中の曲を表示';$('music-state').dataset.state='idle';$('track-name').removeAttribute('href');resetAlbum();return;}
+  if(!data.item){$('track-name').textContent='再生していません';$('artist-name').textContent='Spotifyで音楽を再生してください';$('music-state').dataset.state='paused';$('track-name').removeAttribute('href');resetAlbum();return;}
   $('track-name').textContent=data.item.name || 'タイトルなし';const url=safeUrl(data.item.external_urls?.spotify);if(url)$('track-name').href=url;else $('track-name').removeAttribute('href');
   $('artist-name').textContent=data.item.artists?.map(a=>a.name).join(' / ') || data.item.show?.publisher || '';
-  $('music-state').textContent=data.is_playing?'♫':'Ⅱ';
+  $('music-state').dataset.state=data.is_playing?'playing':'paused';
   const imageUrl=safeUrl(data.item.album?.images?.at(-2)?.url || data.item.album?.images?.[0]?.url || data.item.images?.[0]?.url);
-  if(imageUrl){let img=$('album').querySelector('img');if(!img){img=el('img');img.alt='アルバムジャケット';$('album').replaceChildren(img);}if(img.getAttribute('src')!==imageUrl)img.src=imageUrl;}
+  if(imageUrl){
+    let img=$('album').querySelector('img');if(!img){img=el('img');img.alt='アルバムジャケット';$('album').replaceChildren(img);}if(img.getAttribute('src')!==imageUrl)img.src=imageUrl;
+    // The artwork also tints the card behind the text, as Now Playing does.
+    musicCard.style.setProperty('--art',`url(${JSON.stringify(imageUrl)})`);musicCard.dataset.art='';
+  }
   else resetAlbum();tick();
 }
-const originalAlbum=$('album').firstElementChild.cloneNode(true);
-function resetAlbum(){if(!$('album').querySelector('svg'))$('album').replaceChildren(originalAlbum.cloneNode(true));}
+const originalAlbum=$('album').firstElementChild.cloneNode(true), musicCard=$('album').closest('.music-card');
+function resetAlbum(){if(!$('album').querySelector('svg'))$('album').replaceChildren(originalAlbum.cloneNode(true));delete musicCard.dataset.art;musicCard.style.removeProperty('--art');}
 function renderCalendar(result) {
   calendarInfo=result;showCalendar();
   const sources=result.data.sources||[],expired=sources.some(source=>Date.parse(source.coverageThrough)<Date.now());
@@ -211,11 +235,13 @@ function showCalendar() {
   const data=eventPage(calendarInfo.data.events,calendarIndex,CALENDAR_PAGE_SIZE);calendarIndex=data.index;
   $('calendar-events').replaceChildren();
   if(!data.events.length)$('calendar-events').append(el('p','calendar-empty','今後の予定を確認できません。公式日程の更新をお待ちください。'));
-  const today=jstDay(Date.now());
+  const today=jstDay(Date.now()),tomorrow=jstDay(Date.now()+86400000);let previousDay='';
   data.events.forEach((event,index)=>{
     const row=el('a','calendar-event');row.href=safeUrl(event.url);row.target='_blank';row.rel='noopener noreferrer';row.dataset.indicator=event.indicator;row.dataset.eventId=event.id;
-    const date=new Date(event.timestamp),day=el('div','calendar-day number');
-    day.append(el('strong','',`${date.toLocaleDateString('en-US',{timeZone:'Asia/Tokyo',month:'numeric',day:'numeric'})}`),el('span','',jstDay(event.timestamp)===today?'今日':date.toLocaleDateString('ja-JP',{timeZone:'Asia/Tokyo',weekday:'short'})));
+    const date=new Date(event.timestamp),day=el('div','calendar-day number'),eventDay=jstDay(event.timestamp);
+    day.append(el('strong','',`${date.toLocaleDateString('en-US',{timeZone:'Asia/Tokyo',month:'numeric',day:'numeric'})}`),el('span','',eventDay===today?'今日':eventDay===tomorrow?'明日':date.toLocaleDateString('ja-JP',{timeZone:'Asia/Tokyo',weekday:'short'})));
+    // Like a calendar list, a date is written once for releases on the same day.
+    if(eventDay===previousDay)row.classList.add('same-day');previousDay=eventDay;
     const detail=el('div','calendar-detail'),title=el('span','calendar-title',event.title),meta=el('span','calendar-meta',`${index===0 && calendarIndex===0?'次の発表 · ':''}${event.category}`);
     detail.append(title,meta);
     const at=el('time','calendar-time number',time(date));at.dateTime=date.toISOString();
@@ -264,8 +290,8 @@ function resetHourlyForecast(message='時間別予報を取得しています'){
 }
 function clearWeather(error){
   resetHourlyForecast('時間別予報を取得できません');
-  $('temperature').textContent='—°';$('weather-label').textContent='取得できません';$('tomorrow').textContent='予報は未取得です';
-  $('sunrise').textContent='日の出 —';$('sunset').textContent='日の入 —';$('weather-source').textContent=`Open-Meteo · ${errorText(error)}`;
+  $('temperature').textContent='--°';$('weather-label').textContent='取得できません';$('tomorrow').textContent='予報は未取得です';
+  $('sunrise').textContent='日の出 —';$('sunset').textContent='日の入 —';$('weather-source').textContent=`Open-Meteo · ${errorText(error)}`;$('weather-source').dataset.state='stale';
 }
 function clearCrypto(error){
   $('crypto-feed').title=errorText(error);streamStatus='fallback';updateCryptoStatus();
@@ -316,13 +342,13 @@ function restartJobs() {
   }
   if(backend.backend || config.apiBase){
     jobs.push(makeJob('calendar',6*3600000,cachedTask('economic-calendar',()=>apiForJob('calendar'),renderCalendar,{server:true,maxAge:7*86400000}),()=>{if(calendarInfo)renderCalendar({...calendarInfo,stale:true});else void loadCalendarSnapshot();}));
-    jobs.push(makeJob('news',15*60000,cachedTask('news',()=>apiForJob('news'),renderNews,{server:true}),()=>{news=[];$('news-title').textContent='ニュースを取得できません';$('news-title').removeAttribute('href');$('news-source').textContent='NHK · しばらくして再取得します';$('next-news').textContent='— / — →';$('news-dots').replaceChildren();}));
+    jobs.push(makeJob('news',15*60000,cachedTask('news',()=>apiForJob('news'),renderNews,{server:true}),()=>{news=[];$('news-title').textContent='ニュースを取得できません';$('news-title').removeAttribute('href');$('news-source').textContent='NHK · しばらくして再取得します';$('next-news').setAttribute('aria-label','次のニュース');$('news-dots').replaceChildren();}));
     if(config.photoMode==='unsplash')jobs.push(makeJob('photos',3600000,cachedTask('photos',()=>apiForJob('photos'),result=>{slideshow.setPhotos(result.data);setFeed('photos',result.stale?'stale':'ok');},{server:true,maxAge:7*86400000}),()=>{toast('Unsplashを取得できません。同梱写真を表示しています。');}));
   }else{
     $('news-title').textContent='ニュースはサーバー接続後に表示';$('news-source').textContent='設定でデータサーバーを指定できます';
     if(config.photoMode==='unsplash')toast('Unsplashの自動取得にはAPIサーバーが必要です');
   }
-  jobs.push(makeJob('spotify',30000,async current=>{const data=await spotify.currentlyPlaying();if(current())renderMusic(data);},error=>{$('artist-name').textContent=errorText(error);$('music-state').textContent='!';music=null;$('music-progress').hidden=true;$('spotify-connect').hidden=false;}));
+  jobs.push(makeJob('spotify',30000,async current=>{const data=await spotify.currentlyPlaying();if(current())renderMusic(data);},error=>{$('artist-name').textContent=errorText(error);$('music-state').dataset.state='error';music=null;$('music-progress').hidden=true;$('spotify-connect').hidden=false;}));
 }
 function configureMarket() {
   // A legacy Android JavascriptInterface is injected into every frame, even
@@ -363,7 +389,7 @@ async function saveSettings({close=true}={}) {
   if(config.cryptoSource!==next.cryptoSource){clearQuotes(['BTC','HYPE']);unavailable.delete('BTC');unavailable.delete('HYPE');}
   config=next;
   const persisted=writeStorage(storage,'tv-home-config',config);
-  if(locationChanged){resetHourlyForecast();$('temperature').textContent='—°';$('weather-label').textContent='取得中';$('tomorrow').textContent='予報を取得しています';$('sunrise').textContent='日の出 —';$('sunset').textContent='日の入 —';$('air').textContent='空気 —';}
+  if(locationChanged){resetHourlyForecast();$('temperature').textContent='--°';$('weather-label').textContent='取得中';$('tomorrow').textContent='予報を取得しています';$('sunrise').textContent='日の出 —';$('sunset').textContent='日の入 —';$('air').textContent='空気 —';}
   backend=await api('config').catch(()=>({backend:false,market:false,unsplash:false}));
   applyConfig();if(close)closeSettings();toast(persisted?'設定を保存しました':'このブラウザでは設定を保存できません。現在の画面にのみ反映しました');
 }
@@ -387,7 +413,7 @@ function initializeBridge() {
     if(!valid.length)return;
     const settings=$('apps').querySelector('[data-open-settings]');$('apps').replaceChildren();
     for(const app of valid)$('apps').append(nativeAppTile(app));
-    $('apps').append(settings);$('apps').classList.add('native-apps');$('bottom-note').textContent='TV HOME · Android';
+    $('apps').append(settings);$('apps').classList.add('native-apps');
   }catch{toast('アプリ一覧を取得できません。Web版の一覧を表示します。');}
 }
 
@@ -409,7 +435,7 @@ $('settings-form').onsubmit=async event=>{event.preventDefault();try{await saveS
 $('search-city').onclick=searchCity;$('city-search').onkeydown=event=>{if(event.key==='Enter'){event.preventDefault();void searchCity();}};
 $('calendar-prev').onclick=()=>{calendarIndex=Math.max(0,calendarIndex-1);showCalendar();};
 $('calendar-next').onclick=()=>{calendarIndex++;showCalendar();};
-$('next-news').onclick=()=>{if(news.length){newsIndex=(newsIndex+1)%news.length;showNews();}};
+$('next-news').onclick=()=>{if(news.length){newsIndex=(newsIndex+1)%news.length;showNews();scheduleNews();}};
 $('next-photo').onclick=()=>{if(slideshow.photos.length<2)toast('現在は同梱写真1枚です。設定でUnsplashを接続すると自動切替できます。');else void slideshow.next();};
 $('refresh').onclick=async()=>{const button=$('refresh');button.disabled=true;try{await Promise.allSettled(jobs.map(job=>job.run(true)));toast('データを確認しました。取得制限のため連続更新は30秒間隔です。');}finally{button.disabled=false;}};
 $('fullscreen').onclick=async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else if(document.documentElement.requestFullscreen)await document.documentElement.requestFullscreen();else toast('このブラウザでは全画面表示を利用できません');}catch{toast('全画面表示を開始できませんでした');}};
@@ -423,9 +449,13 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden)cryptoStrea
 addEventListener('pagehide',()=>cryptoStream?.stop());
 addEventListener('pageshow',event=>{if(event.persisted && !document.hidden)cryptoStream?.start();});
 setInterval(()=>{if(!document.hidden)tick();},1000);
-setInterval(()=>{if(!document.hidden && $('settings-overlay').hidden && news.length>1 && document.activeElement!==$('news-title')){newsIndex=(newsIndex+1)%news.length;showNews();}},20000);
+// Restarted on manual paging so the filling page dot always matches the next change.
+let newsTimer;
+function scheduleNews(){clearInterval(newsTimer);newsTimer=setInterval(()=>{if(!document.hidden && $('settings-overlay').hidden && news.length>1 && document.activeElement!==$('news-title')){newsIndex=(newsIndex+1)%news.length;showNews();}},NEWS_INTERVAL);}
+scheduleNews();
 async function start(){
   fit();buildStocks();tick();slideshow.setPhotos(SAMPLE_PHOTOS);initializeBridge();void loadCalendarSnapshot();
+  document.body.classList.add('ready');
   if(document.body.classList.contains('tv'))$('apps').querySelector('button')?.focus({preventScroll:true});
   try{if(await spotify.completeCallback())toast('Spotifyを連携しました');}catch(error){toast(errorText(error));}
   backend=await api('config').catch(()=>({backend:false,market:false,unsplash:false}));
