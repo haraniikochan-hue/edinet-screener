@@ -21,9 +21,9 @@
   --warn: #ffb340;
   --spotify: #1ed760;
   --accent: #0a84ff;
-  --glass: linear-gradient(180deg,rgba(255,255,255,.075),rgba(255,255,255,.02) 40%,rgba(255,255,255,.012)),rgba(16,20,30,.2);
-  --glass-blur: blur(24px) saturate(160%);
-  --glass-shadow: 0 30px 60px -30px rgba(0,0,0,.55),0 1px 2px rgba(0,0,0,.1);
+  --glass: linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.018) 40%,rgba(255,255,255,.01)),rgba(10,13,22,.3);
+  --glass-blur: blur(24px) saturate(150%) brightness(.8);
+  --glass-shadow: 0 30px 60px -30px rgba(0,0,0,.55),0 0 0 .5px rgba(0,0,0,.16),0 1px 2px rgba(0,0,0,.1);
   --rim: linear-gradient(162deg,rgba(255,255,255,.42),rgba(255,255,255,.1) 20%,rgba(255,255,255,.035) 48%,rgba(255,255,255,.07) 80%,rgba(255,255,255,.2));
   --r-card: 32px;
   --ease: cubic-bezier(.2,.8,.2,1);
@@ -63,7 +63,7 @@ h2,h3,p { margin: 0; }
 .frost { display: none; position: absolute; inset: 0; }
 .frosted .frost { display: block; }
 .frost-layer { display: block; object-fit: cover; object-position: 50% 48%; }
-.shade { background: radial-gradient(120% 90% at 50% 40%,transparent 55%,rgba(2,4,10,.38)),linear-gradient(180deg,rgba(4,8,20,.34),transparent 30%,transparent 62%,rgba(3,6,14,.62)),linear-gradient(90deg,rgba(4,10,24,.34),transparent 42%); }
+.shade { background: radial-gradient(34% 30% at 22% 16%,rgba(4,8,20,.26),transparent),radial-gradient(120% 90% at 50% 40%,transparent 55%,rgba(2,4,10,.4)),linear-gradient(180deg,rgba(4,8,20,.4),transparent 30%,transparent 60%,rgba(3,6,14,.68)),linear-gradient(90deg,rgba(4,10,24,.4),transparent 44%); }
 
 /* Stage */
 /* One 1920×1080 screen — dashboard, sheets and toast together — scaled to fit the TV */
@@ -80,11 +80,11 @@ html,body { height: 100%; overflow: hidden; }
 /* Fresh data needs no badge; visibility also takes it out of remote and Tab focus */
 .status-pill[data-state=ok] { opacity: 0; visibility: hidden; pointer-events: none; transition: opacity .4s var(--ease),visibility 0s linear .4s; }
 .status-pill[data-state=waiting]::before { background: var(--warn); box-shadow: 0 0 10px rgba(255,179,64,.6); }
-.glass-button { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; color: var(--label-2); font-size: 19px; background: rgba(255,255,255,.12); box-shadow: inset 0 0 0 .5px rgba(255,255,255,.16),inset 0 1px 0 rgba(255,255,255,.12); transition: transform .35s var(--spring),background .2s,color .2s; }
+.glass-button { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; color: var(--label-3); font-size: 19px; background: rgba(255,255,255,.08); box-shadow: inset 0 0 0 .5px rgba(255,255,255,.16),inset 0 1px 0 rgba(255,255,255,.12); transition: transform .35s var(--spring),background .2s,color .2s; }
 .glass-button:hover { color: #fff; background: rgba(255,255,255,.16); }
 
 /* Greeting and clock */
-.overview { grid-area: overview; display: flex; flex-direction: column; justify-content: flex-end; gap: 16px; min-width: 0; text-shadow: 0 2px 12px rgba(0,0,0,.24); }
+.overview { grid-area: overview; display: flex; flex-direction: column; justify-content: flex-end; gap: 16px; min-width: 0; text-shadow: 0 1px 2px rgba(0,0,0,.14),0 2px 18px rgba(0,0,0,.34); }
 .greeting { display: flex; align-items: center; gap: 10px; font-size: 20px; font-weight: 500; line-height: 22px; color: var(--label-2); }
 .greeting-place { display: inline-flex; align-items: center; gap: 10px; color: var(--label-3); }
 .greeting-place::before { content: ''; width: 4px; height: 4px; border-radius: 50%; background: currentColor; }
@@ -97,7 +97,7 @@ html,body { height: 100%; overflow: hidden; }
 
 /* Liquid glass card: clear fill, saturation lift and a specular rim lit from the upper left */
 .card { position: relative; isolation: isolate; min-width: 0; border-radius: var(--r-card); background: var(--glass); box-shadow: var(--glass-shadow); -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur); }
-.card::before { content: ''; position: absolute; inset: 0; z-index: 1; padding: 1px; border-radius: inherit; background: var(--rim); -webkit-mask: linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask: linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0); pointer-events: none; }
+.card::before,.dock::before { content: ''; position: absolute; inset: 0; z-index: 1; padding: 1px; border-radius: inherit; background: var(--rim); -webkit-mask: linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask: linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0); pointer-events: none; }
 .card-header { display: flex; flex-shrink: 0; align-items: center; justify-content: space-between; gap: 12px; height: 22px; }
 .card-header>* { min-width: 0; }
 .card-title { display: flex; align-items: center; gap: 7px; font-size: 15px; font-weight: 600; line-height: 20px; letter-spacing: .01em; color: var(--label-2); white-space: nowrap; }
@@ -175,7 +175,7 @@ html,body { height: 100%; overflow: hidden; }
 .chart-fill stop { stop-color: currentColor; }
 .chart-halo { opacity: .28; }
 .chart-status { font-size: 11px; color: var(--label-3); white-space: nowrap; }
-.chart-age { position: absolute; right: 0; bottom: -11px; font-size: 9px; color: var(--label-3); white-space: nowrap; }
+.chart-age { position: absolute; right: 0; bottom: -15px; font-size: 12px; line-height: 14px; color: var(--label-3); white-space: nowrap; }
 
 /* Economic calendar — list with category colour bars, dates shown once per day */
 .calendar-card { grid-area: calendar; display: flex; flex-direction: column; min-height: 0; padding: 18px 24px 14px; }
@@ -248,9 +248,14 @@ a.news-title[href]:hover { background: rgba(255,255,255,.07); }
 .text-button { display: inline-flex; align-items: center; gap: 3px; padding: 4px 2px; color: var(--label-2); font-size: 13px; text-align: left; transition: color .2s,background .2s,transform .35s var(--spring); }
 .text-button:hover { color: #fff; }
 
-/* App dock — continuous-corner icons, tvOS-style lift, shadow and light sweep */
+/* App dock — continuous-corner icons on a glass shelf, tvOS-style lift, shadow and light sweep.
+   The shelf is the cards' material (frosted on the TV) with corners concentric to the icons; it hugs
+   the apps and only scrolls them once they no longer fit. Lifted icons and their names rise above it. */
 .launcher-footer { display: grid; grid-template-columns: minmax(0,1fr) auto minmax(0,1fr); align-items: end; gap: 40px; }
-.app-list { grid-column: 2; display: flex; align-items: center; justify-content: center; gap: 24px; min-width: 0; }
+.dock { position: relative; isolation: isolate; grid-column: 2; display: flex; min-width: 0; max-width: 100%; padding: 14px; border-radius: var(--r-card); background: var(--glass); box-shadow: var(--glass-shadow); -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur); }
+.frosted .dock { -webkit-backdrop-filter: none; backdrop-filter: none; }
+.dock::before { z-index: 0; }
+.app-list { display: flex; align-items: center; justify-content: center; gap: 24px; min-width: 0; }
 .app-tile { position: relative; isolation: isolate; flex: 0 0 var(--app-size); width: var(--app-size); height: var(--app-size); border-radius: 22.5%; }
 .app-tile::before { content: ''; position: absolute; z-index: -1; left: 4%; right: 4%; top: 30%; bottom: -16%; background: radial-gradient(closest-side,rgba(0,0,0,.55),rgba(0,0,0,.3) 55%,transparent); opacity: .75; transition: transform .5s var(--spring),opacity .35s; }
 .app-tile:focus { outline: none; z-index: 2; }
@@ -289,16 +294,18 @@ a.news-title[href]:hover { background: rgba(255,255,255,.07); }
 [data-brand=generic] .app-icon { background: linear-gradient(180deg,#4a5062,#2a2e3a); font-size: 26px; font-weight: 500; }
 
 /* Photo credit */
-.photo-caption { grid-column: 3; display: flex; flex-direction: column; align-items: flex-end; gap: 3px; min-width: 0; text-align: right; }
+.photo-caption { grid-column: 3; display: flex; flex-direction: column; align-items: flex-end; gap: 3px; min-width: 0; padding-bottom: 14px; text-align: right; text-shadow: 0 1px 10px rgba(0,0,0,.45); }
 #photo-title { font-size: 15px; font-weight: 500; letter-spacing: .02em; text-shadow: 0 1px 12px rgba(0,0,0,.4); }
-.photo-credit { max-width: 520px; font-size: 12px; color: var(--label-3); }
+.photo-credit { max-width: 520px; font-size: 12px; line-height: 1.5; color: var(--label-2); text-wrap: balance; }
 .photo-credit a { color: var(--label-2); border-radius: 4px; }
 .photo-credit a:hover { color: #fff; }
 #next-photo { margin-right: -8px; padding: 4px 6px 4px 10px; border-radius: 13px; font-size: 12px; }
 #next-photo .icon { font-size: 12px; stroke-width: 2.2; }
 .launcher-footer:has(.native-apps) { grid-template-columns: minmax(0,1fr) 300px; }
-.native-apps { grid-column: 1; width: 100%; justify-content: flex-start; overflow-x: auto; overflow-y: hidden; padding: 44px 12px 12px; margin-top: -44px; margin-bottom: -12px; scrollbar-width: none; overscroll-behavior-x: contain; }
-.native-apps .app-label { max-width: calc(var(--app-size) + 72px); }.native-apps+.photo-caption { grid-column: 2; }
+.dock:has(.native-apps) { grid-column: 1; justify-self: start; padding: 14px 0; }
+/* The scroller's own padding keeps lifted icons and names unclipped; its side padding is the shelf's inset */
+.native-apps { min-width: 0; justify-content: flex-start; overflow-x: auto; overflow-y: hidden; padding: 44px 14px 14px; margin: -44px 0 -14px; scrollbar-width: none; overscroll-behavior-x: contain; }
+.native-apps .app-label { max-width: calc(var(--app-size) + 72px); }.launcher-footer:has(.native-apps) .photo-caption { grid-column: 2; }
 
 /* Remote focus: tvOS-like white platter for controls, a lifted glass row for list items */
 #stage :is(.glass-button,.round-button,.tinted-button,.text-button,.status-pill):focus-visible { outline: none; background: #fff; color: #0b0d12; box-shadow: 0 10px 24px -8px rgba(0,0,0,.7); transform: scale(1.08); }
@@ -436,8 +443,8 @@ details.about { padding: 16px 20px; border-radius: 22px; background: rgba(255,25
 /* Entrance: content fades in once the screen has been fitted. Fade only, so each card stays over its frosted backing */
 body:not(.ready) #stage { opacity: 0; animation: reveal 0s 1.6s forwards; }
 /* backwards fill: once settled nothing lingers, so no ancestor becomes a backdrop root for the glass inside it */
-.ready :is(.masthead,.overview,.weather-section,.market-card,.calendar-card,.news-card,.music-card,.app-list,.photo-caption) { animation: fade .9s var(--ease) backwards; }
-.ready .overview { animation-delay: .04s; }.ready .weather-section { animation-delay: .1s; }.ready .market-card { animation-delay: .14s; }.ready .calendar-card { animation-delay: .18s; }.ready .news-card { animation-delay: .22s; }.ready .music-card { animation-delay: .26s; }.ready .app-list { animation-delay: .32s; }.ready .photo-caption { animation-delay: .38s; }
+.ready :is(.masthead,.overview,.weather-section,.market-card,.calendar-card,.news-card,.music-card,.dock,.photo-caption) { animation: fade .9s var(--ease) backwards; }
+.ready .overview { animation-delay: .04s; }.ready .weather-section { animation-delay: .1s; }.ready .market-card { animation-delay: .14s; }.ready .calendar-card { animation-delay: .18s; }.ready .news-card { animation-delay: .22s; }.ready .music-card { animation-delay: .26s; }.ready .dock { animation-delay: .32s; }.ready .photo-caption { animation-delay: .38s; }
 
 @keyframes drift { from { transform: scale(1.015); } to { transform: scale(1.065); } }
 @keyframes reveal { to { opacity: 1; } }
@@ -460,13 +467,13 @@ body:not(.ready) #stage { opacity: 0; animation: reveal 0s 1.6s forwards; }
 .stock-row,.calendar-event,.app-icon { will-change: transform; }
 .stock-price-row { will-change: transform; }
 .ready .frost { animation: fade .9s var(--ease) .1s backwards; }
-.instant.ready :is(.masthead,.overview,.weather-section,.market-card,.calendar-card,.news-card,.music-card,.app-list,.photo-caption,.frost) { animation: none; }
+.instant.ready :is(.masthead,.overview,.weather-section,.market-card,.calendar-card,.news-card,.music-card,.dock,.photo-caption,.frost) { animation: none; }
 
 /* Material fallbacks */
 @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))) {
-  .card { background: rgba(28,34,46,.94); }
+  .card,.dock { background: rgba(28,34,46,.94); }
 }
 @media(prefers-reduced-transparency:reduce) {
-  .card { -webkit-backdrop-filter: none; backdrop-filter: none; background: #1c2230; }
+  .card,.dock { -webkit-backdrop-filter: none; backdrop-filter: none; background: #1c2230; }
   .app-label,.status-pill,.glass-button,.toast { background: #2c3040; }.modal-overlay { background: rgba(2,4,8,.85); }
 }

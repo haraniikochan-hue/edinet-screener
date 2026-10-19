@@ -93,10 +93,11 @@ function fit() {
   Object.assign($('screen').style,{transform:`scale(${stageScale})`,left:`${(width-1920*stageScale)/2}px`,top:`${(height-1080*stageScale)/2}px`});
   updateFrost();
 }
-// The screen never scrolls, so the frosted layer only needs re-clipping when it is refitted.
+// The screen never scrolls, so the frosted layer only needs re-clipping when it is refitted
+// or the dock shelf changes width.
 function updateFrost() {
   const on=Boolean(frost?.ready);
-  if(on)frost.clip([...document.querySelectorAll('#stage .card')],CARD_RADIUS*stageScale);
+  if(on)frost.clip([...document.querySelectorAll('#stage .card,#stage .dock')],CARD_RADIUS*stageScale);
   document.body.classList.toggle('frosted',on);
 }
 function tick() {
@@ -202,7 +203,7 @@ function renderWeather(result) {
   $('tomorrow').textContent=isNumber(daily.temperature_2m_max?.[tomorrowIndex]) && isNumber(daily.temperature_2m_min?.[tomorrowIndex]) ? `明日 ${Math.round(daily.temperature_2m_max[tomorrowIndex])}° / ${Math.round(daily.temperature_2m_min[tomorrowIndex])}°` : '明日の予報は未取得';
   $('sunrise').textContent=`日の出 ${daily.sunrise?.[todayIndex]?.slice(11,16)||'—'}`;$('sunset').textContent=`日の入 ${daily.sunset?.[todayIndex]?.slice(11,16)||'—'}`;
   const available=renderHourlyForecast($('hourly-forecast'),hourlyForecast(result.data));
-  $('hourly-status').textContent=!available?'未取得':stale?'保存した予報 · 更新待ち':'この先6時間';
+  $('hourly-status').textContent=!available?'未取得':stale?'保存した予報 · 更新待ち':'';
   $('hourly-status').classList.toggle('forecast-stale',stale || !available);
   // A fresh forecast only needs the time; a stale one keeps its date.
   $('weather-source').textContent=`Open-Meteo · ${Number.isFinite(observed)?stale?stamp(observed):time(new Date(observed)):'時刻不明'} 予測${stale?' · 更新待ち':''}`;
@@ -576,7 +577,7 @@ const appListTile=(()=>{
 const dockPackages=()=>[...$('apps').querySelectorAll('[data-package]')].map(tile=>tile.dataset.package);
 function renderDock(focusPackage){
   const {dock}=arrangeDock(nativeApps,dockPrefs);
-  $('apps').replaceChildren(...dock.map(app=>nativeAppTile(app)),appListTile,settingsTile);
+  $('apps').replaceChildren(...dock.map(app=>nativeAppTile(app)),appListTile,settingsTile);updateFrost();
   const tile=focusPackage && $('apps').querySelector(`[data-package="${CSS.escape(focusPackage)}"]`);
   if(tile){tile.focus({preventScroll:true});tile.scrollIntoView({block:'nearest',inline:'nearest'});}
   return tile;
@@ -588,7 +589,7 @@ function initializeBridge() {
     const apps=JSON.parse(window.Android.getApps());if(!Array.isArray(apps))return;
     nativeApps=apps.filter(a=>typeof a.name==='string' && /^[a-zA-Z0-9_]+(?:\.[a-zA-Z0-9_]+)+$/.test(a.packageName));
     if(!nativeApps.length)return;
-    renderDock();$('apps').classList.add('native-apps');
+    renderDock();$('apps').classList.add('native-apps');updateFrost();
     $('tv-settings-group').hidden=typeof window.Android.openTvSettings!=='function';
   }catch{toast('アプリ一覧を取得できません。Web版の一覧を表示します。');}
 }

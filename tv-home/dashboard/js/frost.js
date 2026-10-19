@@ -4,7 +4,10 @@
 // that sits under the cards, clipped to their rounded rectangles.
 const WIDTH = 480;
 // ≈ blur(24px) at the stage's 1920px, measured on a 480px-wide canvas.
-const FILTER = 'blur(6px) saturate(1.6)';
+const FILTER = 'blur(6px) saturate(1.5)';
+// Like a dark material, highlights are capped: a bright daytime sky turns into dim glass so white text
+// and the up/down colours stay readable, while a night photo (already darker than this) is untouched.
+const CEILING = 'rgb(96,100,112)';
 
 export const frostSupported = () => typeof CSS !== 'undefined' && CSS.supports('clip-path','path("M0 0H1V1Z")')
   && Boolean(document.createElement('canvas').getContext);
@@ -35,6 +38,8 @@ export function paintFrost(canvas, image) {
     small.getContext('2d').drawImage(image,0,0,small.width,small.height);
     context.imageSmoothingQuality = 'high'; context.drawImage(small,0,0,width,height);
   }
+  context.globalCompositeOperation = 'darken'; context.fillStyle = CEILING; context.fillRect(0,0,width,height);
+  context.globalCompositeOperation = 'source-over';
 }
 
 export class Frost {

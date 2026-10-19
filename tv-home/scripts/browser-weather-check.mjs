@@ -53,7 +53,8 @@ try{
   await page.locator('#hourly-status').filter({hasText:'更新待ち'}).waitFor();
   report.push('Previously fresh forecast ages into an explicit stale state without waiting for another successful fetch.');
   await page.clock.setFixedTime(new Date(now));await page.reload({waitUntil:'domcontentloaded'});
-  await page.locator('#hourly-status').filter({hasText:'この先6時間'}).waitFor();
+  // A fresh forecast shows no status note (v0.19.0)
+  await page.waitForFunction(()=>document.querySelector('.hourly-item') && document.getElementById('hourly-status').textContent==='');
   mode='offline';await page.reload({waitUntil:'domcontentloaded'});
   await page.locator('#hourly-status').filter({hasText:'更新待ち'}).waitFor();
   assert.deepEqual(await page.locator('.hourly-temperature').allTextContents(),['17°','16°','15°','14°','13°','12°']);
