@@ -21,10 +21,13 @@
   --warn: #ffb340;
   --spotify: #1ed760;
   --accent: #0a84ff;
-  --glass: linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.018) 40%,rgba(255,255,255,.01)),rgba(200,210,230,.06);
+  /* macOS Sonoma's material: no colour of its own, no sheen, a uniform hairline edge. The dock is the
+     light Dock material; the cards the same glass a step darker, so white text stays readable. */
+  --glass: rgba(255,255,255,.07);
+  --dock-glass: rgba(255,255,255,.26);
   --glass-blur: blur(24px) saturate(150%) brightness(.8);
   --glass-shadow: 0 30px 60px -30px rgba(0,0,0,.55),0 0 0 .5px rgba(0,0,0,.16),0 1px 2px rgba(0,0,0,.1);
-  --rim: linear-gradient(162deg,rgba(255,255,255,.42),rgba(255,255,255,.1) 20%,rgba(255,255,255,.035) 48%,rgba(255,255,255,.07) 80%,rgba(255,255,255,.2));
+  --rim: linear-gradient(rgba(255,255,255,.15),rgba(255,255,255,.15));
   --r-card: 32px;
   --ease: cubic-bezier(.2,.8,.2,1);
   --spring: cubic-bezier(.25,1.25,.4,1);
@@ -63,14 +66,10 @@ h2,h3,p { margin: 0; }
 .frost { display: none; position: absolute; inset: 0; }
 .frosted .frost { display: block; }
 .frost-layer { display: block; object-fit: cover; object-position: 50% 48%; }
-/* No blanket darkening: the photo is shown as it is. Only the text that sits on the bare photo (clock,
-   photo credit) gets a soft shade, as dark as the photo behind it needs: js/frost.js measures each photo
-   and sets --clock-shade / --caption-shade (none on a night sky, up to .55 on a bright one). The shade lies on
-   the photo under the frosted copy, so the cards' glass stays the same everywhere. */
-.shade { position: absolute; inset: 0; }
-.shade::before,.shade::after { content: ''; position: absolute; inset: 0; transition: opacity 2.4s var(--ease); }
-.shade::before { background: radial-gradient(38% 36% at 24% 16%,rgb(4,8,20),rgba(4,8,20,.9) 30%,rgba(4,8,20,.45) 62%,transparent); opacity: var(--clock-shade,.35); }
-.shade::after { background: radial-gradient(20% 17% at 81% 91%,rgb(3,6,14),rgba(3,6,14,.8) 40%,transparent); opacity: var(--caption-shade,.35); }
+/* No darkening on the photo. The text that sits on it (clock, photo credit) carries its own legibility,
+   like the iPhone lock screen: a shadow that follows the letters, deeper, with a slightly heavier clock and
+   brighter labels, only as far as the photo behind needs. js/frost.js measures each photo and sets
+   --clock-shade / --caption-shade (0 on a night sky, up to .55 on a bright one). */
 
 /* Stage */
 /* One 1920×1080 screen — dashboard, sheets and toast together — scaled to fit the TV */
@@ -80,27 +79,36 @@ html,body { height: 100%; overflow: hidden; }
 .dashboard-grid { display: grid; grid-template-columns: 500px 860px; grid-template-rows: 142px 286px minmax(0,1fr) 162px; grid-template-areas: 'overview .' 'weather market' 'calendar market' 'calendar extras'; justify-content: space-between; row-gap: 24px; min-height: 0; }
 
 /* Status and window controls: silent while everything is fresh */
-.masthead { display: flex; align-items: center; justify-content: flex-end; }
+.masthead { display: flex; align-items: center; justify-content: flex-end; gap: 20px; min-width: 0; }
 .utility { display: flex; align-items: center; gap: 12px; }
 .status-pill { display: inline-flex; align-items: center; gap: 8px; height: 30px; padding: 0 13px 0 11px; border-radius: 15px; font-size: 13px; font-weight: 500; color: var(--label-2); background: rgba(255,255,255,.12); box-shadow: inset 0 0 0 .5px rgba(255,255,255,.14); transition: opacity .4s var(--ease),transform .35s var(--spring),background .2s,color .2s; }
 .status-pill::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--up); }
 /* Fresh data needs no badge; visibility also takes it out of remote and Tab focus */
 .status-pill[data-state=ok] { opacity: 0; visibility: hidden; pointer-events: none; transition: opacity .4s var(--ease),visibility 0s linear .4s; }
 .status-pill[data-state=waiting]::before { background: var(--warn); box-shadow: 0 0 10px rgba(255,179,64,.6); }
-.glass-button { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; color: var(--label-2); font-size: 19px; background: rgba(14,17,26,.32); box-shadow: inset 0 0 0 .5px rgba(255,255,255,.16),inset 0 1px 0 rgba(255,255,255,.12); transition: transform .35s var(--spring),background .2s,color .2s; }
+.glass-button { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; color: var(--label-2); font-size: 19px; background: rgba(28,28,30,.34); box-shadow: inset 0 0 0 .5px rgba(255,255,255,.16),inset 0 1px 0 rgba(255,255,255,.12); transition: transform .35s var(--spring),background .2s,color .2s; }
 .glass-button:hover { color: #fff; background: rgba(255,255,255,.16); }
 
 /* Greeting and clock */
-.overview { grid-area: overview; display: flex; flex-direction: column; justify-content: flex-end; gap: 16px; min-width: 0; text-shadow: 0 1px 2px rgba(0,0,0,.14),0 2px 18px rgba(0,0,0,.34); }
-.greeting { display: flex; align-items: center; gap: 10px; font-size: 20px; font-weight: 500; line-height: 22px; color: var(--label-2); }
-.greeting-place { display: inline-flex; align-items: center; gap: 10px; color: var(--label-3); }
+.overview { --lift: var(--clock-shade,.35); grid-area: overview; display: flex; flex-direction: column; justify-content: flex-end; gap: 16px; min-width: 0; text-shadow: 0 1px 2px rgba(0,0,0,calc(.12 + var(--lift)*.5)),0 0 calc(10px + var(--lift)*24px) rgba(0,0,0,calc(.18 + var(--lift)*.6)); }
+.greeting { display: flex; align-items: center; gap: 10px; font-size: 20px; font-weight: 500; line-height: 22px; color: rgba(235,240,255,min(1,calc(.8 + var(--lift)*.4))); }
+.greeting-place { display: inline-flex; align-items: center; gap: 10px; color: rgba(235,240,255,min(1,calc(.66 + var(--lift)*.6))); }
 .greeting-place::before { content: ''; width: 4px; height: 4px; border-radius: 50%; background: currentColor; }
 .clock-line { display: flex; align-items: flex-end; gap: 26px; height: 104px; }
-#clock { display: block; margin-left: -5px; font-size: 140px; font-weight: 200; line-height: .76; letter-spacing: -.045em; font-feature-settings: 'case','tnum'; white-space: nowrap; }
+#clock { display: block; margin-left: -5px; font-size: 140px; font-weight: calc(200 + var(--lift)*160); line-height: .76; letter-spacing: -.045em; font-feature-settings: 'case','tnum'; white-space: nowrap; }
 #clock span { display: inline-block; }
 .date { display: flex; flex-direction: column; gap: 3px; padding-bottom: 2px; white-space: nowrap; }
 #date { font-size: 26px; font-weight: 600; letter-spacing: .01em; line-height: 30px; }
-#weekday { font-size: 18px; font-weight: 500; color: var(--label-2); line-height: 22px; }
+#weekday { font-size: 18px; font-weight: 500; color: rgba(235,240,255,min(1,calc(.8 + var(--lift)*.4))); line-height: 22px; }
+/* On a mostly bright sky the clock and the credit switch to dark ink (as the iPhone lock screen does),
+   with a faint light halo instead of a shadow; colours ease across with the photo. */
+.overview,.overview *,.photo-caption,.photo-caption * { transition: color 1.6s var(--ease),text-shadow 1.6s var(--ease); }
+[data-clock-ink=dark] .overview { color: rgba(14,16,22,.92); text-shadow: 0 0 1px rgba(255,255,255,.25),0 0 18px rgba(255,255,255,.3); }
+[data-clock-ink=dark] #clock { font-weight: 250; }
+[data-clock-ink=dark] :is(.greeting,#weekday) { color: rgba(14,16,22,.72); }
+[data-clock-ink=dark] .greeting-place { color: rgba(14,16,22,.58); }
+[data-caption-ink=dark] .photo-caption { color: rgba(14,16,22,.9); text-shadow: 0 0 12px rgba(255,255,255,.3); }
+[data-caption-ink=dark] :is(.photo-credit,.photo-credit a,#next-photo) { color: rgba(14,16,22,.7); }
 
 /* Liquid glass card: clear fill, saturation lift and a specular rim lit from the upper left */
 .card { position: relative; isolation: isolate; min-width: 0; border-radius: var(--r-card); background: var(--glass); box-shadow: var(--glass-shadow); -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur); }
@@ -267,11 +275,11 @@ a.news-title[href]:hover { background: rgba(255,255,255,.07); }
    rises and grows with its name above it: no light sweep or extra shine.
    The shelf is the cards' material (frosted on the TV) with corners concentric to the icons; it hugs
    the apps and only scrolls them once they no longer fit. Lifted icons and their names rise above it. */
-.launcher-footer { display: grid; grid-template-columns: minmax(0,1fr) auto minmax(0,1fr); align-items: end; gap: 40px; }
-.dock { position: relative; isolation: isolate; grid-column: 2; display: flex; min-width: 0; max-width: 100%; padding: 14px; border-radius: var(--r-card); background: var(--glass); box-shadow: var(--glass-shadow); -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur); }
+.launcher-footer { display: flex; justify-content: center; align-items: flex-end; min-width: 0; }
+.dock { position: relative; isolation: isolate; display: flex; min-width: 0; max-width: 100%; padding: 12px 16px; border-radius: var(--r-card); background: var(--dock-glass); box-shadow: 0 24px 48px -28px rgba(0,0,0,.6),0 0 0 .5px rgba(0,0,0,.2); -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur); }
 .frosted .dock { -webkit-backdrop-filter: none; backdrop-filter: none; }
-.dock::before { z-index: 0; }
-.app-list { display: flex; align-items: center; justify-content: center; gap: 24px; min-width: 0; }
+.dock::before { z-index: 0; background: linear-gradient(rgba(255,255,255,.34),rgba(255,255,255,.34)); }
+.app-list { display: flex; align-items: center; justify-content: center; gap: 16px; min-width: 0; }
 .app-tile { position: relative; isolation: isolate; flex: 0 0 var(--app-size); width: var(--app-size); height: var(--app-size); border-radius: 22.5%; }
 .app-tile::before { content: ''; position: absolute; z-index: -1; left: 4%; right: 4%; top: 30%; bottom: -16%; background: radial-gradient(closest-side,rgba(0,0,0,.55),rgba(0,0,0,.3) 55%,transparent); opacity: .75; transition: transform .3s var(--ease),opacity .3s; }
 .app-tile:focus { outline: none; z-index: 2; }
@@ -307,24 +315,23 @@ a.news-title[href]:hover { background: rgba(255,255,255,.07); }
 [data-brand=generic] .app-icon { background: linear-gradient(180deg,#4a5062,#2a2e3a); font-size: 26px; font-weight: 500; }
 
 /* Photo credit */
-.photo-caption { grid-column: 3; display: flex; flex-direction: column; align-items: flex-end; gap: 3px; min-width: 0; padding-bottom: 14px; text-align: right; text-shadow: 0 1px 10px rgba(0,0,0,.45); }
-#photo-title { font-size: 15px; font-weight: 500; letter-spacing: .02em; text-shadow: 0 1px 12px rgba(0,0,0,.4); }
-.photo-credit { max-width: 520px; font-size: 12px; line-height: 1.5; color: var(--label-2); text-wrap: balance; }
+.photo-caption { --lift: var(--caption-shade,.35); display: flex; align-items: center; gap: 10px; min-width: 0; white-space: nowrap; text-shadow: 0 1px 2px rgba(0,0,0,calc(.15 + var(--lift)*.5)),0 0 calc(8px + var(--lift)*16px) rgba(0,0,0,calc(.2 + var(--lift)*.6)); }
+#photo-title { font-size: 14px; font-weight: 600; letter-spacing: .02em; }
+.photo-credit { max-width: 520px; overflow: hidden; font-size: 13px; color: rgba(235,240,255,min(1,calc(.8 + var(--lift)*.4))); text-overflow: ellipsis; }
 .photo-credit a { color: var(--label-2); border-radius: 4px; }
 .photo-credit a:hover { color: #fff; }
-#next-photo { margin-right: -8px; padding: 4px 6px 4px 10px; border-radius: 13px; font-size: 12px; }
+#next-photo { padding: 4px 6px 4px 10px; border-radius: 13px; font-size: 13px; }
 #next-photo .icon { font-size: 12px; stroke-width: 2.2; }
-.launcher-footer:has(.native-apps) { grid-template-columns: minmax(0,1fr) 300px; }
-.dock:has(.native-apps) { grid-column: 1; justify-self: start; padding: 14px 0; }
+.dock:has(.native-apps) { padding: 12px 0; }
 /* The scroller's own padding keeps lifted icons and names unclipped; its side padding is the shelf's inset */
-.native-apps { min-width: 0; justify-content: flex-start; overflow-x: auto; overflow-y: hidden; padding: 44px 14px 14px; margin: -44px 0 -14px; scrollbar-width: none; overscroll-behavior-x: contain; }
+.native-apps { min-width: 0; justify-content: flex-start; overflow-x: auto; overflow-y: hidden; padding: 44px 16px 12px; margin: -44px 0 -12px; scrollbar-width: none; overscroll-behavior-x: contain; }
 /* Scrolling to a focused app keeps it clear of the shelf's edge: room for the shelf inset plus the
    overhang of its name (at most 36px each side), so neither the lifted icon nor the name is cut. */
 .native-apps { scroll-padding-inline: 50px; }
 .native-apps .app-label { max-width: calc(var(--app-size) + 72px); }
 /* The first app can't scroll further in; its name overhangs the icon by at most 10px. */
 .native-apps .app-tile:first-child .app-label { transform: translate(max(-50%,-46px),6px) scale(.9); }
-.native-apps .app-tile:first-child:focus .app-label { transform: translate(max(-50%,-46px),0) scale(1); }.launcher-footer:has(.native-apps) .photo-caption { grid-column: 2; }
+.native-apps .app-tile:first-child:focus .app-label { transform: translate(max(-50%,-46px),0) scale(1); }
 
 /* Remote focus: tvOS-like white platter for controls, a lifted glass row for list items */
 #stage :is(.glass-button,.round-button,.tinted-button,.text-button,.status-pill):focus-visible { outline: none; background: #fff; color: #0b0d12; box-shadow: 0 10px 24px -8px rgba(0,0,0,.7); transform: scale(1.08); }

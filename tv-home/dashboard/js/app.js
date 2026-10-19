@@ -778,10 +778,17 @@ const appListTile=(()=>{
 const dockPackages=()=>[...$('apps').querySelectorAll('[data-package]')].map(tile=>tile.dataset.package);
 function renderDock(focusPackage){
   const {dock}=arrangeDock(nativeApps,dockPrefs);
-  $('apps').replaceChildren(...dock.map(app=>nativeAppTile(app)),appListTile,settingsTile);updateFrost();
+  $('apps').replaceChildren(...dock.map(app=>nativeAppTile(app)),appListTile,settingsTile);fitDock();updateFrost();
   const tile=focusPackage && $('apps').querySelector(`[data-package="${CSS.escape(focusPackage)}"]`);
   if(tile){tile.focus({preventScroll:true});tile.scrollIntoView({block:'nearest',inline:'nearest'});}
   return tile;
+}
+// Like the Mac's Dock every app fits on one centred row: icons shrink (to 56 px at the least) only when
+// the row would be wider than the screen's content area; beyond that the row scrolls.
+function fitDock(){
+  const tiles=$('apps').children.length,room=1920-2*216-32,gap=16;
+  const size=tiles?Math.max(56,Math.min(72,Math.floor((room-gap*(tiles-1))/tiles))):72;
+  $('apps').style.setProperty('--app-size',`${size}px`);
 }
 function saveDock(prefs){dockPrefs=normalizeDock(prefs);writeStorage(storage,DOCK_KEY,dockPrefs);}
 function initializeBridge() {

@@ -43,17 +43,21 @@ export function shadeFor(luminance, target = .1) {
   return Math.min(.55, 1 - (target / luminance) ** (1 / 2.2));
 }
 
-// The relative luminance (WCAG) that 90% of a region of a painted canvas stays under.
+// Like the iPhone lock screen, text on a bright sky turns dark rather than sitting in a shadow: when
+// the photo behind is mostly bright (its median relative luminance at least .28) the ink is dark.
+export const inkFor = median => median >= .28 ? 'dark' : 'light';
+
+// The median and the level 90% stay under, of the relative luminance (WCAG) of a canvas region.
 function regionLuminance(context, canvas, region) {
   const x = Math.floor(region.x0 * canvas.width), y = Math.floor(region.y0 * canvas.height);
   const w = Math.max(1, Math.ceil(region.x1 * canvas.width) - x), h = Math.max(1, Math.ceil(region.y1 * canvas.height) - y);
   const data = context.getImageData(x, y, w, h).data, lin = v => (v /= 255) <= .04045 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4, values = [];
   for (let i = 0; i < data.length; i += 4) values.push(.2126 * lin(data[i]) + .7152 * lin(data[i + 1]) + .0722 * lin(data[i + 2]));
   values.sort((a, b) => a - b);
-  return values[Math.floor(values.length * .9)];
+  return { median:values[Math.floor(values.length * .5)], p90:values[Math.floor(values.length * .9)] };
 }
 // The text on the bare photo, in stage pixels.
-const TEXT_ON_PHOTO = { clock: { x:216, y:96, width:500, height:160 }, caption: { x:1404, y:940, width:300, height:76 } };
+const TEXT_ON_PHOTO = { clock: { x:216, y:96, width:500, height:160 }, caption: { x:1040, y:40, width:600, height:44 } };
 
 function toneHighlights(context, width, height) {
   const image = context.getImageData(0, 0, width, height), d = image.data, span = CAP - KNEE;
@@ -66,8 +70,8 @@ function toneHighlights(context, width, height) {
   context.putImageData(image, 0, 0);
 }
 
-// Draws a blurred, saturated copy of an already loaded image and returns how much shade the text on
-// the bare photo needs ({clock, caption}, see shadeFor), or null when the photo cannot be read.
+// Draws a blurred, saturated copy of an already loaded image and returns, for the text on the bare
+// photo, its shadow strength and ink ({clock:{shade, ink}, caption:{…}}), or null when the photo cannot be read.
 export function paintFrost(canvas, image) {
   const width = WIDTH, height = Math.max(1, Math.round(WIDTH * (image.naturalHeight || 1) / (image.naturalWidth || 1)));
   canvas.width = width; canvas.height = height;
@@ -86,7 +90,10 @@ export function paintFrost(canvas, image) {
   try {
     // Measured on the blur before toning: the text sits on the photo as it is.
     const shade = {};
-    for (const [name, rect] of Object.entries(TEXT_ON_PHOTO)) shade[name] = shadeFor(regionLuminance(context, canvas, photoRegion(rect, width / height)));
+    for (const [name, rect] of Object.entries(TEXT_ON_PHOTO)) {
+      const { median, p90 } = regionLuminance(context, canvas, photoRegion(rect, width / height));
+      shade[name] = { shade:shadeFor(p90), ink:inkFor(median) };
+    }
     toneHighlights(context, width, height);
     return shade;
   } catch {
@@ -103,13 +110,15 @@ export class Frost {
   paint(index, image) {
     try { this.shades[index] = paintFrost(this.canvases[index], image); return true; } catch { return false; }
   }
-  // Shows a painted photo and sets the shade behind the clock and the photo credit for it
-  // (--clock-shade, --caption-shade; without a measurement the stylesheet's defaults apply).
+  // Shows a painted photo and sets, for the clock and the photo credit, their shadow strength
+  // (--clock-shade, --caption-shade) and ink (data-clock-ink, data-caption-ink on <html>); without a
+  // measurement the stylesheet's defaults apply.
   activate(index) {
     this.canvases.forEach((canvas,i) => canvas.classList.toggle('is-active', i === index));
     const shade = this.shades[index], style = document.documentElement.style;
     for (const name of Object.keys(TEXT_ON_PHOTO)) {
-      if (shade) style.setProperty(`--${name}-shade`, shade[name].toFixed(2)); else style.removeProperty(`--${name}-shade`);
+      if (shade) style.setProperty(`--${name}-shade`, shade[name].shade.toFixed(2)); else style.removeProperty(`--${name}-shade`);
+      if (shade) document.documentElement.dataset[`${name}Ink`] = shade[name].ink; else delete document.documentElement.dataset[`${name}Ink`];
     }
     this.ready = true;
   }

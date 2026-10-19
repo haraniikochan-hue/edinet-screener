@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { roundedRectsPath, photoRegion, shadeFor } from '../dashboard/js/frost.js';
+import { roundedRectsPath, photoRegion, shadeFor, inkFor } from '../dashboard/js/frost.js';
 
 test('frost clip is one rounded sub-path per card in viewport pixels',()=>{
   const path=roundedRectsPath([{x:216,y:270,width:500,height:286},{x:844,y:270,width:860,height:432}],32);
@@ -24,4 +24,8 @@ test('text on the photo gets a shade only when the photo behind it is bright',()
   assert.equal(shadeFor(.05),0);assert.equal(shadeFor(.1),0);assert.equal(shadeFor(Number.NaN),0);
   assert.ok(shadeFor(.2)>.2 && shadeFor(.2)<.35);
   assert.ok(shadeFor(.5)>shadeFor(.2));assert.equal(shadeFor(1),.55);
+});
+test('text on a mostly bright sky turns to dark ink',()=>{
+  assert.equal(inkFor(.005),'light');assert.equal(inkFor(.2),'light');
+  assert.equal(inkFor(.28),'dark');assert.equal(inkFor(.82),'dark');
 });
