@@ -1,8 +1,9 @@
-// Remote-control (D-pad) navigation for the TV stage and its dialogs.
+// Remote-control (D-pad) navigation for the TV screen and its dialogs.
 // On the stage, focusable elements inside a [data-nav-group] move among themselves first.
 // Leaving a group follows the group's data-nav-up/down/left/right (another group's name, or
 // "none"); without a rule it takes the nearest element in that direction. Coming back into the
-// group you just left, in the opposite direction, returns to the element you left from.
+// group you just left, in the opposite direction, returns to the element you left from, and the
+// opposite arrow pressed straight after crossing into a group always undoes that move.
 const FOCUSABLE = 'button:not(:disabled),a[href],input:not(:disabled),select:not(:disabled),summary,[tabindex="0"]';
 const DIRECTIONS = { ArrowUp:'up', ArrowDown:'down', ArrowLeft:'left', ArrowRight:'right' };
 const BACK_KEYS = ['Escape','BrowserBack','GoBack'];
@@ -44,7 +45,7 @@ const isTextField = el => el.matches('input:not([type="checkbox"]):not([type="ra
 // home(): the element that holds the app dock. onEdge(current, direction) may consume a move
 // (e.g. paging a list) by returning true.
 export function installNavigation({ modals, home, onEdge = () => false }) {
-  let lastLeft = null;
+  let lastLeft = null, lastCrossing = null;
   const remembered = new Map();
   document.addEventListener('focusin', event => {
     const group = groupOf(event.target);
@@ -97,7 +98,9 @@ export function installNavigation({ modals, home, onEdge = () => false }) {
     const current = elements.includes(document.activeElement) ? document.activeElement : null;
     let next = null;
     if (!current) next = open ? elements[0] : (home?.() && candidates(home())[0]) || elements[0];
-    else if (onEdge(current, direction)) { event.preventDefault(); return; }
+    // Undo comes first, so a group that pages at its edge (the calendar) cannot trap a quick Up-then-Down.
+    else if (!open && lastCrossing?.to === current && direction === OPPOSITE[lastCrossing.direction] && elements.includes(lastCrossing.from)) next = lastCrossing.from;
+    else if (onEdge(current, direction)) { event.preventDefault(); lastCrossing = null; return; }
     else {
       const group = open ? null : groupOf(current);
       // Dialogs are vertical forms: the next control below wins even when it sits at the row's far end.
@@ -117,10 +120,12 @@ export function installNavigation({ modals, home, onEdge = () => false }) {
         }
       }
     }
-    if (next || target.matches?.('select') || document.body.classList.contains('tv')) event.preventDefault();
+    // The screen itself never scrolls; only a dialog or the installed-apps row scrolls to its focus.
+    event.preventDefault();
     if (!next) return;
+    lastCrossing = !open && current && groupOf(next) !== groupOf(current) ? { from:current, to:next, direction } : null;
     next.focus({ preventScroll:true });
-    if (!document.body.classList.contains('tv') || open || next.closest('.native-apps')) next.scrollIntoView({ block:'nearest', inline:'nearest', behavior:'auto' });
+    if (open || next.closest('.native-apps')) next.scrollIntoView({ block:'nearest', inline:'nearest', behavior:'auto' });
   });
   return { focusHome };
 }

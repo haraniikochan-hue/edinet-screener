@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#05070c">
   <meta name="description" content="渋谷の天気とニューヨークのマーケットを、リビングの一画面に。TV Home ダッシュボード。">
   <title>TV Home — 街と、いま。</title>
@@ -36,6 +36,7 @@
   </svg>
   <div class="background" aria-hidden="true"><div class="photo-layer is-active"></div><div class="photo-layer"></div><div class="frost"><canvas class="frost-layer"></canvas><canvas class="frost-layer"></canvas></div></div>
   <div class="shade" aria-hidden="true"></div>
+  <div id="screen">
   <main id="stage" aria-label="TV Home ダッシュボード">
     <header class="masthead"><div class="utility" data-nav-group="top" data-nav-up="none" data-nav-left="none" data-nav-right="none" data-nav-down="market"><button id="connection-status" class="status-pill" data-state="ok" aria-label="データの状態を表示">接続中</button><button id="refresh" class="glass-button" aria-label="データを更新"><svg class="icon"><use href="#i-refresh"/></svg></button><button id="fullscreen" class="glass-button" aria-label="全画面に切り替え"><svg class="icon"><use href="#i-fullscreen"/></svg></button></div></header>
 
@@ -126,6 +127,7 @@
     </section>
   </div>
   <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  </div>
   <noscript><p class="noscript">ダッシュボードを表示するにはJavaScriptを有効にしてください。</p></noscript>
 </body>
 </html>

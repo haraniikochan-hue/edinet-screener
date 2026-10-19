@@ -1,6 +1,6 @@
 添付ZIPの「START_HERE.md」「HANDOFF.md」「AGENTS.md」を読んで、TV Homeプロジェクトを引き継いでください。
 
-現在のアプリはv0.8.0です。Xiaomi TV用ホーム画面のフェーズ2・Webダッシュボードで、v0.5.5の配置のままApple／iOSの考え方でデザインを刷新し、TV向けの軽量化、広告ブロック（AdGuard DNS）、リモコン操作の改善を加えました。私はAppleやiOSのようなデザインが好きで、UIはさらに洗練させたいと考えています。最新の見た目は artifacts/dashboard-desktop.png と現行の dashboard/ が基準です。
+現在のアプリはv0.9.0です。Xiaomi TV用ホーム画面のフェーズ2・Webダッシュボードで、v0.5.5の配置のままApple／iOSの考え方でデザインを刷新し、TV向けの軽量化、広告ブロック（AdGuard DNS）、リモコン操作の改善を加えました。テレビ専用なのでモバイル版は不要です（スマホ・縦画面の配置は削除済み）。私はAppleやiOSのようなデザインが好きで、UIはさらに洗練させたいと考えています。最新の見た目は artifacts/dashboard-desktop.png と現行の dashboard/ が基準です。
 
 朝晩同じフル版、渋谷区の時間別天気、Hyperliquidの12銘柄と24時間チャート、米国経済指標、ニュース、Spotify、7つのアプリドックまで実装済みです。Disney+とSpotifyも追加済み。SmartTubeは見た目だけYouTubeです。
 

@@ -66,19 +66,21 @@ h2,h3,p { margin: 0; }
 .shade { background: radial-gradient(120% 90% at 50% 40%,transparent 55%,rgba(2,4,10,.38)),linear-gradient(180deg,rgba(4,8,20,.34),transparent 30%,transparent 62%,rgba(3,6,14,.62)),linear-gradient(90deg,rgba(4,10,24,.34),transparent 42%); }
 
 /* Stage */
-.tv { overflow: hidden; }.tv #stage { position: absolute; width: 1920px; height: 1080px; transform-origin: top left; }
-#stage { position: relative; min-height: 100vh; padding: 48px 216px 52px; display: grid; grid-template-rows: 28px minmax(0,1fr) 112px; gap: 28px; }
+/* One 1920×1080 screen — dashboard, sheets and toast together — scaled to fit the TV */
+html,body { height: 100%; overflow: hidden; }
+#screen { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: top left; }
+#stage { position: absolute; inset: 0; padding: 48px 216px 52px; display: grid; grid-template-rows: 28px minmax(0,1fr) 112px; gap: 28px; }
 .dashboard-grid { display: grid; grid-template-columns: 500px 860px; grid-template-rows: 142px 286px minmax(0,1fr) 162px; grid-template-areas: 'overview .' 'weather market' 'calendar market' 'calendar extras'; justify-content: space-between; row-gap: 24px; min-height: 0; }
 
 /* Status and window controls: silent while everything is fresh */
 .masthead { display: flex; align-items: center; justify-content: flex-end; }
 .utility { display: flex; align-items: center; gap: 12px; }
-.status-pill { display: inline-flex; align-items: center; gap: 8px; height: 30px; padding: 0 13px 0 11px; border-radius: 15px; font-size: 13px; font-weight: 500; color: var(--label-2); background: var(--fill-2); box-shadow: inset 0 0 0 .5px rgba(255,255,255,.14); -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); transition: opacity .4s var(--ease),transform .35s var(--spring),background .2s,color .2s; }
+.status-pill { display: inline-flex; align-items: center; gap: 8px; height: 30px; padding: 0 13px 0 11px; border-radius: 15px; font-size: 13px; font-weight: 500; color: var(--label-2); background: rgba(255,255,255,.12); box-shadow: inset 0 0 0 .5px rgba(255,255,255,.14); transition: opacity .4s var(--ease),transform .35s var(--spring),background .2s,color .2s; }
 .status-pill::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--up); }
 /* Fresh data needs no badge; visibility also takes it out of remote and Tab focus */
 .status-pill[data-state=ok] { opacity: 0; visibility: hidden; pointer-events: none; transition: opacity .4s var(--ease),visibility 0s linear .4s; }
 .status-pill[data-state=waiting]::before { background: var(--warn); box-shadow: 0 0 10px rgba(255,179,64,.6); }
-.glass-button { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; color: var(--label-2); font-size: 19px; background: var(--fill-2); box-shadow: inset 0 0 0 .5px rgba(255,255,255,.16),inset 0 1px 0 rgba(255,255,255,.12); -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); transition: transform .35s var(--spring),background .2s,color .2s; }
+.glass-button { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; color: var(--label-2); font-size: 19px; background: rgba(255,255,255,.12); box-shadow: inset 0 0 0 .5px rgba(255,255,255,.16),inset 0 1px 0 rgba(255,255,255,.12); transition: transform .35s var(--spring),background .2s,color .2s; }
 .glass-button:hover { color: #fff; background: rgba(255,255,255,.16); }
 
 /* Greeting and clock */
@@ -195,8 +197,7 @@ h2,h3,p { margin: 0; }
 .calendar-day span { font-size: 13px; font-weight: 500; color: var(--label-3); }
 .same-day .calendar-day { visibility: hidden; }
 .calendar-detail { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.calendar-title { font-size: 17px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.calendar-meta { font-size: 12px; color: var(--label-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.calendar-title { font-size: 17px; font-weight: 500; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .calendar-time { font-size: 18px; font-weight: 500; text-align: right; letter-spacing: -.01em; }
 .next-event .calendar-title { font-weight: 650; }
 .next-event::before { box-shadow: 0 0 10px var(--cat); }
@@ -262,7 +263,7 @@ a.news-title[href]:hover { background: rgba(255,255,255,.07); }
 .app-tile:focus .app-icon::before { animation: glint .95s var(--ease) .08s both; }
 .app-tile:focus::before { transform: translateY(13px) scale(1.18); opacity: .95; }
 .app-tile:active .app-icon { transform: translateY(-3px) scale(1.04); transition-duration: .12s; }
-.app-label { position: absolute; bottom: calc(100% + 18px); left: 50%; max-width: 180px; width: max-content; padding: 5px 12px; border-radius: 999px; background: rgba(40,44,58,.5); color: #fff; font-size: 14px; font-weight: 600; line-height: 17px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-shadow: inset 0 0 0 .5px rgba(255,255,255,.24),inset 0 1px 0 rgba(255,255,255,.14),0 6px 18px -6px rgba(0,0,0,.5); -webkit-backdrop-filter: blur(20px) saturate(160%); backdrop-filter: blur(20px) saturate(160%); opacity: 0; transform: translate(-50%,6px) scale(.9); transition: opacity .2s,transform .4s var(--spring); pointer-events: none; }
+.app-label { position: absolute; bottom: calc(100% + 18px); left: 50%; max-width: 180px; width: max-content; padding: 5px 12px; border-radius: 999px; background: rgba(36,40,52,.84); color: #fff; font-size: 14px; font-weight: 600; line-height: 17px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-shadow: inset 0 0 0 .5px rgba(255,255,255,.24),inset 0 1px 0 rgba(255,255,255,.14),0 6px 18px -6px rgba(0,0,0,.5); opacity: 0; transform: translate(-50%,6px) scale(.9); transition: opacity .2s,transform .4s var(--spring); pointer-events: none; }
 .app-tile:focus .app-label { opacity: 1; transform: translate(-50%,0) scale(1); }
 .app-icon img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .app-brand-mark { display: block; width: 74%; height: 74%; background: currentColor; -webkit-mask: var(--app-logo) center/contain no-repeat; mask: var(--app-logo) center/contain no-repeat; }
@@ -303,9 +304,11 @@ a.news-title[href]:hover { background: rgba(255,255,255,.07); }
 .photo-credit a:focus-visible { outline-offset: 2px; }
 
 /* Settings sheet — iOS grouped style */
-.modal-open:not(.tv) { overflow: hidden; }
-.modal-overlay { position: fixed; inset: 0; z-index: 20; display: flex; align-items: center; justify-content: center; padding: 24px; background: rgba(2,4,8,.5); -webkit-backdrop-filter: blur(14px) saturate(120%); backdrop-filter: blur(14px) saturate(120%); animation: fade .3s var(--ease); }
-.settings-dialog { position: relative; width: 100%; max-width: 720px; max-height: 90vh; overflow: auto; padding: 30px 32px 26px; border-radius: 36px; background: linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,0) 30%),rgba(26,28,36,.84); box-shadow: inset 0 0 0 .5px rgba(255,255,255,.2),inset 0 1px 0 rgba(255,255,255,.14),0 40px 120px -20px rgba(0,0,0,.8); -webkit-backdrop-filter: blur(40px) saturate(180%); backdrop-filter: blur(40px) saturate(180%); scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.25) transparent; animation: sheet .45s var(--spring); }
+/* Sheets share the scaled screen and are drawn 1.25× so their text reads from the sofa */
+.modal-overlay { position: absolute; inset: 0; z-index: 20; display: flex; align-items: center; justify-content: center; padding: 48px; background: rgba(2,4,8,.78); zoom: 1.25; animation: fade .3s var(--ease); }
+.settings-dialog { position: relative; width: 100%; max-width: 720px; max-height: 100%; overflow: auto; padding: 30px 32px 26px; border-radius: 36px; background: linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,0) 30%),#1b1d25; box-shadow: inset 0 0 0 .5px rgba(255,255,255,.2),inset 0 1px 0 rgba(255,255,255,.14),0 40px 120px -20px rgba(0,0,0,.8); scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.25) transparent; animation: sheet .45s var(--spring); }
+/* Remote focus scrolls a sheet just far enough to show the control and its focus ring */
+.settings-dialog,.detail-sheet { scroll-padding-block: 28px; }
 .settings-dialog:focus-visible { outline: none; }
 .dialog-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 22px; }
 .eyebrow { display: block; font-size: 11px; font-weight: 600; letter-spacing: .12em; color: var(--label-3); }
@@ -376,7 +379,7 @@ details.about { padding: 16px 20px; border-radius: 22px; background: rgba(255,25
 .tradingview-credit { padding: 5px 0; font-size: 11px; text-align: right; color: var(--label-3); }
 
 /* Detail sheet — what OK shows for a row, a release or a headline */
-.detail-sheet { position: relative; width: 100%; max-width: 720px; max-height: 90vh; overflow: auto; padding: 30px 32px 28px; border-radius: 36px; background: linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,0) 30%),rgba(26,28,36,.88); box-shadow: inset 0 0 0 .5px rgba(255,255,255,.2),inset 0 1px 0 rgba(255,255,255,.14),0 40px 120px -20px rgba(0,0,0,.8); -webkit-backdrop-filter: blur(40px) saturate(180%); backdrop-filter: blur(40px) saturate(180%); animation: sheet .45s var(--spring); }
+.detail-sheet { position: relative; width: 100%; max-width: 720px; max-height: 100%; overflow: auto; padding: 30px 32px 28px; border-radius: 36px; background: linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,0) 30%),#1b1d25; box-shadow: inset 0 0 0 .5px rgba(255,255,255,.2),inset 0 1px 0 rgba(255,255,255,.14),0 40px 120px -20px rgba(0,0,0,.8); animation: sheet .45s var(--spring); }
 .detail-sheet::before { content: ''; position: absolute; left: 32px; top: 0; width: 56px; height: 4px; border-radius: 0 0 4px 4px; background: var(--sheet-accent,transparent); }
 .detail-sheet:focus-visible { outline: none; }
 .detail-sheet .dialog-heading { margin-bottom: 18px; }
@@ -400,20 +403,18 @@ details.about { padding: 16px 20px; border-radius: 22px; background: rgba(255,25
 .detail-actions .primary-button { display: inline-flex; align-items: center; text-decoration: none; cursor: pointer; }
 .detail-sheet :is(button,a):focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
 .detail-sheet .icon-button:focus-visible { outline: none; background: #fff; color: #0b0d12; }
-.tv .detail-sheet { -webkit-backdrop-filter: none; backdrop-filter: none; background: linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,0) 30%),#1b1d25; }
 
 /* Toast — glass HUD capsule */
-.toast { position: fixed; z-index: 40; left: 50%; top: max(20px,4vh,env(safe-area-inset-top)); max-width: min(90vw,760px); padding: 12px 22px; border-radius: 26px; background: rgba(34,38,50,.66); color: var(--label); font-size: 15px; font-weight: 500; line-height: 1.5; text-align: center; box-shadow: inset 0 0 0 .5px rgba(255,255,255,.22),inset 0 1px 0 rgba(255,255,255,.12),0 20px 50px -16px rgba(0,0,0,.7); -webkit-backdrop-filter: blur(30px) saturate(180%); backdrop-filter: blur(30px) saturate(180%); transform: translateX(-50%); animation: toast .5s var(--spring); }
+.toast { position: absolute; z-index: 40; left: 50%; top: 40px; width: max-content; max-width: 960px; padding: 16px 30px; border-radius: 32px; background: rgba(30,34,46,.92); color: var(--label); font-size: 20px; font-weight: 500; line-height: 1.5; text-align: center; box-shadow: inset 0 0 0 .5px rgba(255,255,255,.22),inset 0 1px 0 rgba(255,255,255,.12),0 20px 50px -16px rgba(0,0,0,.7); transform: translateX(-50%); animation: toast .5s var(--spring); }
 .noscript { position: fixed; inset: 40%; padding: 20px; background: #0a0f1a; }
 
-/* Entrance: content rises into place once the stage has been fitted */
+/* Entrance: content fades in once the screen has been fitted. Fade only, so each card stays over its frosted backing */
 body:not(.ready) #stage { opacity: 0; animation: reveal 0s 1.6s forwards; }
 /* backwards fill: once settled nothing lingers, so no ancestor becomes a backdrop root for the glass inside it */
-.ready :is(.masthead,.overview,.weather-section,.market-card,.calendar-card,.news-card,.music-card,.app-list,.photo-caption) { animation: rise .9s var(--ease) backwards; }
+.ready :is(.masthead,.overview,.weather-section,.market-card,.calendar-card,.news-card,.music-card,.app-list,.photo-caption) { animation: fade .9s var(--ease) backwards; }
 .ready .overview { animation-delay: .04s; }.ready .weather-section { animation-delay: .1s; }.ready .market-card { animation-delay: .14s; }.ready .calendar-card { animation-delay: .18s; }.ready .news-card { animation-delay: .22s; }.ready .music-card { animation-delay: .26s; }.ready .app-list { animation-delay: .32s; }.ready .photo-caption { animation-delay: .38s; }
 
 @keyframes drift { from { transform: scale(1.015); } to { transform: scale(1.065); } }
-@keyframes rise { from { opacity: 0; transform: translateY(14px) scale(.985); } }
 @keyframes reveal { to { opacity: 1; } }
 @keyframes fade { from { opacity: 0; } }
 @keyframes sheet { from { opacity: 0; transform: translateY(24px) scale(.97); } }
@@ -425,103 +426,18 @@ body:not(.ready) #stage { opacity: 0; animation: reveal 0s 1.6s forwards; }
   body:not(.ready) #stage { opacity: 1; }
 }
 
-/* TV stage: the pre-blurred photo replaces live blur under the cards, small glass becomes a
-   tinted solid, and per-second updates (prices, progress) stay inside their own boxes */
-.tv.frosted .card { -webkit-backdrop-filter: none; backdrop-filter: none; }
-.tv :is(.app-label,.status-pill,.glass-button,.toast,.modal-overlay,.settings-dialog) { -webkit-backdrop-filter: none; backdrop-filter: none; }
-.tv .app-label { background: rgba(36,40,52,.84); }
-.tv :is(.status-pill,.glass-button) { background: rgba(255,255,255,.12); }
-.tv .toast { background: rgba(30,34,46,.92); }
-.tv .modal-overlay { background: rgba(2,4,8,.78); }
-.tv .settings-dialog { background: linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,0) 30%),#1b1d25; }
-.tv .card,.tv .stock-row { contain: layout paint; }
-.tv .stock-price-row { will-change: transform; }
-/* Fade-only entrance on TV, so each card stays over its frosted backing */
-.tv.ready :is(.masthead,.overview,.weather-section,.market-card,.calendar-card,.news-card,.music-card,.app-list,.photo-caption) { animation-name: fade; }
-.tv.ready .frost { animation: fade .9s var(--ease) .1s backwards; }
-
-/* TV / landscape stage only */
-@media(min-width:1001px) and (orientation:landscape) {
-  .calendar-meta,.calendar-heading .eyebrow { display: none; }
-  .calendar-title { line-height: 1.25; }
-}
-
-/* Phones, tablets and portrait screens: one scrolling column */
-@media(max-width:1000px),(orientation:portrait) {
-  body { overflow: auto; }
-  #stage { display: flex; flex-direction: column; gap: 28px; padding: max(28px,env(safe-area-inset-top)) max(28px,env(safe-area-inset-right)) max(28px,env(safe-area-inset-bottom)) max(28px,env(safe-area-inset-left)); }
-  .masthead { height: 40px; }.status-pill { font-size: 12px; }
-  .dashboard-grid { display: flex; flex-direction: column; gap: 22px; }
-  .overview { padding: 0 2px 6px; }.clock-line { height: 104px; }#clock { font-size: 136px; }
-  .weather-section { padding: 20px 22px 16px; }.weather-now { height: auto; }.weather-footer { height: auto; margin-top: 12px; flex-wrap: wrap; row-gap: 6px; }
-  .market-column { order: 1; align-self: stretch; }.market-card { height: auto; padding: 18px 22px; }
-  .stock-grid { flex: auto; grid-template-rows: repeat(6,68px); column-gap: 32px; }
-  .stock-row { grid-template-columns: 28px minmax(62px,1fr) 64px 96px; column-gap: 10px; }.stock-row::after { left: 50px; }
-  .symbol-icon { width: 28px; height: 28px; }.stock-price-row { font-size: 21px; }.stock-chart,.stock-chart svg { height: 30px; }
-  .calendar-card { order: 2; padding: 20px 22px 16px; }.calendar-events { grid-template-rows: repeat(6,58px); }
-  .calendar-event { grid-template-columns: 3px 64px minmax(0,1fr) auto; align-items: center; }
-  .calendar-day { flex-direction: column; align-items: flex-start; gap: 1px; }.calendar-day strong { font-size: 19px; }
-  .same-day .calendar-day { visibility: visible; opacity: .35; }
-  .calendar-title { font-size: 17px; }.calendar-time { font-size: 19px; }
-  .side-stack { order: 3; grid-template-columns: 1fr 1fr; grid-template-rows: 196px; gap: 22px; }
-  .news-title { -webkit-line-clamp: 3; }
-  .music-card { gap: 16px; }.album { width: 72px; height: 72px; border-radius: 14px; }.album svg { width: 30px; height: 30px; }
-  #tradingview { height: 760px; flex: auto; }.tradingview-grid { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; }
-  .launcher-footer { display: flex; flex-direction: column; align-items: stretch; gap: 26px; --app-size: 66px; }
-  .app-list:not(.native-apps) { width: max-content; max-width: 100%; align-self: center; justify-content: flex-start; gap: 20px; overflow-x: auto; overflow-y: hidden; padding: 48px 16px 14px; margin-top: -30px; margin-bottom: -10px; scroll-padding-inline: 16px; scrollbar-width: none; overscroll-behavior-x: contain; }
-  .native-apps { padding-top: 48px; margin-top: -14px; margin-bottom: -10px; }
-  .photo-caption { align-items: flex-start; text-align: left; }#next-photo { margin-right: 0; margin-left: -10px; }
-}
-/* Two market columns need ~720px; below that the list becomes one column */
-@media(max-width:720px) {
-  .stock-grid { grid-template-columns: 1fr; grid-template-rows: repeat(12,62px); column-gap: 0; }.stock-grid::before { display: none; }
-  .stock-row { grid-template-columns: 28px minmax(62px,1fr) 66px 94px; }
-  .stock-row:nth-last-child(2)::after { display: block; }
-}
-@media(max-width:640px) {
-  #stage { gap: 24px; padding: max(20px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(24px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left)); }
-  .greeting { font-size: 17px; }
-  .clock-line { height: 76px; gap: 16px; }#clock { font-size: clamp(76px,25vw,104px); margin-left: -3px; }
-  #date { font-size: 21px; line-height: 25px; }#weekday { font-size: 15px; line-height: 19px; }
-  :root { --r-card: 28px; }
-  .weather-section { padding: 18px 18px 14px; }#temperature { font-size: 50px; line-height: 44px; }
-  .weather-summary #tomorrow,#weather-label { white-space: normal; }
-  .hourly-time { font-size: 12px; }.hourly-temperature>span { font-size: 17px; }.rain-key { font-size: 11px; }
-  .chips { flex-wrap: wrap; row-gap: 6px; gap: 12px; }
-  .market-card { padding: 14px 18px; }
-  .stock-symbol { font-size: 17px; }.company-name { font-size: 12px; }.stock-change { font-size: 13px; }
-  .calendar-card { padding: 18px 16px 14px; }.calendar-events { margin: 0 -8px; }
-  .calendar-event { grid-template-columns: 3px 52px minmax(0,1fr) auto; column-gap: 10px; padding: 0 8px; }.calendar-event::after { left: 23px; right: 8px; }
-  .calendar-title { font-size: 15px; }.calendar-day strong { font-size: 17px; }.calendar-time { font-size: 17px; }
-  .round-button { width: 36px; height: 36px; }
-  .side-stack { grid-template-columns: 1fr; grid-template-rows: 172px 148px; gap: 22px; }
-  .news-title { -webkit-line-clamp: 2; font-size: 18px; }
-  .album { width: 86px; height: 86px; }
-  .launcher-footer { --app-size: clamp(50px,14vw,64px); }.app-list:not(.native-apps) { gap: clamp(12px,3.6vw,20px); }.app-label { font-size: 12px; padding-inline: 10px; }
-  .settings-dialog { max-height: 92vh; padding: 24px 18px 20px; border-radius: 30px; }.modal-overlay { padding: 12px; }
-  .settings-dialog fieldset { padding-inline: 16px; }.dialog-heading h2 { font-size: 26px; }.button-row { flex-wrap: wrap; gap: 12px; }
-  .toast { font-size: 14px; }
-  /* Facts stack label over value on a phone instead of squeezing two columns */
-  .detail-sheet { padding: 24px 18px 20px; border-radius: 30px; }.detail-sheet h2 { font-size: 24px; }
-  .detail-facts { grid-template-columns: 1fr; }
-  .detail-facts dt { padding-bottom: 0; }.detail-facts dd { padding-top: 2px; border-top: 0; }
-  .detail-chart { height: 200px; }
-}
-@media(max-width:360px) {
-  .market-card { padding-inline: 14px; }.stock-row { grid-template-columns: 24px minmax(58px,1fr) 52px 86px; column-gap: 8px; }.stock-row::after { left: 44px; }
-  .symbol-icon { width: 24px; height: 24px; }.stock-price-row { font-size: 19px; }.stock-symbol { font-size: 15px; }
-  .calendar-card { padding-inline: 14px; }.calendar-event { grid-template-columns: 3px 48px minmax(0,1fr) auto; column-gap: 8px; }.calendar-title { font-size: 14px; }.calendar-time { font-size: 16px; }
-  .weather-place { font-size: 15px; }
-  .clock-line { gap: 14px; height: 70px; }#clock { font-size: 72px; }#date { font-size: 18px; line-height: 22px; }#weekday { font-size: 14px; }
-}
+/* The pre-blurred photo replaces live blur under the cards; per-second updates (prices,
+   progress) stay inside their own boxes */
+.frosted .card { -webkit-backdrop-filter: none; backdrop-filter: none; }
+.card,.stock-row { contain: layout paint; }
+.stock-price-row { will-change: transform; }
+.ready .frost { animation: fade .9s var(--ease) .1s backwards; }
 
 /* Material fallbacks */
 @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))) {
   .card { background: rgba(28,34,46,.94); }
-  .app-label,.status-pill,.glass-button,.toast { background: rgba(44,48,60,.96); }
-  .settings-dialog { background: #1c1e26; }
 }
 @media(prefers-reduced-transparency:reduce) {
-  .card,.settings-dialog,.app-label,.status-pill,.glass-button,.toast,.modal-overlay { -webkit-backdrop-filter: none; backdrop-filter: none; }
-  .card { background: #1c2230; }.settings-dialog { background: #1c1e26; }.app-label,.status-pill,.glass-button,.toast { background: #2c3040; }.modal-overlay { background: rgba(2,4,8,.85); }
+  .card { -webkit-backdrop-filter: none; backdrop-filter: none; background: #1c2230; }
+  .app-label,.status-pill,.glass-button,.toast { background: #2c3040; }.modal-overlay { background: rgba(2,4,8,.85); }
 }

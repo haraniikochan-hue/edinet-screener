@@ -125,26 +125,24 @@ try{
     if(box('#apps').bottom>box('#stage').bottom-40)failures.push('app dock lost its bottom safe margin');
     return failures;
   });assert.deepEqual(collision,[]);
-  for(const viewport of [{width:1366,height:768},{width:768,height:1024},{width:660,height:1000},{width:390,height:844},{width:320,height:720}]){
+  // TV only: one 1920×1080 screen scaled to the WebView (a Google TV WebView usually reports 960×540 CSS px).
+  for(const viewport of [{width:3840,height:2160},{width:1366,height:768},{width:1280,height:720},{width:960,height:540}]){
     await page.setViewportSize(viewport);await page.waitForTimeout(200);
-    if(viewport.width<=700){
-      await page.locator('[data-app=smarttube]').focus();
-      await page.locator('[data-app=smarttube]').evaluate(button=>button.scrollIntoView({block:'nearest',inline:'nearest'}));
-      for(const name of ['U-NEXT','Netflix','Prime Video','Disney+','Spotify','設定']){
-        await page.keyboard.press('ArrowRight');
-        assert.equal(await page.locator('#apps button:focus').getAttribute('aria-label'),name);
-        assert.equal(await page.locator('#apps').evaluate(nav=>{const a=nav.getBoundingClientRect(),b=document.activeElement.getBoundingClientRect();return b.left>=a.left-1 && b.right<=a.right+1;}),true,`focused app visible at ${viewport.width}`);
-      }
-      await page.keyboard.press('ArrowLeft');
-      assert.equal(await page.locator('#apps button:focus').getAttribute('data-app'),'spotify');
-      assert.ok(await page.locator('#apps').evaluate(nav=>nav.scrollLeft)>0,'mobile dock scrolls to reveal the added apps');
-    }
-    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),true,`overflow ${viewport.width}`);
-    assert.equal(await page.evaluate(()=>document.body.classList.contains('frosted')),viewport.width>1000 && viewport.width>viewport.height,`frost only on the TV stage at ${viewport.width}`);
-    const suffix=viewport.width===390?'mobile':String(viewport.width);
+    const scale=Math.min(viewport.width/1920,viewport.height/1080);
+    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1 && document.documentElement.scrollHeight<=innerHeight+1),true,`page scroll at ${viewport.width}`);
+    assert.equal(await page.evaluate(()=>document.body.classList.contains('frosted')),true,`frosted cards at ${viewport.width}`);
+    const screen=await page.locator('#screen').boundingBox();
+    assert.ok(Math.abs(screen.width-1920*scale)<1 && Math.abs(screen.height-1080*scale)<1,`screen fitted at ${viewport.width}`);
     assert.equal(await page.locator('.stock-row').evaluateAll(rows=>rows.every(row=>{const a=row.querySelector('.stock-labels').getBoundingClientRect(),b=row.querySelector('.stock-chart').getBoundingClientRect(),c=row.querySelector('.stock-price-row').getBoundingClientRect();const overlap=(x,y)=>x.left<y.right-1 && x.right>y.left+1 && x.top<y.bottom-1 && x.bottom>y.top+1;return !overlap(a,b) && !overlap(b,c) && !overlap(a,c) && c.right<=row.getBoundingClientRect().right+1;})),true,`market collision ${viewport.width}`);
-    await page.screenshot({path:resolve(out,`dashboard-${suffix}.png`),fullPage:viewport.width<=1000});
-    report.push(`${viewport.width}×${viewport.height}: no horizontal page overflow.${viewport.width<=700?' All seven dock buttons reachable through horizontal scrolling.':''}`);
+    // Sheets scale with the screen instead of keeping CSS px, which would double them on a 960×540 WebView.
+    await page.locator('[data-brand=settings]').focus();await page.keyboard.press('Enter');
+    await page.locator('#settings-dialog').waitFor({state:'visible'});
+    const sheet=await page.locator('#settings-dialog').evaluate(async el=>{await Promise.all(el.getAnimations().map(a=>a.finished));const r=el.getBoundingClientRect();return {width:r.width,top:r.top,bottom:r.bottom};});
+    assert.ok(Math.abs(sheet.width-900*scale)<2,`settings sheet is 900 screen px wide at ${viewport.width}: ${sheet.width}`);
+    assert.ok(sheet.top>=0 && sheet.bottom<=viewport.height,`settings sheet fits at ${viewport.width}`);
+    await page.keyboard.press('Escape');await page.locator('#settings-overlay').waitFor({state:'hidden'});
+    if(viewport.width<3840)await page.screenshot({path:resolve(out,`dashboard-${viewport.width}.png`)});
+    report.push(`${viewport.width}×${viewport.height}: screen scaled ×${+scale.toFixed(3)} without page scroll; frosted cards; settings sheet ${Math.round(sheet.width)}px (900 screen px).`);
   }
   await page.setViewportSize({width:1920,height:1080});
   await page.route('https://api.open-meteo.com/**',route=>route.abort());

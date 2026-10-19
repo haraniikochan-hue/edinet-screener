@@ -65,16 +65,16 @@ function setFeed(key, state) {
   setAttr($('connection-status'),'data-state',!navigator.onLine || waiting ? 'waiting' : 'ok');
 }
 function freshness(result, observation, ttl) {return result.stale || !Number.isFinite(observation) || Date.now()-observation>ttl;}
+// TV only: the whole 1920×1080 screen (dashboard, sheets, toast) is scaled to the WebView, which
+// usually reports 960×540 CSS px on a 1080p/4K Google TV, and letterboxed if the aspect differs.
 function fit() {
-  const tv=innerWidth>1000 && innerWidth>innerHeight;
-  document.body.classList.toggle('tv',tv);
-  if(tv){stageScale=Math.min(innerWidth/1920,innerHeight/1080);Object.assign($('stage').style,{transform:`scale(${stageScale})`,left:`${(innerWidth-1920*stageScale)/2}px`,top:`${(innerHeight-1080*stageScale)/2}px`});}
-  else Object.assign($('stage').style,{transform:'',left:'',top:''});
+  stageScale=Math.min(innerWidth/1920,innerHeight/1080);
+  Object.assign($('screen').style,{transform:`scale(${stageScale})`,left:`${(innerWidth-1920*stageScale)/2}px`,top:`${(innerHeight-1080*stageScale)/2}px`});
   updateFrost();
 }
-// The fixed TV stage never scrolls, so the frosted layer only needs re-clipping when the stage is refitted.
+// The screen never scrolls, so the frosted layer only needs re-clipping when it is refitted.
 function updateFrost() {
-  const on=Boolean(frost?.ready) && document.body.classList.contains('tv');
+  const on=Boolean(frost?.ready);
   if(on)frost.clip([...document.querySelectorAll('#stage .card')],CARD_RADIUS*stageScale);
   document.body.classList.toggle('frosted',on);
 }
@@ -279,8 +279,7 @@ function showCalendar() {
     day.append(el('strong','',MONTH_DAY.format(date)),el('span','',eventDay===today?'今日':eventDay===tomorrow?'明日':WEEKDAY_SHORT.format(date)));
     // Like a calendar list, a date is written once for releases on the same day.
     if(eventDay===previousDay)row.classList.add('same-day');previousDay=eventDay;
-    const detail=el('div','calendar-detail'),title=el('span','calendar-title',event.title),meta=el('span','calendar-meta',`${index===0 && calendarIndex===0?'次の発表 · ':''}${event.category}`);
-    detail.append(title,meta);
+    const detail=el('div','calendar-detail');detail.append(el('span','calendar-title',event.title));
     const at=el('time','calendar-time number',time(date));at.dateTime=date.toISOString();
     row.append(day,detail,at);row.title=`${event.originalTitle} / ${event.source} / ${date.toISOString()}${event.note?' / '+event.note:''}`;
     row.setAttribute('aria-label',`${dated(date)} ${time(date)} 日本時間 ${event.title} ${event.source}の公式日程を開く`);
@@ -594,7 +593,7 @@ const navigation=installNavigation({modals:[{element:$('settings-overlay'),close
 // A passive dashboard rests with focus on the dock, so a forgotten highlight never lingers on a card.
 let lastInput=Date.now();
 for(const type of ['keydown','pointerdown'])addEventListener(type,()=>{lastInput=Date.now();},{capture:true,passive:true});
-setInterval(()=>{if(document.body.classList.contains('tv') && !document.hidden && Date.now()-lastInput>IDLE_HOME && $('settings-overlay').hidden && $('detail-overlay').hidden)navigation.focusHome();},10000);
+setInterval(()=>{if(!document.hidden && Date.now()-lastInput>IDLE_HOME && $('settings-overlay').hidden && $('detail-overlay').hidden)navigation.focusHome();},10000);
 addEventListener('resize',fit);addEventListener('online',()=>{setFeed('connection','ok');jobs.forEach(job=>void job.run());});addEventListener('offline',()=>{setFeed('connection','error');});
 document.addEventListener('visibilitychange',()=>{if(document.hidden)cryptoStream?.stop();else{cryptoStream?.start();tick();jobs.forEach(job=>void job.run());}});
 addEventListener('pagehide',()=>cryptoStream?.stop());
@@ -612,7 +611,7 @@ async function start(){
   // The TV app already runs full screen; the button only helps in a desktop browser.
   $('fullscreen').hidden=Boolean(window.Android) || !document.fullscreenEnabled;
   document.body.classList.add('ready');
-  if(document.body.classList.contains('tv'))$('apps').querySelector('button')?.focus({preventScroll:true});
+  $('apps').querySelector('button')?.focus({preventScroll:true});
   try{if(await spotify.completeCallback())toast('Spotifyを連携しました');}catch(error){toast(errorText(error));}
   backend=await api('config').catch(()=>({backend:false,market:false,unsplash:false}));
   applyConfig();

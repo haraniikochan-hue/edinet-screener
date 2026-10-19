@@ -4,7 +4,9 @@
 
 `HANDOFF.md` のフェーズ2を実装した、ビルド不要のHTML/CSS/JavaScript＋小さなNode.jsデータサーバーです。時計・天気・経済指標を左、マーケット・ニュース・Spotifyを右にまとめ、Apple TV／iOSのクリアなガラス素材・Inter＋Noto Sans JP・iOSのシステムカラーで統一しています。
 
-## 現在の仕様（v0.8.0）
+## 現在の仕様（v0.9.0）
+
+- **TV専用（v0.9.0）**：スマホ・縦画面用の配置をやめ、1920×1080の画面1枚だけにしました。設定・詳細シート・通知もその画面の中に入り、TVの解像度（WebViewが報告する960×540など）に合わせて全体が一緒に縮尺されます。シートはソファから読めるよう1.25倍。詳細は `HANDOFF.md` 第3.3節。
 
 - **リモコン操作の改善（v0.8.0）**：自然な移動と戻り、経済指標のページ送り、決定で詳細を表示（相場・経済指標・ニュース・データの状態）、設定画面をリモコンだけで操作可能に。詳細は下の「操作」と `HANDOFF.md` 第3.2節。
 
@@ -17,7 +19,7 @@
 
 - **朝・夜とも同じフル版**。渋谷区の天気、Spotify。スポーツ欄なし。
 - **6時間先までの時間別天気**。時刻、昼夜に合った天気アイコン、気温のライン、降水確率と小さなバーを、現在の天気と同じガラスカードに表示。
-- アプリ列は **SmartTube / U-NEXT / Netflix / Prime Video / Disney+ / Spotify / 設定**。画面下の中央に、ロゴだけの角丸ボタンを並べています。スマホのアプリ列は横スクロールでき、矢印キーでも選択したアプリが見える位置へ移動します。**SmartTubeはユーザー指定でYouTubeのアイコン**を使い、表示名と起動先はSmartTubeのままです。地デジはありません。
+- アプリ列は **SmartTube / U-NEXT / Netflix / Prime Video / Disney+ / Spotify / 設定**。画面下の中央に、ロゴだけの角丸ボタンを並べています。**SmartTubeはユーザー指定でYouTubeのアイコン**を使い、表示名と起動先はSmartTubeのままです。地デジはありません。
 - NY時間・取引開始カウントダウン・重複するドル円/米国債の日次カードは撤去。**米国主要経済指標カレンダー**に置き換えています。
 - **Apple TV / iOSを参考にしたクリアなガラス調UI**。パネルの白い曇りと暗い色を薄くし、背景のぼかしを30pxから20pxへ調整。選択したアプリはブランドの色を保って少し浮き上がり、その上に名前が現れます。ぼかし非対応端末やOSの透明度軽減設定では不透明な背景へ切り替えます。
 - **12銘柄を1つの一覧に統合**。SP500 / BTC / HYPE / JP225 / SOXL / XYZ100 / JPY / DRAM / GOLD / CL / 30Y / 10Y。ダウの枠はSOXL、VIXの枠はDRAM。
@@ -39,13 +41,13 @@ npm run dev
 
 ブラウザで **http://127.0.0.1:4173/** を開きます。終了は `Ctrl+C`。
 
-スマホから同じLANのPCに接続する場合：
+同じLANの別の端末（TVのブラウザなど）からPCのサーバーに接続する場合：
 
 ```sh
 HOST=0.0.0.0 npm run dev
 ```
 
-スマホで `http://<PCのLAN内IP>:4173/` を開きます。**Spotify認証はHTTPSまたは明示的なループバックIPが必要**なので、LANのHTTP表示だけでは認証できません。クラウド実行環境の127.0.0.1は手元の端末から直接開けません。
+その端末で `http://<PCのLAN内IP>:4173/` を開きます。画面はTV専用なので、縦長の画面では1920×1080の画面がそのまま縮小表示されます。**Spotify認証はHTTPSまたは明示的なループバックIPが必要**なので、LANのHTTP表示だけでは認証できません。クラウド実行環境の127.0.0.1は手元の端末から直接開けません。
 
 HTTPプロキシが必要なNode.js 24環境では、継承したプロキシ変数を保持して `NODE_USE_ENV_PROXY=1 npm run dev` とします。TLS検証を無効化する必要はありません。
 
@@ -197,14 +199,14 @@ TV Home自体には広告がありません。TV全体の広告とトラッカ�
 
 TVのリモコン（↑↓←→・決定・戻る）で全部操作できるように作っています。PCでは矢印キー・Enter・Escが同じ役割です。
 
-- **移動**：画面はブロック（上部ボタン・相場・経済指標・ニュース・Spotify・アプリ・写真）に分かれ、矢印はまずブロックの中を動き、端で隣のブロックへ移ります。来た方向へ戻ると元の場所に戻ります（例：Netflixで↑→ニュース→↓でNetflix）。アプリの列より下には行きません。
+- **移動**：画面はブロック（上部ボタン・相場・経済指標・ニュース・Spotify・アプリ・写真）に分かれ、矢印はまずブロックの中を動き、端で隣のブロックへ移ります。来た方向へ戻ると元の場所に戻ります（例：Netflixで↑→ニュース→↓でNetflix。SmartTubeで↑→経済指標の最後の行→↓でSmartTube）。アプリの列より下には行きません。
 - **経済指標**：↓で予定を順に見られ、最後の行の先で次のページ、最初の行の上で前のページに切り替わります。
 - **決定（OK）**：相場の行は24時間の大きなチャート・高値／安値・契約・単位・受信時刻、経済指標は米国東部時間と発表元、ニュースは要約、「一部更新待ち」はどのデータが待っているかを表示します。TVを離れるリンクは開かず、PCのブラウザでだけ「公式日程を開く」などのボタンを出します。
 - **戻る**：開いている画面を閉じます。ホームではアプリの列（最後に選んだアプリ）に戻ります。1分操作がないときも同じ位置に戻り、選択の光が画面に残り続けません。
 - **設定**：↑↓で全項目を上から順に移動できます（プルダウンや入力欄で止まりません）。プルダウンは決定で選択肢を開き、スイッチは決定で切り替わります。
 - 写真が1枚だけのときは「写真を切り替え」を出しません。TVアプリでは全画面ボタンも出しません。
-- 地域検索とSpotifyの初回認証はPC/スマホで行う想定です。TVでのテキスト入力・認証方法はフェーズ3で設計します。
-- 1920×1080基準で左右216px・上48px・下52pxの余白。左列500px、右列860px、列間128px。カード同士は24px間隔。
+- 地域検索とSpotifyの初回認証はPCのブラウザで行う想定です（画面はTV専用で、スマホでは縮小表示になります）。TVでのテキスト入力・認証方法はフェーズ3で設計します。
+- 画面は1920×1080の1枚だけ（TV専用）。TVの解像度に合わせて全体を縮尺し、ページはスクロールしません。左右216px・上48px・下52pxの余白。左列500px、右列860px、列間128px。カード同士は24px間隔。
 - OSの「視差効果を減らす」設定に対応。背景のゆっくりズームは初期設定オフで、設定でオンにできます（TVでは描画の負荷が増えます）。
 
 ## 検証・ビルド
@@ -223,7 +225,10 @@ PLAYWRIGHT_MODULE=/path/to/playwright/index.mjs CHROMIUM_PATH=/path/to/chromium 
 PLAYWRIGHT_MODULE=/path/to/playwright/index.mjs CHROMIUM_PATH=/path/to/chromium node scripts/browser-integrations-check.mjs
 PLAYWRIGHT_MODULE=/path/to/playwright/index.mjs CHROMIUM_PATH=/path/to/chromium node scripts/browser-market-check.mjs
 PLAYWRIGHT_MODULE=/path/to/playwright/index.mjs CHROMIUM_PATH=/path/to/chromium node scripts/browser-weather-check.mjs
+PLAYWRIGHT_MODULE=/path/to/playwright/index.mjs CHROMIUM_PATH=/path/to/chromium node scripts/browser-ux-check.mjs
 ```
+
+`browser-check.mjs` は4K・1366×768・1280×720・960×540（Google TVのWebViewで一般的な値）で、画面全体と設定シートが一緒に縮尺されることを確認します。`browser-ux-check.mjs` はリモコン操作を1920×1080と960×540（2倍密度）で確認します。
 
 動作の重さを比べるときは、サーバーを起動したまま次を実行します（Linuxでは描画を含むChromium全体のCPUも表示）。第3引数はCPUの低速化倍率で、`4` にすると非力な端末に近づきます。
 
@@ -231,14 +236,14 @@ PLAYWRIGHT_MODULE=/path/to/playwright/index.mjs CHROMIUM_PATH=/path/to/chromium 
 PLAYWRIGHT_MODULE=/path/to/playwright/index.mjs node scripts/perf-bench.mjs http://127.0.0.1:4173/ 20 1
 ```
 
-通常のブラウザ検証には天気・Hyperliquid・BLS・BEAへのネットワーク接続が必要です。結果とスクリーンショットは `artifacts/` に保存します。Hyperliquidは実際のREST取得とWebSocket更新も確認しました。切断/再接続・HTTPフォールバック・上場廃止・古い値の表示・CoinGeckoへの切替は制御したレスポンスで検証しています。地域検索、SpotifyのOAuth成功/不正state、写真切替、Androidブリッジもテスト用レスポンスで検証しています。単体テストは38件。天気の夜間・降水・欠測・日跨ぎ・通信障害・地域変更は専用のブラウザ検証でも確認しています。12契約すべての実データ価格・チャートと、実データ6時間予報を確認しています。Spotifyの実アカウント認証・Unsplashの実キー・TV実機は未検証です。
+通常のブラウザ検証には天気・Hyperliquid・BLS・BEAへのネットワーク接続が必要です。結果とスクリーンショットは `artifacts/` に保存します。Hyperliquidは実際のREST取得とWebSocket更新も確認しました。切断/再接続・HTTPフォールバック・上場廃止・古い値の表示・CoinGeckoへの切替は制御したレスポンスで検証しています。地域検索、SpotifyのOAuth成功/不正state、写真切替、Androidブリッジ、広告ブロックの判定もテスト用レスポンスで検証しています。単体テストは47件。天気の夜間・降水・欠測・日跨ぎ・通信障害・地域変更は専用のブラウザ検証でも確認しています。12契約すべての実データ価格・チャートと、実データ6時間予報を確認しています。Spotifyの実アカウント認証・Unsplashの実キー・TV実機は未検証です。
 
 ## ファイル構成とフェーズ3
 
 ```text
 dashboard/             WebViewに同梱する公開ファイル
   index.html           画面構成
-  styles.css           TV / PC / スマホのスタイル
+  styles.css           TV画面（1920×1080）のスタイル
   js/app.js            描画・更新・設定・UI統合
   js/data.js           公開API、キャッシュ、銘柄、設定
   js/weather.js        日本時間の6時間予報、天気アイコン、気温と降水確率の描画

@@ -8,8 +8,8 @@ const browser = await chromium.launch({ headless:true, ...(process.env.CHROMIUM_
 const base = process.env.DASHBOARD_URL || 'http://127.0.0.1:4173/';
 const report = [];
 
-async function fixturePage({ clock = false } = {}) {
-  const context = await browser.newContext({ viewport:{ width:1920, height:1080 } });
+async function fixturePage({ clock = false, viewport = { width:1920, height:1080 }, deviceScaleFactor = 1 } = {}) {
+  const context = await browser.newContext({ viewport, deviceScaleFactor });
   const page = await context.newPage(), errors = [];
   page.on('pageerror', error => errors.push(error.message));
   if (clock) await page.clock.install();
@@ -46,6 +46,9 @@ try {
   await page.keyboard.press('ArrowDown'); assert.equal(await focused(page), 'netflix', 'nothing below the dock');
   await page.keyboard.press('ArrowUp'); assert.equal(await focused(page), 'news-title');
   await page.keyboard.press('ArrowDown'); assert.equal(await focused(page), 'netflix', 'down returns to the app you came from');
+  await page.locator('[data-app="smarttube"]').focus(); await page.keyboard.press('ArrowUp'); assert.equal(await focused(page), 'cal5', 'SmartTube sits under the calendar');
+  await page.keyboard.press('ArrowDown'); assert.equal(await focused(page), 'smarttube', 'the opposite arrow undoes a move instead of paging the calendar');
+  assert.match(await page.locator('#calendar-page').textContent(), /^1–6 \//);
   await page.locator('#refresh').focus(); await page.keyboard.press('ArrowDown');
   assert.equal(await page.evaluate(() => document.activeElement.classList.contains('stock-row')), true, 'top buttons lead down into the market');
   // Weather is offline in this fixture, so the waiting badge is shown and is the leftmost top control.
@@ -57,11 +60,11 @@ try {
   await page.locator('.calendar-event').last().focus(); await page.keyboard.press('ArrowDown');
   assert.equal(await focused(page), 'cal0'); assert.match(await page.locator('#calendar-page').textContent(), /^7–12 \//, 'moving past the last release turns the page');
   await page.keyboard.press('ArrowUp'); assert.equal(await focused(page), 'cal5'); assert.match(await page.locator('#calendar-page').textContent(), /^1–6 \//);
-  await page.keyboard.press('Escape'); assert.equal(await focused(page), 'netflix', 'Back returns to the last app on the dock');
+  await page.keyboard.press('Escape'); assert.equal(await focused(page), 'smarttube', 'Back returns to the last app on the dock');
   await page.locator('[data-brand="settings"]').focus(); await page.keyboard.press('ArrowRight');
   assert.equal(await page.evaluate(() => document.activeElement.dataset.brand), 'settings', 'credits and the hidden photo switch are not focus stops');
   assert.equal(await page.locator('#next-photo').isHidden(), true, 'no photo switch while there is one photo');
-  report.push('Remote: dock is the floor, up/down retraces to the same app, top buttons lead into the market, calendar pages by moving past its edges, Back returns to the dock, credits and the single-photo switch are skipped.');
+  report.push('Remote: dock is the floor, up/down retraces to the same app (even onto the calendar, which otherwise pages past its last row), top buttons lead into the market, calendar pages by moving past its edges, Back returns to the dock, credits and the single-photo switch are skipped.');
 
   // Detail sheets instead of leaving the launcher.
   await page.locator('[data-symbol="SP500"]').focus(); await page.keyboard.press('Enter');
@@ -111,6 +114,36 @@ try {
   report.push('Settings by remote: Down walks every field to Save without changing selects; OK toggles switches; Back closes.');
   assert.deepEqual(errors, []);
   await context.close();
+
+  // A Google TV WebView usually reports 960×540 CSS px at device pixel ratio 2: everything,
+  // sheets and toast included, must shrink with the 1920×1080 screen.
+  const small = await fixturePage({ viewport:{ width:960, height:540 }, deviceScaleFactor:2 });
+  const box = selector => small.page.locator(selector).evaluate(async el => { await Promise.all(el.getAnimations().map(a => a.finished)); const r = el.getBoundingClientRect(); return { left:r.left, top:r.top, right:r.right, bottom:r.bottom, width:r.width }; });
+  assert.deepEqual(await box('#screen'), { left:0, top:0, right:960, bottom:540, width:960 });
+  assert.equal(await focused(small.page), 'smarttube');
+  await small.page.keyboard.press('ArrowUp'); assert.equal(await focused(small.page), 'cal5', 'remote moves the same way at 960×540');
+  await small.page.keyboard.press('ArrowDown'); assert.equal(await focused(small.page), 'smarttube');
+  await small.page.keyboard.press('ArrowRight'); await small.page.keyboard.press('ArrowRight');
+  await small.page.keyboard.press('ArrowUp'); assert.equal(await focused(small.page), 'news-title');
+  await small.page.keyboard.press('Enter'); await small.page.locator('#detail-overlay').waitFor({ state:'visible' });
+  const detail = await box('#detail-sheet');
+  assert.ok(detail.width <= 451 && detail.top >= 0 && detail.bottom <= 540, `detail sheet scales with the screen: ${JSON.stringify(detail)}`);
+  await small.page.keyboard.press('Escape');
+  await small.page.locator('[data-brand="settings"]').focus(); await small.page.keyboard.press('Enter');
+  await small.page.locator('#settings-dialog').waitFor({ state:'visible' });
+  const sheet = await box('#settings-dialog');
+  assert.ok(Math.abs(sheet.width - 450) < 1 && sheet.top >= 0 && sheet.bottom <= 540, `settings sheet scales with the screen: ${JSON.stringify(sheet)}`);
+  for (let i = 0; i < 40; i++) await small.page.keyboard.press('ArrowDown');
+  const last = await small.page.evaluate(() => { const r = document.activeElement.getBoundingClientRect(), d = document.querySelector('#settings-dialog').getBoundingClientRect(); return { inside:r.top >= d.top && r.bottom <= d.bottom, scrolled:document.querySelector('#settings-dialog').scrollTop > 0 }; });
+  assert.deepEqual(last, { inside:true, scrolled:true }, 'the sheet scrolls to keep the focused control in view');
+  await small.page.keyboard.press('Escape');
+  await small.page.locator('#refresh').click();
+  const note = await box('#toast');
+  assert.ok(note.top >= 0 && note.bottom <= 540 && note.width < 480, `toast scales with the screen: ${JSON.stringify(note)}`);
+  assert.deepEqual(await small.page.evaluate(() => [scrollX, scrollY, document.documentElement.scrollWidth, document.documentElement.scrollHeight]), [0, 0, 960, 540], 'the page never scrolls');
+  report.push('960×540 at 2× (typical Google TV WebView): the whole 1920×1080 screen scales to fit, remote moves are unchanged, the settings sheet is 450px (900 screen px), the detail sheet and toast stay inside the screen and the page never scrolls.');
+  assert.deepEqual(small.errors, []);
+  await small.context.close();
 
   // An idle TV comes back to rest on the dock.
   const idle = await fixturePage({ clock:true });
