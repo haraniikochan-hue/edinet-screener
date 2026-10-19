@@ -289,6 +289,10 @@ class MainActivity : Activity() {
         return super.dispatchKeyEvent(event)
     }
 
+    private fun openTvSettings() {
+        try { startActivity(Intent(Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) } catch (e: Exception) { }
+    }
+
     private fun sendEscape() {
         web.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ESCAPE))
         web.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_ESCAPE))
@@ -408,9 +412,7 @@ class MainActivity : Activity() {
 
         /** The Android TV settings, which the stock home screen used to open; reached from the Settings sheet. */
         @JavascriptInterface
-        fun openTvSettings() = runOnUiThread {
-            try { startActivity(Intent(Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) } catch (e: Exception) { }
-        }
+        fun openTvSettings() = runOnUiThread { this@MainActivity.openTvSettings() }
 
         @JavascriptInterface
         fun hasUnsplash(): Boolean = BuildConfig.UNSPLASH_ACCESS_KEY.isNotEmpty()

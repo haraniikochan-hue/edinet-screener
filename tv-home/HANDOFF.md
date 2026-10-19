@@ -1,4 +1,4 @@
-# TV Home 引き継ぎ書 — v0.15.0
+# TV Home 引き継ぎ書 — v0.16.0
 
 引き継ぎ日：2026-10-19。対象：Xiaomi TV用ホーム画面のフェーズ2・Webダッシュボード。
 
@@ -213,6 +213,7 @@ Xiaomi TVのGPU・CPUで滑らかに動くよう最適化した。見た目はv0
 - **背景写真（v0.12.0）**：ユーザーの希望は「ニューヨークやロンドン、パリなど、色々な都市のダウンタウンの昼夜のかっこいい写真」。`dashboard/js/feeds.js` の `PHOTO_CITIES`（ニューヨーク・ロンドン・パリ・シカゴ・東京・香港・シンガポール・ドバイ）から、それぞれUnsplashの `photos/random` で3枚ずつ取り、混ぜて24枚にする（1時間ごと、8リクエスト。デモ段階の上限は1時間50回）。写真の左下には都市名と撮影者を出す。アプリでは `/api/unsplash?query=` をKotlinが代行し、Access Keyを付ける。検索語は `PHOTO_QUERIES` の8つだけ許可する。Access Keyは `android/local.properties` の `unsplash.accessKey`（コミットしない）から `BuildConfig` に入れ、ページには渡さない。テレビの設定で写真の取得元を「Unsplashから自動取得」に保存済み。2026-10-19に、8都市×3枚が取得されて切り替わることをテレビで確認した。Unsplashの本番申請（上限の引き上げ）と、写真の利用時に必要な download エンドポイントの呼び出しは未対応。
 - **キャスト（v0.13.0で追加、v0.14.0で外した）**：テレビはGoogle Cast（`com.google.android.apps.mediashell`）とAirPlay（MediaTekの `com.mediatek.partner.airplay_sys`、HomeKit対応）を内蔵し、どちらも常に受信している（mDNSで「リビングルームのテレビ」）。一度ドックにタイルを置いたが、ユーザーと相談のうえ「押す意味がない」として外した。Androidの「画面ミラーリング」（Miracast、`com.xiaomi.mitv.smartshare`）は、開くとテレビのWi-Fiが切り替わり、IPアドレスが変わってADBが切れた。Galaxy（Smart View＝Miracast）には、Google Homeアプリの「画面をキャスト」を案内した。
 - **裏にいるときのメモリ（v0.14.0）**：キャスト中に映像が重く音が途切れるとの相談。テレビとスマホのWi-Fiはどちらも5GHzで良好（テレビは `harannWiFi_5G`、-31dBm、780Mbps）。テレビのメモリは1.8GB（空きは約0.5GB）で、TV Homeは裏にいる間も約0.5GB（アプリ約350MB＋WebViewの描画プロセス約160MB）を使っていた。Androidはホームアプリを前面と同じ扱いにするため、バックグラウンド向けのメモリ解放の合図（`TRIM_MEMORY_BACKGROUND`）は届かない（`am send-trim-memory` も前面扱いで拒否）。そこで、ほかのアプリ・キャストが前面になったらすぐ `pauseTimers()`、30秒後（またはメモリ不足の合図 `TRIM_MEMORY_RUNNING_LOW` のとき）にWebViewを破棄し、ホームに戻ったら作り直すようにした。2026-10-19の計測では、514MB → 330MB（約180MB減）。WebViewの描画プロセスは残る。キャストの重さが実際に改善したかは、ユーザーの確認待ち。
+- **リモコンの設定ボタン（v0.16.0）**：ユーザーの依頼「設定ボタンで即座にテレビの設定を開く」。リモコンは `Xiaomi RC Consumer Control` から `KEYCODE_SETTINGS`（176、scan 0x0c018f）を送る。Xiaomiのシステム（`MiTVWindowPolicyInjector`）がこのキーを先に取り、`TOGGLE_NOTIFICATION_HANDLER_PANEL` で標準ホームのパネルを開こうとする。標準ホームが無効なので失敗し、アプリにはキーが届かない。このintentはシステムアプリしか受け取れず、TV Homeで受けても無視された（試して撤去した）。そこで、ユーザーの確認を得て、ユーザー補助サービス `jp.tvhome.SettingsKeyService`（`flagRequestFilterKeyEvents`）を作った。設定ボタンだけを受け取って `Settings.ACTION_SETTINGS` を開き、ほかのキーはそのまま流し、記録しない。PCから `settings put secure enabled_accessibility_services jp.tvhome.launcher/jp.tvhome.SettingsKeyService` と `accessibility_enabled 1` で有効にした（変更前は null／0）。ホームでもほかのアプリでも開くことを、ユーザーがリモコンで確認した。戻すには `settings delete secure enabled_accessibility_services` と `settings put secure accessibility_enabled 0`、またはテレビの設定 → ユーザー補助 →「TV Home 設定ボタン」をオフにする。APKを入れ直しても有効のまま残ることを確認済み。
 - **ドックの編集とアプリ一覧（v0.15.0）**：ユーザーの依頼で追加。2026-10-19にユーザーがリモコンで動作を確認した。
   - **長押しメニュー**：ドックのアプリで決定ボタンを長押し（550ms、またはキーのリピートが来た時点）すると、iOS風のメニュー（並べ替え／ドックから外す／キャンセル）が出る。短く押せば今までどおり起動する（決定はキーを離したときに処理）。ホームボタンの長押しはAndroidが先に受け取るため使えない、とユーザーに説明済み。PCのブラウザでは右クリックでも開く。
   - **並べ替え**：選んだアプリが持ち上がり、←→で移動、決定か戻るで確定する。
@@ -465,7 +466,7 @@ PLAYWRIGHT_MODULE=/absolute/path/to/playwright/index.mjs CHROMIUM_PATH=/path/to/
 - 接続情報がない部分は必要な情報を明示する。実接続・実機確認・公開を済ませたことにしない。
 - 仮価格・架空チャート・推測の指標値を本番表示に加えない。テストの制御レスポンスと実データの証拠を分ける。
 - キーやトークンを `dashboard/`・`dist/`・ZIP・スクリーンショットへ含めない。秘密情報はサーバー側で管理する。
-- 2026-10-19に、ユーザーの確認を得てTV Homeをインストールし、標準ホーム（launcherx）と初期設定ウィザード（setupwraith）を無効化した（戻し方は第3.4節）。それ以外のシステム設定は変更していない。システムアプリの無効化は対象と影響を説明してユーザーに確認してから行う。Google Play開発者サービス・システムUI・チューナー関連を安易に止めず、標準ランチャーは代替の動作確認前に無効化しない。
+- 2026-10-19に、ユーザーの確認を得てTV Homeをインストールし、標準ホーム（launcherx）と初期設定ウィザード（setupwraith）を無効化した（戻し方は第3.4節）。その後、Spotify表示のための通知へのアクセスと、設定ボタンのためのユーザー補助サービスを、それぞれユーザーの確認を得て有効にした（第3.4節）。それ以外のシステム設定は変更していない。システムアプリの無効化は対象と影響を説明してユーザーに確認してから行う。Google Play開発者サービス・システムUI・チューナー関連を安易に止めず、標準ランチャーは代替の動作確認前に無効化しない。
 - 引き継ぎ作成の依頼を、TV変更・デプロイ・インストールの許可とみなさない。
 - この環境ではSites公開ヘルパーがなく未公開だった。次の環境も同じとは限らない。localhostを外部公開URLとして案内しない。
 - レイアウト変更時は文字・価格・チャート・選択ラベルの衝突と複数画面幅を確認。完成形の意図を保つ小さな修正を優先する。
