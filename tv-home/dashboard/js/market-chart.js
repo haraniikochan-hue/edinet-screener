@@ -22,8 +22,8 @@ export function chartGeometry(series, width=160, height=52) {
 }
 
 const svgNode=(tag,attrs={})=>{const node=document.createElementNS('http://www.w3.org/2000/svg',tag);for(const [k,v]of Object.entries(attrs))node.setAttribute(k,String(v));return node;};
-export function drawMarketChart(container,series,id,label) {
-  const g=chartGeometry(series);if(!g)return false;
+export function drawMarketChart(container,series,id,label,{width=160,height=52}={}) {
+  const g=chartGeometry(series,width,height);if(!g)return false;
   const svg=svgNode('svg',{viewBox:`0 0 ${g.width} ${g.height}`,role:'img','aria-label':label,preserveAspectRatio:'none'});
   const title=svgNode('title');title.textContent=label;svg.append(title);
   const defs=svgNode('defs');

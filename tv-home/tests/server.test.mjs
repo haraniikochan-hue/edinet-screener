@@ -6,9 +6,10 @@ test('yield parser skips missing observations without treating holiday blanks as
     {date:'2026-10-14',value:4.2,thirty:4.8},{date:'2026-10-17',value:4.3,thirty:4.9},
   ]);
 });
-test('RSS returns headlines, source timestamps, and NHK links without article bodies or scripts',()=>{
+test('RSS returns headlines, a capped lead, source timestamps and NHK links without markup or scripts',()=>{
   const xml='<rss><item><title><![CDATA[経済 &amp; IT <script>test</script>]]></title><link>http://www3.nhk.or.jp/news/1</link><pubDate>Sun, 18 Oct 2026 14:00:00 +0900</pubDate><description>full article</description></item><item><title>unsafe</title><link>javascript:alert(1)</link><pubDate>Sun, 18 Oct 2026 14:00:00 +0900</pubDate></item></rss>';
-  const rows=parseRSS(xml);assert.equal(rows.length,1);assert.equal(rows[0].title,'経済 & IT test');assert.equal(rows[0].url,'https://www3.nhk.or.jp/news/1');assert.equal(rows[0].description,undefined);
+  const rows=parseRSS(xml);assert.equal(rows.length,1);assert.equal(rows[0].title,'経済 & IT test');assert.equal(rows[0].url,'https://www3.nhk.or.jp/news/1');assert.equal(rows[0].description,undefined);assert.equal(rows[0].summary,'full article');
+  assert.equal(parseRSS(xml.replace('full article','長'.repeat(500)))[0].summary.length,240);
 });
 test('RSS accepts NHK ONE article links and rejects look-alike hosts',()=>{
   const item=(link)=>`<item><title>見出し</title><link>${link}</link><pubDate>Sun, 18 Oct 2026 23:44:18 +0900</pubDate></item>`;

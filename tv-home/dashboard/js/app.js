@@ -13,7 +13,7 @@ import { drawMarketChart } from './market-chart.js';
 import { HOUR, weatherTimestamp, weatherIsStale, hourlyForecast, makeWeatherIcon, renderHourlyForecast } from './weather.js';
 
 const $ = id => document.getElementById(id);
-const CALENDAR_PAGE_SIZE = 6, NEWS_INTERVAL = 20000, CARD_RADIUS = 32;
+const CALENDAR_PAGE_SIZE = 6, NEWS_INTERVAL = 20000, CARD_RADIUS = 32, IDLE_HOME = 60000;
 const storage = { getItem:key => { try{return localStorage.getItem(key);}catch{return null;} }, setItem:(key,value) => localStorage.setItem(key,value) };
 let config = normalizeConfig(readStorage(storage,'tv-home-config',DEFAULT_CONFIG));
 let backend = {backend:false,market:false,unsplash:false};
@@ -33,6 +33,7 @@ const format = (locale, options) => {const key=locale+JSON.stringify(options);if
 const TIME = format('ja-JP',{timeZone:'Asia/Tokyo',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}), DATED = format('ja-JP',{timeZone:'Asia/Tokyo',month:'numeric',day:'numeric'});
 const HOUR_OF_DAY = format('en-US',{timeZone:'Asia/Tokyo',hour:'numeric',hourCycle:'h23'}), ISO_DAY = format('en-CA',{timeZone:'Asia/Tokyo',year:'numeric',month:'2-digit',day:'2-digit'});
 const MONTH_DAY = format('en-US',{timeZone:'Asia/Tokyo',month:'numeric',day:'numeric'}), WEEKDAY_SHORT = format('ja-JP',{timeZone:'Asia/Tokyo',weekday:'short'});
+const FULL_JST = format('ja-JP',{timeZone:'Asia/Tokyo',month:'long',day:'numeric',weekday:'short',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}), FULL_ET = format('ja-JP',{timeZone:'America/New_York',month:'long',day:'numeric',weekday:'short',hour:'2-digit',minute:'2-digit',hourCycle:'h23'});
 const time = date => TIME.format(date);
 const dated = date => DATED.format(date);
 // DOM writes are skipped when nothing changed, so an idle second costs no style or layout work.
@@ -98,7 +99,8 @@ function tick() {
 function buildStocks() {
   $('stocks').replaceChildren();stockElements.clear();
   MARKETS.forEach(({symbol,name,icon}) => {
-    const row=el('div','stock-row'), badge=el('img','symbol-icon');row.dataset.symbol=symbol;
+    // Rows open a detail sheet with OK: on a TV there is no hover tooltip for the contract details.
+    const row=el('div','stock-row'), badge=el('img','symbol-icon');row.dataset.symbol=symbol;row.tabIndex=0;row.setAttribute('role','button');
     badge.src=icon;badge.alt='';badge.width=44;badge.height=44;badge.addEventListener('error',()=>{badge.style.visibility='hidden';},{once:true});
     const labels=el('div','stock-labels'), label=el('span','stock-symbol',symbol), source=el('span','company-name',name);
     const chart=el('div','stock-chart'), chartStatus=el('span','chart-status','履歴を取得中');chart.append(chartStatus);
@@ -378,7 +380,7 @@ function restartJobs() {
   if(backend.backend || config.apiBase){
     jobs.push(makeJob('calendar',6*3600000,cachedTask('economic-calendar',()=>apiForJob('calendar'),renderCalendar,{server:true,maxAge:7*86400000}),()=>{if(calendarInfo)renderCalendar({...calendarInfo,stale:true});else void loadCalendarSnapshot();}));
     jobs.push(makeJob('news',15*60000,cachedTask('news',()=>apiForJob('news'),renderNews,{server:true}),()=>{news=[];$('news-title').textContent='ニュースを取得できません';$('news-title').removeAttribute('href');$('news-source').textContent='NHK · しばらくして再取得します';$('next-news').setAttribute('aria-label','次のニュース');$('news-dots').replaceChildren();}));
-    if(config.photoMode==='unsplash')jobs.push(makeJob('photos',3600000,cachedTask('photos',()=>apiForJob('photos'),result=>{slideshow.setPhotos(result.data);setFeed('photos',result.stale?'stale':'ok');},{server:true,maxAge:7*86400000}),()=>{toast('Unsplashを取得できません。同梱写真を表示しています。');}));
+    if(config.photoMode==='unsplash')jobs.push(makeJob('photos',3600000,cachedTask('photos',()=>apiForJob('photos'),result=>{setPhotos(result.data);setFeed('photos',result.stale?'stale':'ok');},{server:true,maxAge:7*86400000}),()=>{toast('Unsplashを取得できません。同梱写真を表示しています。');}));
   }else{
     $('news-title').textContent='ニュースはサーバー接続後に表示';$('news-source').textContent='設定でデータサーバーを指定できます';
     if(config.photoMode==='unsplash')toast('Unsplashの自動取得にはAPIサーバーが必要です');
@@ -400,7 +402,7 @@ function configureMarket() {
 function applyConfig() {
   $('location-name').textContent=config.location.name;
   document.body.classList.toggle('motion',config.motion && !matchMedia('(prefers-reduced-motion: reduce)').matches);
-  configureMarket();slideshow.setPhotos(SAMPLE_PHOTOS);slideshow.schedule(config.photoInterval);restartJobs();tick();
+  configureMarket();setPhotos(SAMPLE_PHOTOS);slideshow.schedule(config.photoInterval);restartJobs();tick();
 }
 const ADBLOCK = {checking:['確認中…',''],active:['広告ブロック 有効','live'],partial:['一部の広告のみ遮断','waiting'],inactive:['広告ブロック 無効',''],unknown:['確認できません（オフライン）','']};
 let adblockCheckedAt=0, adblockStatus='', adblockVersion=0;
@@ -417,6 +419,76 @@ function renderNativeAdBlock(){
   $('adblock-toggle').checked=Boolean(host);if(host)$('adblock-dns').value=host;
   $('adblock-help').textContent=`オンにすると、TVのプライベートDNSを上のサーバー（初期値は広告とトラッカーを遮断するAdGuard DNS）に切り替えます。オフでAndroid標準の「自動」に戻ります。アプリが動かなくなったらオフにしてください。YouTubeの広告はSmartTubeが除去します。動画や音声に組み込まれた広告は消せません。`;
 }
+// Detail sheet: what OK shows for a market row, a release, a headline or the data status.
+let detailReturn=null;
+function openDetail({eyebrow='',title,subtitle='',body='',facts=[],chart=null,link=null,action=null,accent=''}){
+  detailReturn=document.activeElement;
+  $('detail-eyebrow').textContent=eyebrow;$('detail-title').textContent=title;
+  $('detail-subtitle').textContent=subtitle;$('detail-subtitle').hidden=!subtitle;
+  $('detail-body').textContent=body;$('detail-body').hidden=!body;
+  $('detail-facts').replaceChildren(...facts.filter(([,value])=>value).flatMap(([term,value,tone])=>[el('dt','',term),el('dd',tone?`tone-${tone}`:'',value)]));
+  const chartShown=Boolean(chart) && drawMarketChart($('detail-chart'),chart.series,`detail-${chart.symbol}`,chart.label,{width:640,height:200});
+  $('detail-chart').hidden=!chartShown;
+  if(!chartShown)$('detail-chart').replaceChildren();
+  else{
+    // Time runs left to right; the dotted line is the first candle's open.
+    const axis=el('div','detail-axis');axis.setAttribute('aria-hidden','true');
+    const start=time(new Date(chart.series.start)),yesterday=jstDay(chart.series.start)!==jstDay(chart.series.lastTime);
+    axis.append(el('span','',`${yesterday?'昨日 ':''}${start}`),el('span','',`点線 ${chart.baseline}`),el('span','',time(new Date(chart.series.lastTime))));
+    $('detail-chart').append(axis);
+  }
+  // Links would leave the TV app, so they are offered only in a browser.
+  const url=link && !window.Android ? safeUrl(link.href) : '';
+  $('detail-link').hidden=!url && !action;
+  if(url){$('detail-link').href=url;$('detail-link').textContent=link.label;$('detail-link').onclick=null;$('detail-link').removeAttribute('role');$('detail-link').removeAttribute('tabindex');}
+  else if(action){$('detail-link').removeAttribute('href');$('detail-link').textContent=action.label;$('detail-link').setAttribute('role','button');$('detail-link').tabIndex=0;$('detail-link').onclick=event=>{event.preventDefault();action.run();};}
+  $('detail-sheet').style.setProperty('--sheet-accent',accent||'transparent');
+  $('detail-overlay').hidden=false;$('stage').inert=true;document.body.classList.add('modal-open');
+  $('close-detail').focus();
+}
+// If the row was re-rendered meanwhile (a calendar page turn), focus rests on the dock instead of nowhere.
+function closeDetail(){ $('detail-overlay').hidden=true;$('stage').inert=false;document.body.classList.remove('modal-open');if(detailReturn?.isConnected)detailReturn.focus({preventScroll:true});else navigation.focusHome(); }
+function openMarketDetail(symbol){
+  const market=MARKET_BY_SYMBOL.get(symbol),q=quotes.get(symbol),series=histories.get(`${market.coin}:${config.chartRange}`);
+  const values=series?.points?.map(point=>point.value).filter(isNumber)||[];
+  const change=q && isNumber(q.change)?`${q.change>0?'+':q.change<0?'−':''}${Math.abs(q.change).toFixed(2)}%`:'';
+  openDetail({eyebrow:market.name,title:q?`${symbol} ${money(q.price,market.digits)}`:symbol,
+    subtitle:q?`24時間 ${change}${q.stale?' · 更新待ち':''}`:(unavailable.get(symbol)||'価格を取得しています'),
+    chart:series && config.marketMode==='custom'?{series,symbol,label:`${symbol} 24時間の取引価格`,baseline:money(series.baseline,market.digits)}:null,
+    facts:[['24時間の高値・安値',values.length?`${money(Math.max(...values),market.digits)} / ${money(Math.min(...values),market.digits)}（取引価格）`:''],
+      ['契約',`${market.coin} · 無期限先物`],['単位',market.unit],['配信元',q?.source||''],
+      ['受信',q?`${stamp(q.timestamp)} JST${q.stale?'（最終取得値）':''}`:''],['注記',q && q.source!=='Hyperliquid'?q.note:'価格はマーク価格、変化率は24時間比。チャートは15分足の取引価格。']],
+    accent:q && isNumber(q.change) && q.change<0?'var(--down)':'var(--up)'});
+}
+const RELEASE_SOURCES={BLS:'米労働統計局（BLS）',BEA:'米経済分析局（BEA）',FRB:'米連邦準備制度理事会（FRB）'};
+function openEventDetail(row){
+  const event=calendarInfo?.data.events.find(item=>item.id===row.dataset.eventId);if(!event)return;
+  const date=new Date(event.timestamp),days=Math.round((Date.parse(jstDay(event.timestamp))-Date.parse(jstDay(Date.now())))/86400000);
+  const when=days===0?'今日':days===1?'明日':days>1?`あと${days}日`:'';
+  openDetail({eyebrow:event.category,title:event.title,subtitle:`${when?`${when} · `:''}${FULL_JST.format(date)}`,
+    facts:[['日本時間',FULL_JST.format(date)],['米国東部時間',FULL_ET.format(date)],['発表元',RELEASE_SOURCES[event.source]],['予想・結果','未接続（公式の発表日程のみ）'],['備考',event.note||'']],
+    link:{href:event.url,label:'公式日程を開く'},accent:getComputedStyle(row).getPropertyValue('--cat').trim()});
+}
+function openNewsDetail(){
+  const item=news[newsIndex];if(!item)return;
+  openDetail({eyebrow:item.source,title:item.title,body:item.summary||'',facts:[['配信',`${stamp(Date.parse(item.publishedAt))} JST`]],link:{href:item.url,label:'NHKで続きを読む'}});
+}
+const FEEDS={connection:'ネットワーク',weather:'天気',air:'空気の状態',markets:'相場（12銘柄）','market:':'Hyperliquid','market:xyz':'trade.xyz','market:para':'para',charts:'チャート',crypto:'CoinGecko',calendar:'米国経済指標',news:'ニュース',spotify:'Spotify',photos:'背景写真'};
+const FEED_STATES={ok:'最新',stale:'更新待ち（保存済みの値を表示）',error:'取得できません'};
+function openStatusDetail(){
+  const rows=Object.entries(FEEDS).filter(([key])=>feedState.has(key)).map(([key,label])=>[label,FEED_STATES[feedState.get(key)]||feedState.get(key),feedState.get(key)==='ok'?'':'warn']);
+  const waiting=[...feedState.values()].some(state=>state!=='ok');
+  openDetail({eyebrow:'TV HOME',title:'データの状態',subtitle:!navigator.onLine?'オフラインです。接続が戻ると自動で再取得します。':waiting?'一部の情報が更新を待っています。自動で再取得します。':'すべて最新です。',
+    facts:rows,action:{label:'今すぐ再取得',run:()=>{closeDetail();$('refresh').click();}}});
+}
+// The economic calendar behaves like a scrolling list: moving past an edge turns the page.
+function calendarEdge(current,direction){
+  if(!current.classList.contains('calendar-event'))return false;
+  const rows=[...$('calendar-events').querySelectorAll('.calendar-event')],index=rows.indexOf(current);
+  if(direction==='down' && index===rows.length-1 && !$('calendar-next').disabled){calendarIndex++;showCalendar();$('calendar-events').querySelector('.calendar-event')?.focus({preventScroll:true});return true;}
+  if(direction==='up' && index===0 && calendarIndex>0){calendarIndex--;showCalendar();[...$('calendar-events').querySelectorAll('.calendar-event')].at(-1)?.focus({preventScroll:true});return true;}
+  return false;
+}
 function closeSettings(){ $('settings-overlay').hidden=true;$('stage').inert=false;document.body.classList.remove('modal-open');returnFocus?.focus({preventScroll:true}); }
 function openSettings(section='general') {
   returnFocus=document.activeElement;selectedLocation={...config.location};
@@ -428,7 +500,8 @@ function openSettings(section='general') {
   $('adblock-dns').value=config.adblockDns;$('adblock-message').textContent='';renderNativeAdBlock();
   if(Date.now()-adblockCheckedAt>60000 || !adblockStatus)void checkAdBlock();
   $('spotify-message').textContent='';$('settings-error').textContent='';$('settings-overlay').hidden=false;$('stage').inert=true;document.body.classList.add('modal-open');
-  (section==='market' ? $('market-mode') : section==='spotify' ? $('spotify-client-id') : $('close-settings')).focus();
+  // On the TV app, focusing the Client ID field would pop up the on-screen keyboard straight away.
+  (section==='market' ? $('market-mode') : section==='spotify' ? (window.Android ? $('connect-in-settings') : $('spotify-client-id')) : $('close-settings')).focus();
 }
 async function saveSettings({close=true}={}) {
   const clientId=$('spotify-client-id').value.trim(), apiBase=$('api-base').value.trim();
@@ -476,8 +549,15 @@ function initializeBridge() {
 
 if(frostSupported())frost=new Frost(document.querySelector('.frost'),[...document.querySelectorAll('.frost-layer')]);
 const slideshow=new Slideshow({layers:[...document.querySelectorAll('.photo-layer')],caption:$('photo-credit'),title:$('photo-title'),frost,onFrost:updateFrost,onError:()=>{setFeed('photos','error');$('photo-title').textContent='背景写真を読み込めませんでした';}});
+// The photo switch is only offered when there is another photo to switch to.
+function setPhotos(photos){slideshow.setPhotos(photos);$('next-photo').hidden=slideshow.photos.length<2;}
 document.addEventListener('click',event=>{
   const open=event.target.closest('[data-open-settings]');if(open){openSettings(open.dataset.openSettings);return;}
+  // OK on a row or headline shows details in place: following a link would leave the launcher.
+  const row=event.target.closest('#stage .stock-row');if(row){openMarketDetail(row.dataset.symbol);return;}
+  const release=event.target.closest('#stage .calendar-event');if(release){event.preventDefault();openEventDetail(release);return;}
+  if(event.target.closest('#news-title') && news.length){event.preventDefault();openNewsDetail();return;}
+  if(event.target.closest('#connection-status')){openStatusDetail();return;}
   const app=event.target.closest('[data-app],[data-package]');if(!app)return;
   pressApp(app);
   if(app.dataset.package && typeof window.Android?.launchApp==='function'){
@@ -488,6 +568,8 @@ $('apps').addEventListener('pointermove',event=>{
   if(event.pointerType==='mouse')event.target.closest('.app-tile')?.focus({preventScroll:true});
 });
 $('close-settings').onclick=closeSettings;$('cancel-settings').onclick=closeSettings;
+$('close-detail').onclick=closeDetail;
+$('detail-overlay').addEventListener('click',event=>{if(event.target===$('detail-overlay'))closeDetail();});
 $('settings-overlay').addEventListener('click',event=>{if(event.target===$('settings-overlay'))closeSettings();});
 $('settings-form').onsubmit=async event=>{event.preventDefault();try{await saveSettings();}catch(error){$('settings-error').textContent=errorText(error);}};
 $('search-city').onclick=searchCity;$('city-search').onkeydown=event=>{if(event.key==='Enter'){event.preventDefault();void searchCity();}};
@@ -508,7 +590,11 @@ $('adblock-toggle').onchange=()=>{
 };
 $('connect-in-settings').onclick=async()=>{try{await saveSettings({close:false});await spotify.connect(config.spotifyClientId || backend.spotifyClientId);}catch(error){$('spotify-message').textContent=errorText(error);}};
 $('disconnect-spotify').onclick=()=>{spotify.disconnect();renderMusic({connected:false});$('spotify-message').textContent='このブラウザの連携情報を削除しました';};
-installNavigation({modal:$('settings-overlay'),closeModal:closeSettings});
+const navigation=installNavigation({modals:[{element:$('settings-overlay'),close:closeSettings},{element:$('detail-overlay'),close:closeDetail}],home:()=>$('apps'),onEdge:calendarEdge});
+// A passive dashboard rests with focus on the dock, so a forgotten highlight never lingers on a card.
+let lastInput=Date.now();
+for(const type of ['keydown','pointerdown'])addEventListener(type,()=>{lastInput=Date.now();},{capture:true,passive:true});
+setInterval(()=>{if(document.body.classList.contains('tv') && !document.hidden && Date.now()-lastInput>IDLE_HOME && $('settings-overlay').hidden && $('detail-overlay').hidden)navigation.focusHome();},10000);
 addEventListener('resize',fit);addEventListener('online',()=>{setFeed('connection','ok');jobs.forEach(job=>void job.run());});addEventListener('offline',()=>{setFeed('connection','error');});
 document.addEventListener('visibilitychange',()=>{if(document.hidden)cryptoStream?.stop();else{cryptoStream?.start();tick();jobs.forEach(job=>void job.run());}});
 addEventListener('pagehide',()=>cryptoStream?.stop());
@@ -516,13 +602,15 @@ addEventListener('pageshow',event=>{if(event.persisted && !document.hidden)crypt
 setInterval(()=>{if(!document.hidden)tick();},1000);
 // Restarted on manual paging so a headline chosen by hand gets its full time on screen.
 let newsTimer;
-function scheduleNews(){clearInterval(newsTimer);newsTimer=setInterval(()=>{if(!document.hidden && $('settings-overlay').hidden && news.length>1 && document.activeElement!==$('news-title')){newsIndex=(newsIndex+1)%news.length;showNews();}},NEWS_INTERVAL);}
+function scheduleNews(){clearInterval(newsTimer);newsTimer=setInterval(()=>{if(!document.hidden && $('settings-overlay').hidden && $('detail-overlay').hidden && news.length>1 && document.activeElement!==$('news-title')){newsIndex=(newsIndex+1)%news.length;showNews();}},NEWS_INTERVAL);}
 scheduleNews();
 // Loaded as a print sheet so it never blocks the first paint; the CSP forbids an inline onload.
 function enableJapaneseFont(){const link=$('font-ja');if(!link)return;const on=()=>{link.media='all';};if(link.sheet)on();else link.addEventListener('load',on,{once:true});}
 async function start(){
   enableJapaneseFont();
-  fit();buildStocks();tick();slideshow.setPhotos(SAMPLE_PHOTOS);initializeBridge();void loadCalendarSnapshot();
+  fit();buildStocks();tick();setPhotos(SAMPLE_PHOTOS);initializeBridge();void loadCalendarSnapshot();
+  // The TV app already runs full screen; the button only helps in a desktop browser.
+  $('fullscreen').hidden=Boolean(window.Android) || !document.fullscreenEnabled;
   document.body.classList.add('ready');
   if(document.body.classList.contains('tv'))$('apps').querySelector('button')?.focus({preventScroll:true});
   try{if(await spotify.completeCallback())toast('Spotifyを連携しました');}catch(error){toast(errorText(error));}
