@@ -49,6 +49,10 @@ try{
   assert.equal(await page.locator('[data-symbol=SOXL]').count(),1);
   assert.equal(await page.locator('[data-symbol=DRAM]').count(),1);
   assert.equal(await page.locator('[data-symbol=DJI], [data-symbol=VIX], [data-symbol=SILVER]').count(),0);
+  // TV performance: cards sit on the pre-blurred photo; no live backdrop blur on the stage.
+  await page.waitForFunction(()=>document.body.classList.contains('frosted'),{timeout:15000});
+  assert.equal(await page.locator('.card').evaluateAll(cards=>cards.every(card=>getComputedStyle(card).backdropFilter==='none')),true,'TV cards must not use live backdrop-filter');
+  assert.match(await page.locator('.frost').evaluate(e=>e.style.clipPath),/^path\(/);
   await page.evaluate(()=>document.fonts.ready);
   await page.locator('[data-app=spotify]').focus();
   await page.waitForTimeout(450);
@@ -84,9 +88,11 @@ try{
   await page.keyboard.press('Enter');await page.locator('#settings-dialog').waitFor({state:'visible'});
   await page.keyboard.press('Shift+Tab');assert.equal(await page.locator(':focus').textContent(),'設定を保存');
   await page.keyboard.press('Tab');assert.equal(await page.locator(':focus').getAttribute('id'),'close-settings');
-  await page.locator('#motion').uncheck();await page.getByRole('button',{name:'設定を保存',exact:true}).click();
+  // The slow zoom is off by default (it keeps a TV GPU busy); the switch must still turn it on.
+  assert.equal(await page.locator('#motion').isChecked(),false);
+  await page.locator('#motion').check();await page.getByRole('button',{name:'設定を保存',exact:true}).click();
   await page.waitForFunction(()=>document.querySelector('#settings-overlay').hidden);
-  assert.equal(await page.locator('body').evaluate(el=>el.classList.contains('motion')),false);
+  assert.equal(await page.locator('body').evaluate(el=>el.classList.contains('motion')),true);
   report.push('Desktop: all 12 live quotes and real 24h charts; ticker icons; D-pad, Enter, modal focus trap, save verified.');
   report.push('Seven-logo dock: Disney+ official app icon and Spotify symbol added; all apps reachable by D-pad, new buttons show the Web launch limitation, accessible names and focused labels retained with no card overlap.');
   report.push(`US calendar: ${calendarPayload.data.sources.map(source=>`${source.source} ${source.status}`).join(', ')}; source freshness displayed correctly, JST dates and working six-item pagination; NY clock and duplicated rate widgets removed.`);
@@ -134,6 +140,7 @@ try{
       assert.ok(await page.locator('#apps').evaluate(nav=>nav.scrollLeft)>0,'mobile dock scrolls to reveal the added apps');
     }
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),true,`overflow ${viewport.width}`);
+    assert.equal(await page.evaluate(()=>document.body.classList.contains('frosted')),viewport.width>1000 && viewport.width>viewport.height,`frost only on the TV stage at ${viewport.width}`);
     const suffix=viewport.width===390?'mobile':String(viewport.width);
     assert.equal(await page.locator('.stock-row').evaluateAll(rows=>rows.every(row=>{const a=row.querySelector('.stock-labels').getBoundingClientRect(),b=row.querySelector('.stock-chart').getBoundingClientRect(),c=row.querySelector('.stock-price-row').getBoundingClientRect();const overlap=(x,y)=>x.left<y.right-1 && x.right>y.left+1 && x.top<y.bottom-1 && x.bottom>y.top+1;return !overlap(a,b) && !overlap(b,c) && !overlap(a,c) && c.right<=row.getBoundingClientRect().right+1;})),true,`market collision ${viewport.width}`);
     await page.screenshot({path:resolve(out,`dashboard-${suffix}.png`),fullPage:viewport.width<=1000});

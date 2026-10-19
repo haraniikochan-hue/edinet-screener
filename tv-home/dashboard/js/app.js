@@ -3,6 +3,7 @@ import { eventPage, jstDay } from './calendar.js';
 import { installNavigation } from './navigation.js';
 import { nativeAppTile, pressApp } from './launcher.js';
 import { Slideshow, SAMPLE_PHOTOS } from './slideshow.js';
+import { Frost, frostSupported } from './frost.js';
 import * as spotify from './spotify.js';
 import { mountTradingView } from './tradingview.js';
 import { getMarketSnapshot, getMarketCandles, HyperliquidStream } from './hyperliquid.js';
@@ -11,7 +12,7 @@ import { drawMarketChart } from './market-chart.js';
 import { HOUR, weatherTimestamp, weatherIsStale, hourlyForecast, makeWeatherIcon, renderHourlyForecast } from './weather.js';
 
 const $ = id => document.getElementById(id);
-const CALENDAR_PAGE_SIZE = 6, NEWS_INTERVAL = 20000;
+const CALENDAR_PAGE_SIZE = 6, NEWS_INTERVAL = 20000, CARD_RADIUS = 32;
 const storage = { getItem:key => { try{return localStorage.getItem(key);}catch{return null;} }, setItem:(key,value) => localStorage.setItem(key,value) };
 let config = normalizeConfig(readStorage(storage,'tv-home-config',DEFAULT_CONFIG));
 let backend = {backend:false,market:false,unsplash:false};
@@ -19,19 +20,30 @@ let generation=0, jobs=[], news=[], newsIndex=0, music=null, toastTimer, returnF
 let calendarInfo=null, calendarIndex=0, calendarNextTime=0;
 let weatherResult=null, nextForecastHour=0, weatherWasStale=false;
 let cryptoStream=null, streamStatus='connecting', chartVersion=0, chartQueue=Promise.resolve();
+let stageScale=1, lastMinute='', frost=null;
 const quotes = new Map();
 const histories = new Map(), unavailable = new Map(), activeDexCoins = new Map(), metadata = new Map();
 const stockElements = new Map();
 const feedState = new Map();
-const time = (date, zone='Asia/Tokyo') => new Intl.DateTimeFormat('ja-JP',{timeZone:zone,hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(date);
-const dated = date => new Intl.DateTimeFormat('ja-JP',{timeZone:'Asia/Tokyo',month:'numeric',day:'numeric'}).format(date);
+// Building an Intl formatter costs far more than using one, especially on a TV CPU,
+// and the market rows format times every second — so each one is built once.
+const formats = new Map();
+const format = (locale, options) => {const key=locale+JSON.stringify(options);if(!formats.has(key))formats.set(key,new Intl.DateTimeFormat(locale,options));return formats.get(key);};
+const TIME = format('ja-JP',{timeZone:'Asia/Tokyo',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}), DATED = format('ja-JP',{timeZone:'Asia/Tokyo',month:'numeric',day:'numeric'});
+const HOUR_OF_DAY = format('en-US',{timeZone:'Asia/Tokyo',hour:'numeric',hourCycle:'h23'}), ISO_DAY = format('en-CA',{timeZone:'Asia/Tokyo',year:'numeric',month:'2-digit',day:'2-digit'});
+const MONTH_DAY = format('en-US',{timeZone:'Asia/Tokyo',month:'numeric',day:'numeric'}), WEEKDAY_SHORT = format('ja-JP',{timeZone:'Asia/Tokyo',weekday:'short'});
+const time = date => TIME.format(date);
+const dated = date => DATED.format(date);
+// DOM writes are skipped when nothing changed, so an idle second costs no style or layout work.
+const setText = (node, text) => {if(node.textContent!==text)node.textContent=text;};
+const setAttr = (node, name, value) => {if(node.getAttribute(name)!==value)node.setAttribute(name,value);};
 const stamp = ts => `${dated(new Date(ts))} ${time(new Date(ts))}`;
 const el = (tag, className='', content='') => {const node=document.createElement(tag);node.className=className;node.textContent=content;return node;};
 const errorText = error => error.message || 'データを取得できません';
 const api = path => fetchJSON(`${config.apiBase}/api/${path}`);
 const reducedMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 const EASE = 'cubic-bezier(.2,.8,.2,1)';
-const greeting = date => {const hour=Number(new Intl.DateTimeFormat('en-US',{timeZone:'Asia/Tokyo',hour:'numeric',hourCycle:'h23'}).format(date));return hour>=4 && hour<10?'おはようございます':hour>=10 && hour<17?'こんにちは':'こんばんは';};
+const greeting = date => {const hour=Number(HOUR_OF_DAY.format(date));return hour>=4 && hour<10?'おはようございます':hour>=10 && hour<17?'こんにちは':'こんばんは';};
 // Like iOS numeric text transitions, only the digits that changed blur and rise in.
 function renderClock(text) {
   const clock=$('clock'),previous=clock.dataset.text||'';if(previous===text)return;
@@ -47,28 +59,39 @@ function toast(message) { clearTimeout(toastTimer);$('toast').textContent=messag
 function setFeed(key, state) {
   feedState.set(key,state);
   const waiting=[...feedState.values()].some(v => v==='error' || v==='stale');
-  $('connection-status').textContent=!navigator.onLine ? 'オフライン' : waiting ? '一部更新待ち' : 'データ接続中';
-  $('connection-status').dataset.state=!navigator.onLine || waiting ? 'waiting' : 'ok';
+  setText($('connection-status'),!navigator.onLine ? 'オフライン' : waiting ? '一部更新待ち' : 'データ接続中');
+  setAttr($('connection-status'),'data-state',!navigator.onLine || waiting ? 'waiting' : 'ok');
 }
 function freshness(result, observation, ttl) {return result.stale || !Number.isFinite(observation) || Date.now()-observation>ttl;}
 function fit() {
   const tv=innerWidth>1000 && innerWidth>innerHeight;
   document.body.classList.toggle('tv',tv);
-  if(tv){const scale=Math.min(innerWidth/1920,innerHeight/1080);Object.assign($('stage').style,{transform:`scale(${scale})`,left:`${(innerWidth-1920*scale)/2}px`,top:`${(innerHeight-1080*scale)/2}px`});}
+  if(tv){stageScale=Math.min(innerWidth/1920,innerHeight/1080);Object.assign($('stage').style,{transform:`scale(${stageScale})`,left:`${(innerWidth-1920*stageScale)/2}px`,top:`${(innerHeight-1080*stageScale)/2}px`});}
   else Object.assign($('stage').style,{transform:'',left:'',top:''});
+  updateFrost();
+}
+// The fixed TV stage never scrolls, so the frosted layer only needs re-clipping when the stage is refitted.
+function updateFrost() {
+  const on=Boolean(frost?.ready) && document.body.classList.contains('tv');
+  if(on)frost.clip([...document.querySelectorAll('#stage .card')],CARD_RADIUS*stageScale);
+  document.body.classList.toggle('frosted',on);
 }
 function tick() {
-  const now=new Date();
-  renderClock(time(now));$('clock').dateTime=now.toISOString();
-  const hello=greeting(now);if($('greeting').textContent!==hello)$('greeting').textContent=hello;
-  $('date').textContent=new Intl.DateTimeFormat('ja-JP',{timeZone:config.timeZone,month:'long',day:'numeric'}).format(now);
-  $('weekday').textContent=new Intl.DateTimeFormat('ja-JP',{timeZone:config.timeZone,weekday:'long'}).format(now);
+  const now=new Date(),minute=time(now);
+  if(minute!==lastMinute){
+    // Clock, greeting and date only change with the minute.
+    lastMinute=minute;renderClock(minute);$('clock').dateTime=now.toISOString();
+    setText($('greeting'),greeting(now));
+    setText($('date'),format('ja-JP',{timeZone:config.timeZone,month:'long',day:'numeric'}).format(now));
+    setText($('weekday'),format('ja-JP',{timeZone:config.timeZone,weekday:'long'}).format(now));
+  }
   if(calendarNextTime && now.getTime()>=calendarNextTime)showCalendar();
   if(weatherResult && (now.getTime()>=nextForecastHour || (!weatherWasStale && weatherIsStale(weatherResult,now.getTime()))))renderWeather(weatherResult);
   updateCryptoStatus();
   if(music?.item && isNumber(music.progress_ms) && isNumber(music.item.duration_ms)){
     const progress=Math.min(music.item.duration_ms,music.progress_ms+(music.is_playing?Date.now()-music.fetchedAt:0));
-    $('music-progress').firstElementChild.style.width=`${progress/music.item.duration_ms*100}%`;
+    // A transform update is composited only: no layout or repaint of the card each second.
+    $('music-progress').firstElementChild.style.transform=`scaleX(${(progress/music.item.duration_ms).toFixed(4)})`;
   }
 }
 function buildStocks() {
@@ -86,17 +109,18 @@ function renderStocks() {
   for(const [symbol,item] of stockElements){
     const q=quotes.get(symbol), market=MARKET_BY_SYMBOL.get(symbol);
     item.row.classList.toggle('unavailable',!q);item.row.classList.toggle('quote-stale',Boolean(q?.stale));
-    if(!q){item.price.textContent='—';item.change.className='stock-unavailable';item.change.textContent=unavailable.get(symbol)||'取得待ち';item.source.textContent=item.name;item.row.removeAttribute('title');item.row.removeAttribute('aria-label');continue;}
-    item.price.textContent=money(q.price,market.digits);
-    item.change.textContent=isNumber(q.change)?`${q.change>0?'+':q.change<0?'−':''}${Math.abs(q.change).toFixed(2)}%`:'—';item.change.className=`stock-change ${tone(q.change)}`;
-    item.source.textContent=q.stale?`更新待ち · ${stamp(q.timestamp)}`:item.name;
-    item.row.title=`${item.name} / ${q.source} / ${stamp(q.timestamp)} JST受信 / ${q.note || '24時間変化率'}${q.stale?' / 最終取得値':''}`;
-    item.row.setAttribute('aria-label',`${symbol} ${item.row.title} ${item.price.textContent} ${item.change.textContent}`);
+    if(!q){setText(item.price,'—');item.change.className='stock-unavailable';setText(item.change,unavailable.get(symbol)||'取得待ち');setText(item.source,item.name);item.row.removeAttribute('title');item.row.removeAttribute('aria-label');continue;}
+    setText(item.price,money(q.price,market.digits));
+    setText(item.change,isNumber(q.change)?`${q.change>0?'+':q.change<0?'−':''}${Math.abs(q.change).toFixed(2)}%`:'—');setAttr(item.change,'class',`stock-change ${tone(q.change)}`);
+    const received=stamp(q.timestamp);
+    setText(item.source,q.stale?`更新待ち · ${received}`:item.name);
+    const title=`${item.name} / ${q.source} / ${received} JST受信 / ${q.note || '24時間変化率'}${q.stale?' / 最終取得値':''}`;
+    setAttr(item.row,'title',title);setAttr(item.row,'aria-label',`${symbol} ${title} ${item.price.textContent} ${item.change.textContent}`);
   }
   if(config.marketMode==='custom'){
     const fresh=[...quotes.values()].filter(q=>!q.stale).length;
-    $('stock-source').textContent=`${fresh} / ${MARKETS.length} 銘柄`;
-    $('market-dot').className=`status-dot ${fresh===MARKETS.length?'connected':'stale'}`;
+    setText($('stock-source'),`${fresh} / ${MARKETS.length} 銘柄`);
+    setAttr($('market-dot'),'class',`status-dot ${fresh===MARKETS.length?'connected':'stale'}`);
   }
 }
 function renderChart(market) {
@@ -106,10 +130,14 @@ function renderChart(market) {
     if(saved?.data?.coin===market.coin && Array.isArray(saved.data.points) && saved.fetchedAt<=Date.now() && Date.now()-saved.fetchedAt<3600000)histories.set(key,{...saved.data,stale:true});
   }
   const series=histories.get(key);
-  if(config.cryptoSource!=='hyperliquid' && !market.dex){item.chart.replaceChildren(el('span','chart-status','履歴未接続'));return;}
-  if(unavailable.has(market.symbol)){item.chart.replaceChildren(el('span','chart-status',unavailable.get(market.symbol)));return;}
-  if(!series){item.chart.replaceChildren(el('span','chart-status','履歴を取得中'));return;}
+  const status=text=>{if(item.chartState!==text){item.chartState=text;item.chart.replaceChildren(el('span','chart-status',text));}};
+  if(config.cryptoSource!=='hyperliquid' && !market.dex){status('履歴未接続');return;}
+  if(unavailable.has(market.symbol)){status(unavailable.get(market.symbol));return;}
+  if(!series){status('履歴を取得中');return;}
   const lag=Date.now()-series.lastTime>series.intervalMs*2;
+  // Twelve SVG charts are rebuilt only when their data or freshness actually changes.
+  const state=`${series.start}|${series.lastTime}|${series.points.length}|${series.points.at(-1)?.value}|${series.stale}|${lag}`;
+  if(item.chartState===state)return;item.chartState=state;
   const label=`${market.symbol} ${CHART_RANGES[config.chartRange].label}の取引価格。点線は期間最初の足の始値。最終足 ${stamp(series.lastTime)} JST${series.stale?'。履歴の更新待ち':''}`;
   if(drawMarketChart(item.chart,series,market.symbol,label)){
     item.chart.title=label;
@@ -133,7 +161,7 @@ function queueCharts() {
           if(!current())return;
           histories.set(key,{...result.data,stale:Boolean(result.stale)});renderChart(market);
         }catch{
-          if(current()){histories.delete(key);stockElements.get(market.symbol).chart.replaceChildren(el('span','chart-status','履歴の取得待ち'));}
+          if(current()){histories.delete(key);const item=stockElements.get(market.symbol);item.chartState='履歴の取得待ち';item.chart.replaceChildren(el('span','chart-status','履歴の取得待ち'));}
         }
       }
     }));
@@ -145,7 +173,7 @@ function renderWeather(result) {
   weatherResult=result;weatherWasStale=stale;nextForecastHour=(Math.floor(Date.now()/HOUR)+1)*HOUR;
   $('temperature').textContent=`${Math.round(current.temperature_2m)}°`;$('weather-label').textContent=weatherLabel(current.weather_code);
   $('weather-icon').replaceChildren(makeWeatherIcon(current.weather_code,current.is_day));
-  const today=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Tokyo',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+  const today=ISO_DAY.format(new Date());
   const todayIndex=daily.time.indexOf(today), tomorrowIndex=todayIndex<0?-1:todayIndex+1;
   $('tomorrow').textContent=isNumber(daily.temperature_2m_max?.[tomorrowIndex]) && isNumber(daily.temperature_2m_min?.[tomorrowIndex]) ? `明日 ${Math.round(daily.temperature_2m_max[tomorrowIndex])}° / ${Math.round(daily.temperature_2m_min[tomorrowIndex])}°` : '明日の予報は未取得';
   $('sunrise').textContent=`日の出 ${daily.sunrise?.[todayIndex]?.slice(11,16)||'—'}`;$('sunset').textContent=`日の入 ${daily.sunset?.[todayIndex]?.slice(11,16)||'—'}`;
@@ -186,9 +214,9 @@ function updateCryptoStatus() {
   const available=MARKETS.every(m=>quotes.has(m.symbol) && !quotes.get(m.symbol).stale),live=available && cryptoStream?.healthy();
   setFeed('markets',available?'ok':'stale');
   const label=config.cryptoSource==='hyperliquid'?'Hyperliquid':'Hyperliquid + CoinGecko';
-  $('crypto-feed').textContent=`${label} · ${live?(config.cryptoSource==='hyperliquid'?'LIVE':'HIP-3 LIVE / BTC・HYPE 2分更新'):available?'HTTP 30秒更新':streamStatus==='connecting' && !quotes.size?'接続中':'一部更新待ち'}`;
-  $('crypto-feed').dataset.state=live?'live':available?'ok':'waiting';
-  $('crypto-note').textContent=`${config.cryptoSource==='hyperliquid'?'価格：無期限先物のマーク価格':'BTC・HYPE：USD参考価格 / 他：無期限先物'} · 変化率：24h · チャート：取引価格`;
+  setText($('crypto-feed'),`${label} · ${live?(config.cryptoSource==='hyperliquid'?'LIVE':'HIP-3 LIVE / BTC・HYPE 2分更新'):available?'HTTP 30秒更新':streamStatus==='connecting' && !quotes.size?'接続中':'一部更新待ち'}`);
+  setAttr($('crypto-feed'),'data-state',live?'live':available?'ok':'waiting');
+  setText($('crypto-note'),`${config.cryptoSource==='hyperliquid'?'価格：無期限先物のマーク価格':'BTC・HYPE：USD参考価格 / 他：無期限先物'} · 変化率：24h · チャート：取引価格`);
 }
 function renderNews(result) {news=result.data;newsIndex=Math.min(newsIndex,news.length-1);showNews();setFeed('news',result.stale || news.every(n=>Date.now()-Date.parse(n.publishedAt)>2*86400000)?'stale':'ok');}
 function showNews() {
@@ -200,7 +228,6 @@ function showNews() {
   $('news-source').textContent=`${current.source} · ${stamp(Date.parse(current.publishedAt))}${old?' · 過去の配信':''}`;
   $('next-news').setAttribute('aria-label',`次のニュース（${newsIndex+1} / ${news.length}）`);
   $('news-dots').replaceChildren(...news.map((_,i)=>el('i',i===newsIndex?'active':'')));
-  $('news-dots').style.setProperty('--news-interval',`${NEWS_INTERVAL}ms`);$('news-dots').classList.toggle('rotating',news.length>1);
 }
 function renderMusic(data) {
   music=data;$('spotify-connect').hidden=Boolean(data.connected);$('music-progress').hidden=!data.item;
@@ -211,14 +238,21 @@ function renderMusic(data) {
   $('music-state').dataset.state=data.is_playing?'playing':'paused';
   const imageUrl=safeUrl(data.item.album?.images?.at(-2)?.url || data.item.album?.images?.[0]?.url || data.item.images?.[0]?.url);
   if(imageUrl){
-    let img=$('album').querySelector('img');if(!img){img=el('img');img.alt='アルバムジャケット';$('album').replaceChildren(img);}if(img.getAttribute('src')!==imageUrl)img.src=imageUrl;
-    // The artwork also tints the card behind the text, as Now Playing does.
-    musicCard.style.setProperty('--art',`url(${JSON.stringify(imageUrl)})`);musicCard.dataset.art='';
+    let img=$('album').querySelector('img');if(!img){img=el('img');img.alt='アルバムジャケット';img.onload=()=>paintWash(img);$('album').replaceChildren(img);}if(img.getAttribute('src')!==imageUrl)img.src=imageUrl;
   }
   else resetAlbum();tick();
 }
 const originalAlbum=$('album').firstElementChild.cloneNode(true), musicCard=$('album').closest('.music-card');
-function resetAlbum(){if(!$('album').querySelector('svg'))$('album').replaceChildren(originalAlbum.cloneNode(true));delete musicCard.dataset.art;musicCard.style.removeProperty('--art');}
+function resetAlbum(){if(!$('album').querySelector('svg'))$('album').replaceChildren(originalAlbum.cloneNode(true));delete musicCard.dataset.art;}
+// The artwork tints the card like Now Playing. It is drawn once into a 24px canvas that CSS
+// stretches into a soft wash, instead of a live blur filter repainted with the card.
+function paintWash(image) {
+  try{
+    const canvas=$('album-wash'),context=canvas.getContext('2d');
+    context.clearRect(0,0,canvas.width,canvas.height);if('filter' in context)context.filter='blur(2px) saturate(1.5)';
+    context.drawImage(image,0,0,canvas.width,canvas.height);musicCard.dataset.art='';
+  }catch{delete musicCard.dataset.art;}
+}
 function renderCalendar(result) {
   calendarInfo=result;showCalendar();
   const sources=result.data.sources||[],expired=sources.some(source=>Date.parse(source.coverageThrough)<Date.now());
@@ -239,7 +273,7 @@ function showCalendar() {
   data.events.forEach((event,index)=>{
     const row=el('a','calendar-event');row.href=safeUrl(event.url);row.target='_blank';row.rel='noopener noreferrer';row.dataset.indicator=event.indicator;row.dataset.eventId=event.id;
     const date=new Date(event.timestamp),day=el('div','calendar-day number'),eventDay=jstDay(event.timestamp);
-    day.append(el('strong','',`${date.toLocaleDateString('en-US',{timeZone:'Asia/Tokyo',month:'numeric',day:'numeric'})}`),el('span','',eventDay===today?'今日':eventDay===tomorrow?'明日':date.toLocaleDateString('ja-JP',{timeZone:'Asia/Tokyo',weekday:'short'})));
+    day.append(el('strong','',MONTH_DAY.format(date)),el('span','',eventDay===today?'今日':eventDay===tomorrow?'明日':WEEKDAY_SHORT.format(date)));
     // Like a calendar list, a date is written once for releases on the same day.
     if(eventDay===previousDay)row.classList.add('same-day');previousDay=eventDay;
     const detail=el('div','calendar-detail'),title=el('span','calendar-title',event.title),meta=el('span','calendar-meta',`${index===0 && calendarIndex===0?'次の発表 · ':''}${event.category}`);
@@ -417,7 +451,8 @@ function initializeBridge() {
   }catch{toast('アプリ一覧を取得できません。Web版の一覧を表示します。');}
 }
 
-const slideshow=new Slideshow({layers:[...document.querySelectorAll('.photo-layer')],caption:$('photo-credit'),title:$('photo-title'),onError:()=>{setFeed('photos','error');$('photo-title').textContent='背景写真を読み込めませんでした';}});
+if(frostSupported())frost=new Frost(document.querySelector('.frost'),[...document.querySelectorAll('.frost-layer')]);
+const slideshow=new Slideshow({layers:[...document.querySelectorAll('.photo-layer')],caption:$('photo-credit'),title:$('photo-title'),frost,onFrost:updateFrost,onError:()=>{setFeed('photos','error');$('photo-title').textContent='背景写真を読み込めませんでした';}});
 document.addEventListener('click',event=>{
   const open=event.target.closest('[data-open-settings]');if(open){openSettings(open.dataset.openSettings);return;}
   const app=event.target.closest('[data-app],[data-package]');if(!app)return;
@@ -449,11 +484,14 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden)cryptoStrea
 addEventListener('pagehide',()=>cryptoStream?.stop());
 addEventListener('pageshow',event=>{if(event.persisted && !document.hidden)cryptoStream?.start();});
 setInterval(()=>{if(!document.hidden)tick();},1000);
-// Restarted on manual paging so the filling page dot always matches the next change.
+// Restarted on manual paging so a headline chosen by hand gets its full time on screen.
 let newsTimer;
 function scheduleNews(){clearInterval(newsTimer);newsTimer=setInterval(()=>{if(!document.hidden && $('settings-overlay').hidden && news.length>1 && document.activeElement!==$('news-title')){newsIndex=(newsIndex+1)%news.length;showNews();}},NEWS_INTERVAL);}
 scheduleNews();
+// Loaded as a print sheet so it never blocks the first paint; the CSP forbids an inline onload.
+function enableJapaneseFont(){const link=$('font-ja');if(!link)return;const on=()=>{link.media='all';};if(link.sheet)on();else link.addEventListener('load',on,{once:true});}
 async function start(){
+  enableJapaneseFont();
   fit();buildStocks();tick();slideshow.setPhotos(SAMPLE_PHOTOS);initializeBridge();void loadCalendarSnapshot();
   document.body.classList.add('ready');
   if(document.body.classList.contains('tv'))$('apps').querySelector('button')?.focus({preventScroll:true});

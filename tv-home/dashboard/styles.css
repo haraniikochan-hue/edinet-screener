@@ -1,7 +1,10 @@
 /* TV Home — design system
    1920×1080 stage for TV/landscape PC, a single column for phones and portrait.
    Type: Inter (Latin, optical sizes) + Noto Sans JP with proportional kana (palt).
-   Colour: iOS dark-mode label and system colours on a clear "liquid glass" material. */
+   Colour: iOS dark-mode label and system colours on a clear "liquid glass" material.
+   Performance (TV): no live blur on the stage — cards sit on a pre-blurred photo (js/frost.js),
+   nothing animates continuously, and per-second updates stay inside contained rows. */
+@font-face { font-family: 'Inter'; font-style: normal; font-weight: 100 700; font-display: swap; src: url('assets/fonts/inter-latin-var.woff2') format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
 :root {
   color-scheme: dark;
   --font: 'Inter','Noto Sans JP',-apple-system,BlinkMacSystemFont,'Hiragino Sans','Hiragino Kaku Gothic ProN',system-ui,sans-serif;
@@ -29,7 +32,7 @@
 }
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
-body { margin: 0; background: #05070c; color: var(--label); font: 400 16px/1.4 var(--font); font-feature-settings: 'palt'; font-optical-sizing: auto; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; text-rendering: optimizeLegibility; }
+body { margin: 0; background: #05070c; color: var(--label); font: 400 16px/1.4 var(--font); font-feature-settings: 'palt'; font-optical-sizing: auto; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
 button,input,select { font: inherit; color: inherit; }
 button { border: 0; padding: 0; background: none; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 button:disabled { cursor: default; opacity: .3; }
@@ -50,8 +53,16 @@ h2,h3,p { margin: 0; }
 /* Background photograph */
 .background,.shade { position: fixed; inset: 0; pointer-events: none; }
 .background { overflow: hidden; background: #0d1626; }
-.photo-layer { position: absolute; inset: -2%; background-size: cover; background-position: 50% 48%; opacity: 0; transition: opacity 2.4s var(--ease); transform: scale(1.015); filter: saturate(.95) brightness(1.04); }
-.photo-layer.is-active { opacity: 1; }.motion .photo-layer.is-active { animation: drift 65s linear both; }
+.photo-layer,.frost-layer { position: absolute; left: -2%; top: -2%; width: 104%; height: 104%; opacity: 0; transition: opacity 2.4s var(--ease); transform: scale(1.015); }
+.photo-layer { background-size: cover; background-position: 50% 48%; }
+.photo-layer.is-active,.frost-layer.is-active { opacity: 1; }
+/* 650 steps over 65s move <0.1px each: it looks continuous but the compositor only redraws ten times a second */
+.motion .photo-layer.is-active,.motion .frost-layer.is-active { animation: drift 65s steps(650) both; }
+.modal-open .photo-layer,.modal-open .frost-layer { animation-play-state: paused; }
+/* The frosted copy of the photo, clipped to the cards (TV stage only) */
+.frost { display: none; position: absolute; inset: 0; }
+.frosted .frost { display: block; }
+.frost-layer { display: block; object-fit: cover; object-position: 50% 48%; }
 .shade { background: radial-gradient(120% 90% at 50% 40%,transparent 55%,rgba(2,4,10,.38)),linear-gradient(180deg,rgba(4,8,20,.34),transparent 30%,transparent 62%,rgba(3,6,14,.62)),linear-gradient(90deg,rgba(4,10,24,.34),transparent 42%); }
 
 /* Stage */
@@ -70,7 +81,7 @@ h2,h3,p { margin: 0; }
 .glass-button:hover { color: #fff; background: rgba(255,255,255,.16); }
 
 /* Greeting and clock */
-.overview { grid-area: overview; display: flex; flex-direction: column; justify-content: flex-end; gap: 16px; min-width: 0; text-shadow: 0 2px 24px rgba(0,0,0,.28); }
+.overview { grid-area: overview; display: flex; flex-direction: column; justify-content: flex-end; gap: 16px; min-width: 0; text-shadow: 0 2px 12px rgba(0,0,0,.24); }
 .greeting { display: flex; align-items: center; gap: 10px; font-size: 20px; font-weight: 500; line-height: 22px; color: var(--label-2); }
 .greeting-place { display: inline-flex; align-items: center; gap: 10px; color: var(--label-3); }
 .greeting-place::before { content: ''; width: 4px; height: 4px; border-radius: 50%; background: currentColor; }
@@ -82,7 +93,7 @@ h2,h3,p { margin: 0; }
 #weekday { font-size: 18px; font-weight: 500; color: var(--label-2); line-height: 22px; }
 
 /* Liquid glass card: clear fill, saturation lift and a specular rim lit from the upper left */
-.card { position: relative; min-width: 0; border-radius: var(--r-card); background: var(--glass); box-shadow: var(--glass-shadow); -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur); }
+.card { position: relative; isolation: isolate; min-width: 0; border-radius: var(--r-card); background: var(--glass); box-shadow: var(--glass-shadow); -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur); }
 .card::before { content: ''; position: absolute; inset: 0; z-index: 1; padding: 1px; border-radius: inherit; background: var(--rim); -webkit-mask: linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask: linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0); pointer-events: none; }
 .card-header { display: flex; flex-shrink: 0; align-items: center; justify-content: space-between; gap: 12px; height: 22px; }
 .card-header>* { min-width: 0; }
@@ -100,7 +111,7 @@ h2,h3,p { margin: 0; }
 .weather-icon { display: grid; place-items: center; width: 30px; height: 30px; margin-bottom: 2px; }
 #weather-label { font-size: 15px; font-weight: 600; line-height: 19px; white-space: nowrap; }
 #tomorrow { font-size: 14px; line-height: 19px; color: var(--label-2); white-space: nowrap; font-variant-numeric: tabular-nums; }
-.weather-glyph { width: 100%; height: 100%; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; overflow: visible; filter: drop-shadow(0 1px 1.5px rgba(0,0,0,.22)); }
+.weather-glyph { width: 100%; height: 100%; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; overflow: visible; }
 .glyph-sun { fill: #ffd60a; stroke: #ffd60a; }.glyph-rays { stroke: #ffd60a; stroke-width: 1.8; }.glyph-moon { fill: #eef2fb; stroke: #eef2fb; }.glyph-cloud { fill: #f5f7fb; stroke: #f5f7fb; }.glyph-rain { stroke: var(--rain); stroke-width: 2.1; }.glyph-snow { fill: #eaf4ff; }.glyph-lightning { fill: #ffd60a; stroke: #ffd60a; stroke-width: .6; }.glyph-fog { stroke: #c9d2de; stroke-width: 1.9; }.glyph-unknown { stroke: var(--label-3); }
 .hourly-section { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--separator); }
 .hourly-heading { display: flex; justify-content: space-between; align-items: center; gap: 10px; height: 18px; margin-bottom: 6px; }
@@ -131,7 +142,7 @@ h2,h3,p { margin: 0; }
 #sunrise { --chip-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 19.5h18M7 19.5a5 5 0 0 1 10 0M12 3v6.2M9.4 5.6 12 3l2.6 2.6M4.3 14.6l1.5.9M19.7 14.6l-1.5.9'/%3E%3C/svg%3E"); }
 #sunset { --chip-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 19.5h18M7 19.5a5 5 0 0 1 10 0M12 3v6.2M9.4 6.6 12 9.2l2.6-2.6M4.3 14.6l1.5.9M19.7 14.6l-1.5.9'/%3E%3C/svg%3E"); }
 #air { --chip-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M3 8.5c2-1.6 4-1.6 6 0s4 1.6 6 0 4-1.6 6 0M3 13c2-1.6 4-1.6 6 0s4 1.6 6 0 4-1.6 6 0M3 17.5c2-1.6 4-1.6 6 0s4 1.6 6 0'/%3E%3C/svg%3E"); }
-.weather-footer .source-line { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.weather-footer .source-line { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .source-line[data-state=stale] { color: var(--warn); }
 
 /* Markets — Stocks-style rows in one panel */
@@ -201,35 +212,31 @@ h2,h3,p { margin: 0; }
 .news-controls { display: flex; align-items: center; gap: 12px; }
 .news-dots { display: flex; align-items: center; gap: 5px; }
 .news-dots i { width: 6px; height: 6px; border-radius: 3px; background: rgba(255,255,255,.3); transition: width .4s var(--ease),background .3s; }
-.news-dots i { position: relative; overflow: hidden; }
 .news-dots i.active { width: 18px; background: #fff; }
-.news-dots.rotating i.active { background: rgba(255,255,255,.34); }
-.news-dots.rotating i.active::after { content: ''; position: absolute; inset: 0; border-radius: inherit; background: #fff; transform-origin: left; animation: progress var(--news-interval,20s) linear both; }
 #next-news { width: 28px; height: 28px; }
 .news-title { display: -webkit-box; margin: auto -8px; padding: 2px 8px; border-radius: 10px; font-size: 19px; font-weight: 600; line-height: 1.45; letter-spacing: .01em; word-break: auto-phrase; text-wrap: pretty; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; transition: background .2s; }
 a.news-title[href]:hover { background: rgba(255,255,255,.07); }
 .news-footer { display: flex; flex-shrink: 0; align-items: center; justify-content: space-between; gap: 12px; }
 .news-footer .tiny { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .music-card { display: flex; align-items: center; gap: 18px; overflow: hidden; }
-.music-card::after { content: ''; position: absolute; inset: -30%; z-index: -1; background: var(--art,none) center/cover; filter: blur(36px) saturate(1.5); opacity: 0; transition: opacity 1s var(--ease); pointer-events: none; }
-.music-card[data-art]::after { opacity: .42; }
+.album-wash { position: absolute; left: -20%; top: -40%; z-index: -1; width: 140%; height: 180%; opacity: 0; transition: opacity 1s var(--ease); pointer-events: none; }
+.music-card[data-art] .album-wash { opacity: .42; }
 .album { position: relative; display: grid; place-items: center; flex-shrink: 0; width: 98px; height: 98px; overflow: hidden; border-radius: 16px; background: linear-gradient(150deg,rgba(30,215,96,.32),rgba(30,215,96,.05) 70%),rgba(255,255,255,.06); box-shadow: inset 0 0 0 .5px rgba(255,255,255,.18),0 12px 24px -10px rgba(0,0,0,.6); }
 .album svg { width: 38px; height: 38px; color: rgba(255,255,255,.72); }
 .album img { width: 100%; height: 100%; object-fit: cover; }
 .music-details { display: flex; flex: 1; flex-direction: column; min-width: 0; }
 .spotify-mark { width: 16px; height: 16px; background: var(--spotify); -webkit-mask: url('assets/apps/spotify.svg') center/contain no-repeat; mask: url('assets/apps/spotify.svg') center/contain no-repeat; }
 .equalizer { display: flex; align-items: flex-end; gap: 2px; height: 13px; }
-.equalizer i { width: 3px; height: 100%; border-radius: 1.5px; background: var(--spotify); transform-origin: 50% 100%; transform: scaleY(.3); }
+/* A still "now playing" glyph: a looping animation would keep the TV redrawing all day */
+.equalizer i { width: 3px; height: 55%; border-radius: 1.5px; background: var(--spotify); }
+.equalizer i:nth-child(2) { height: 100%; }.equalizer i:nth-child(3) { height: 72%; }
 .equalizer[data-state=idle] { visibility: hidden; }
-.equalizer[data-state=paused] i { opacity: .5; }
+.equalizer[data-state=paused] i { opacity: .45; height: 30%; }
 .equalizer[data-state=error] i { background: var(--warn); }
-.equalizer[data-state=playing] i { animation: equalize .9s var(--ease) infinite alternate; }
-.equalizer[data-state=playing] i:nth-child(2) { animation-duration: .7s; animation-delay: -.3s; }
-.equalizer[data-state=playing] i:nth-child(3) { animation-duration: 1.1s; animation-delay: -.6s; }
 .track-name { margin-top: 8px; font-size: 18px; font-weight: 600; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .music-details .secondary { margin-top: 2px; font-size: 14px; line-height: 1.35; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .progress { height: 4px; margin-top: 10px; border-radius: 2px; background: rgba(255,255,255,.2); overflow: hidden; }
-.progress span { display: block; width: 0; height: 100%; border-radius: inherit; background: #fff; transition: width 1s linear; }
+.progress span { display: block; width: 100%; height: 100%; border-radius: inherit; background: #fff; transform-origin: left; transform: scaleX(0); }
 .tinted-button { display: inline-flex; align-self: flex-start; align-items: center; gap: 4px; height: 30px; margin-top: 10px; padding: 0 11px 0 13px; border-radius: 15px; font-size: 13px; font-weight: 600; color: var(--spotify); background: rgba(30,215,96,.18); box-shadow: inset 0 0 0 .5px rgba(30,215,96,.3); transition: transform .35s var(--spring),background .2s,color .2s; }
 .tinted-button .icon { font-size: 14px; stroke-width: 2.2; }
 .tinted-button:hover { background: rgba(30,215,96,.28); }
@@ -240,7 +247,7 @@ a.news-title[href]:hover { background: rgba(255,255,255,.07); }
 .launcher-footer { display: grid; grid-template-columns: minmax(0,1fr) auto minmax(0,1fr); align-items: end; gap: 40px; }
 .app-list { grid-column: 2; display: flex; align-items: center; justify-content: center; gap: 24px; min-width: 0; }
 .app-tile { position: relative; isolation: isolate; flex: 0 0 var(--app-size); width: var(--app-size); height: var(--app-size); border-radius: 22.5%; }
-.app-tile::before { content: ''; position: absolute; z-index: -1; left: 14%; right: 14%; top: 34%; bottom: -5%; border-radius: 40%; background: rgba(0,0,0,.6); filter: blur(9px); opacity: .7; transition: transform .5s var(--spring),opacity .35s; }
+.app-tile::before { content: ''; position: absolute; z-index: -1; left: 4%; right: 4%; top: 30%; bottom: -16%; background: radial-gradient(closest-side,rgba(0,0,0,.55),rgba(0,0,0,.3) 55%,transparent); opacity: .75; transition: transform .5s var(--spring),opacity .35s; }
 .app-tile:focus { outline: none; z-index: 2; }
 .app-icon { position: relative; display: grid; place-items: center; width: 100%; height: 100%; overflow: hidden; border-radius: 22.5%; background: #1c1c1e; -webkit-mask: url('assets/squircle.svg') center/100% 100% no-repeat; mask: url('assets/squircle.svg') center/100% 100% no-repeat; transform-origin: 50% 60%; transition: transform .5s var(--spring); }
 .app-icon::before,.app-icon::after { content: ''; position: absolute; inset: 0; z-index: 1; border-radius: inherit; pointer-events: none; }
@@ -377,13 +384,26 @@ body:not(.ready) #stage { opacity: 0; animation: reveal 0s 1.6s forwards; }
 @keyframes sheet { from { opacity: 0; transform: translateY(24px) scale(.97); } }
 @keyframes toast { from { opacity: 0; transform: translate(-50%,-18px) scale(.94); } }
 @keyframes glint { from { transform: translateX(-130%); } to { transform: translateX(130%); } }
-@keyframes progress { from { transform: scaleX(0); } }
-@keyframes equalize { from { transform: scaleY(.25); } to { transform: scaleY(1); } }
 
 @media(prefers-reduced-motion:reduce) {
   *,*::before,*::after { animation: none!important; transition: none!important; scroll-behavior: auto!important; }
   body:not(.ready) #stage { opacity: 1; }
 }
+
+/* TV stage: the pre-blurred photo replaces live blur under the cards, small glass becomes a
+   tinted solid, and per-second updates (prices, progress) stay inside their own boxes */
+.tv.frosted .card { -webkit-backdrop-filter: none; backdrop-filter: none; }
+.tv :is(.app-label,.status-pill,.glass-button,.toast,.modal-overlay,.settings-dialog) { -webkit-backdrop-filter: none; backdrop-filter: none; }
+.tv .app-label { background: rgba(36,40,52,.84); }
+.tv :is(.status-pill,.glass-button) { background: rgba(255,255,255,.12); }
+.tv .toast { background: rgba(30,34,46,.92); }
+.tv .modal-overlay { background: rgba(2,4,8,.78); }
+.tv .settings-dialog { background: linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,0) 30%),#1b1d25; }
+.tv .card,.tv .stock-row { contain: layout paint; }
+.tv .stock-price-row { will-change: transform; }
+/* Fade-only entrance on TV, so each card stays over its frosted backing */
+.tv.ready :is(.masthead,.overview,.weather-section,.market-card,.calendar-card,.news-card,.music-card,.app-list,.photo-caption) { animation-name: fade; }
+.tv.ready .frost { animation: fade .9s var(--ease) .1s backwards; }
 
 /* TV / landscape stage only */
 @media(min-width:1001px) and (orientation:landscape) {

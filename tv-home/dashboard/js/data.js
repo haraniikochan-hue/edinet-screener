@@ -3,10 +3,16 @@ export const SYMBOLS = MARKETS.map(m=>[m.symbol,m.name,m.symbol]);
 export const DEFAULT_CONFIG = {
   location: { name: '渋谷区', latitude: 35.6589, longitude: 139.70665 },
   timeZone: 'Asia/Tokyo', marketMode: 'custom', cryptoSource: 'hyperliquid', photoMode: 'sample',
-  photoInterval: 60, motion: true, apiBase: '', spotifyClientId: '', chartRange: '1d',
+  photoInterval: 60, motion: false, apiBase: '', spotifyClientId: '', chartRange: '1d',
 };
 export const isNumber = n => typeof n === 'number' && Number.isFinite(n);
-export const money = (n, digits = 2) => isNumber(n) ? n.toLocaleString('en-US', { minimumFractionDigits: digits, maximumFractionDigits: digits }) : '—';
+// toLocaleString builds a new NumberFormat on every call; prices update every second.
+const moneyFormats = new Map();
+export const money = (n, digits = 2) => {
+  if (!isNumber(n)) return '—';
+  if (!moneyFormats.has(digits)) moneyFormats.set(digits, new Intl.NumberFormat('en-US', { minimumFractionDigits: digits, maximumFractionDigits: digits }));
+  return moneyFormats.get(digits).format(n);
+};
 export function signed(n, suffix = '%', digits = 2) {
   return isNumber(n) ? `${n > 0 ? '+' : n < 0 ? '−' : '±'}${Math.abs(n).toFixed(digits)}${suffix}` : '—';
 }

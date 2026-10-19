@@ -4,7 +4,9 @@
 
 `HANDOFF.md` のフェーズ2を実装した、ビルド不要のHTML/CSS/JavaScript＋小さなNode.jsデータサーバーです。時計・天気・経済指標を左、マーケット・ニュース・Spotifyを右にまとめ、Apple TV／iOSのクリアなガラス素材・Inter＋Noto Sans JP・iOSのシステムカラーで統一しています。
 
-## 現在の仕様（v0.6.0）
+## 現在の仕様（v0.6.1）
+
+- **TV向けの軽量化（v0.6.1）**：カードのぼかしを写真ごとに1回だけ作る方式に変え、常時動くアニメーションをなくし、毎秒の処理を変化した部分だけにしました。計測では待機中のChromium CPUが103%→3%、描画は13fps→60fps。ゆっくりズームは初期設定オフです。詳細は `HANDOFF.md` 第3.1節、計測は `scripts/perf-bench.mjs`。
 
 - **v0.6.0のデザイン刷新**：Apple Weather型の天気、Apple株価アプリ型の相場、カテゴリー色付きの経済指標、iOSの連続曲線アイコンとtvOS型のフォーカス、iOS型の設定画面。TVで読めるよう最小文字を12pxに。正常時は状態表示を出さず、更新待ちのときだけ琥珀色で表示。詳細は `HANDOFF.md` 第3節。
 - **ニュース配信元を修正**：旧 `www3.nhk.or.jp` のRSSは2026-08-08で更新が止まっていたため、NHK ONE（`news.web.nhk`）の経済RSSへ切り替えました。
@@ -166,7 +168,7 @@ Pexelsも候補ですが、APIドキュメントには壁紙アプリを含む�
 - 全画面ボタン、手動更新、次の写真、次のニュースに対応。
 - 地域検索とSpotifyの初回認証はPC/スマホで行う想定です。TVでのテキスト入力・認証方法はフェーズ3で設計します。
 - 1920×1080基準で左右216px・上48px・下36pxの余白。左列500px、右列860px、列間128px。カード同士は24px間隔。時計の右側を広い余白にし、天気とマーケットは上端270pxでそろえています。横向きPCは全体を縮尺表示し、スマホと縦画面は縦並びになります。スマホのマーケットも1枚のパネル内のリストで、12銘柄の価格と小型チャートを1列で表示します。
-- OSの「視差効果を減らす」設定に対応。設定でも背景ズームを止められます。
+- OSの「視差効果を減らす」設定に対応。背景のゆっくりズームは初期設定オフで、設定でオンにできます（TVでは描画の負荷が増えます）。
 
 ## 検証・ビルド
 
@@ -184,6 +186,12 @@ PLAYWRIGHT_MODULE=/path/to/playwright/index.mjs CHROMIUM_PATH=/path/to/chromium 
 PLAYWRIGHT_MODULE=/path/to/playwright/index.mjs CHROMIUM_PATH=/path/to/chromium node scripts/browser-integrations-check.mjs
 PLAYWRIGHT_MODULE=/path/to/playwright/index.mjs CHROMIUM_PATH=/path/to/chromium node scripts/browser-market-check.mjs
 PLAYWRIGHT_MODULE=/path/to/playwright/index.mjs CHROMIUM_PATH=/path/to/chromium node scripts/browser-weather-check.mjs
+```
+
+動作の重さを比べるときは、サーバーを起動したまま次を実行します（Linuxでは描画を含むChromium全体のCPUも表示）。第3引数はCPUの低速化倍率で、`4` にすると非力な端末に近づきます。
+
+```sh
+PLAYWRIGHT_MODULE=/path/to/playwright/index.mjs node scripts/perf-bench.mjs http://127.0.0.1:4173/ 20 1
 ```
 
 通常のブラウザ検証には天気・Hyperliquid・BLS・BEAへのネットワーク接続が必要です。結果とスクリーンショットは `artifacts/` に保存します。Hyperliquidは実際のREST取得とWebSocket更新も確認しました。切断/再接続・HTTPフォールバック・上場廃止・古い値の表示・CoinGeckoへの切替は制御したレスポンスで検証しています。地域検索、SpotifyのOAuth成功/不正state、写真切替、Androidブリッジもテスト用レスポンスで検証しています。単体テストは38件。天気の夜間・降水・欠測・日跨ぎ・通信障害・地域変更は専用のブラウザ検証でも確認しています。12契約すべての実データ価格・チャートと、実データ6時間予報を確認しています。Spotifyの実アカウント認証・Unsplashの実キー・TV実機は未検証です。
