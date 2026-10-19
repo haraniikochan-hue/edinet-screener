@@ -291,7 +291,7 @@ a.news-title[href]:hover { background: rgba(255,255,255,.07); }
 #next-photo .icon { font-size: 12px; stroke-width: 2.2; }
 .launcher-footer:has(.native-apps) { grid-template-columns: minmax(0,1fr) 300px; }
 .native-apps { grid-column: 1; width: 100%; justify-content: flex-start; overflow-x: auto; overflow-y: hidden; padding: 44px 12px 12px; margin-top: -44px; margin-bottom: -12px; scrollbar-width: none; overscroll-behavior-x: contain; }
-.native-apps .app-label { max-width: calc(var(--app-size) + 24px); }.native-apps+.photo-caption { grid-column: 2; }
+.native-apps .app-label { max-width: calc(var(--app-size) + 72px); }.native-apps+.photo-caption { grid-column: 2; }
 
 /* Remote focus: tvOS-like white platter for controls, a lifted glass row for list items */
 #stage :is(.glass-button,.round-button,.tinted-button,.text-button,.status-pill):focus-visible { outline: none; background: #fff; color: #0b0d12; box-shadow: 0 10px 24px -8px rgba(0,0,0,.7); transform: scale(1.08); }

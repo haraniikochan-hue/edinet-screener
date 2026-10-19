@@ -201,10 +201,13 @@ Xiaomi TVのGPU・CPUで滑らかに動くよう最適化した。見た目はv0
 - **ソース**：`android/`（Kotlin、Gradle 8.10.2、AGP 8.7.3、compileSdk 35、minSdk 28）。`MainActivity.kt` 1ファイル。ビルド時に `dashboard/` をAPKの `assets/www/` へコピーし、`WebViewAssetLoader` で `https://appassets.androidplatform.net/` から配信する。`dist/` は使わない。
 - **ニュース・経済指標**：Nodeサーバーの処理を `dashboard/js/feeds.js`（NHKのRSS解析、BLS/BEAの日程と同梱日程の統合）と `dashboard/js/economic-calendar.js`（`lib/` から移動。`lib/economic-calendar.mjs` は再エクスポート）に移し、`server.mjs` とアプリで共用する。アプリでは `app.js` が自分で解析し、配信元にCORSがないため、取得だけをアプリの `/api/upstream?url=` が代行する。代行できるのは `UPSTREAM_FEEDS` の3つのURLだけ（Kotlin側にも同じ一覧）。
 - **ドック**：`window.Android.getApps()` が固定の順（SmartTube → U-NEXT → Netflix → Prime Video → Disney+ → Spotify）のうちインストール済みのもの、「テレビの設定」（Androidの設定を開く）、残りのTVアプリ（名前順）を最大16件返し、最後にダッシュボードの「設定」が付く。標準ホームがないため、他のアプリへの入口として残りも並べた。地デジ（`com.mitv.livetv`、削除済みの確定事項）とXiaomiのシステムツール（`com.xiaomi.mitv.*`）は出さない。起動できるのは一覧に出したパッケージだけ。
-- **実機のパッケージ名（ADBで確認）**：U-NEXT `jp.unext.tv.player`、Netflix `com.netflix.ninja`、Prime Video `com.amazon.amazonvideo.livingroom`、Disney+ `com.disney.disneyplus`、Spotify `com.spotify.tv.android`。**SmartTubeはテレビに入っていない**（公式YouTube `com.google.android.youtube.tv` はある）。`MainActivity.kt` の `PINNED` は `com.teamsmart.videomanager.tv` を想定しており、SmartTubeを入れたら、実際のパッケージ名を確認して合わせる。それまでSmartTubeのタイルは出ない。YouTubeを代わりにしない。
+- **実機のパッケージ名（ADBで確認）**：SmartTube `org.smarttube.stable`、U-NEXT `jp.unext.tv.player`、Netflix `com.netflix.ninja`、Prime Video `com.amazon.amazonvideo.livingroom`、Disney+ `com.disney.disneyplus`、Spotify `com.spotify.tv.android`。公式YouTube（`com.google.android.youtube.tv`）は別に入っていて、ドックの後半に並ぶ。
+- **SmartTube（ユーザーの確認を得て導入）**：作者の公式GitHub（yuliskov/SmartTube）の安定版 `SmartTube_stable_32.56_armeabi-v7a.apk`（テレビのCPUは armeabi-v7a）。GitHubが公開しているSHA-256と照合してから `adb install` した。消すなら `adb uninstall org.smarttube.stable`。更新はPlayストアではなく、SmartTube自身の更新通知から行う。
+- **ドックのアイコン**：`getApps()` は各アプリのアイコンをPNGのdata URL（192px）で `icon` に入れて返す。アダプティブアイコンは、見える範囲いっぱいに描く。ページ側の角丸（squircle）で全タイルを同じ形に切り抜く。同梱のロゴがあるブランド（SmartTube・U-NEXT・Netflix・Prime Video・Disney+・Spotify）は、今までどおり同梱ロゴを使う。それ以外（テレビの設定・ABEMA・DAZN・Hulu・Lemino・Playストア・TVer・YouTube・ブラウザー）は実物のアイコンを使う。`launcher.js` は `data:image/png;base64,` 以外の値を画像として使わない。名前ラベルの最大幅は、アイコン幅＋72px。
 - **リモコン**：戻るはページへ `Escape` として届く。ホームのときはアプリを閉じない。TV Homeの表示中にホームを押すと `Escape` を送り、シートを閉じてドックへ戻る。外部サイトへの移動は無視する。
 - **デバッグ**：デバッグビルド（`assembleDebug`）だけ、WebViewのDevToolsをADB経由で開ける（`adb forward tcp:9333 localabstract:webview_devtools_remote_<pid>`）。テレビに入っているのはリリースビルド（開発用の鍵で署名）。
-- **既知の問題**：BLS（`www.bls.gov`）は通信の特徴でボットを判定しており、Androidからの取得が403になる（PCのNodeは成功、curlも403）。アプリではBLSが同梱日程（2026年12月まで）になり、「一部更新待ち」が常に出る。BEAとNHKは取得できる。Unsplash・Spotify認証はアプリでは未対応（`/api/config` は無効を返す）。広告ブロックの切り替え（`setPrivateDns`）も未実装。ただしテレビのプライベートDNSは、すでに `dns.adguard-dns.com`（hostname）に設定されていた。
+- **BLSの取得**：BLS（`www.bls.gov`）は接続方式（TLSやHTTP/2の特徴）でクライアントを判定している。AndroidのHttpURLConnection、Android 14内蔵のHttpEngine（Cronet）、Macのcurlは403になり、PCのNodeとテレビのWebView（Chrome 155）は200になる（ヘッダーを変えても結果は同じだった）。このためアプリは、配信元が403を返したときだけ、画面に出さないWebViewで取得し直す。そのWebViewは、空のページを配信元のオリジンで開き、同一オリジンの `fetch` で読む（最大20秒）。2026-10-19に、テレビで「BLS・BEA 自動更新」になり「一部更新待ち」が消えたことを確認した。HttpEngineを試した際は `ACCESS_NETWORK_STATE` がないためにクラッシュを繰り返したので、HttpEngineは外した。
+- **未対応**：Unsplash・Spotify認証はアプリでは未対応（`/api/config` は無効を返す）。広告ブロックの切り替え（`setPrivateDns`）も未実装。ただしテレビのプライベートDNSは、すでに `dns.adguard-dns.com`（hostname）に設定されていた。
 
 ビルドと入れ替え：
 
@@ -431,7 +434,7 @@ PLAYWRIGHT_MODULE=/absolute/path/to/playwright/index.mjs CHROMIUM_PATH=/path/to/
 | --- | --- | --- |
 | TV型番・OS | 一部確認（2026-10-19、Castから） | 65インチ、Cast上の型番 `MiTV-MZTU0`、Android 14（Build UKN1.240806.017）、Cast受信ブラウザはChrome 92・960×540・密度2。Google TVかPatchWallか、WebViewの版は未確認（ADBで調べる） |
 | 作業端末と接続経路 | 未確認 | PC利用可否、スマホ/Termux、同一LAN・ADB接続を確認 |
-| APK | v0.10.0をテレビにインストール済み・ホームに設定済み（第3.4節） | ドックの見た目（ロゴのないアプリは頭文字だけ）、SmartTubeの導入、BLSの取得、アプリ内の広告ブロック切り替え、スリープ復帰・長時間稼働の確認 |
+| APK | v0.10.0をテレビにインストール済み・ホームに設定済み（第3.4節） | （ドックのアイコン・SmartTube・BLSは2026-10-19に対応済み）アプリ内の広告ブロック切り替え、スリープ復帰・長時間稼働の確認 |
 | サーバー運用 | アプリでは不要 | ニュース・経済指標はアプリが自分で取得する。Unsplashを使う場合だけ、キーを置く場所を決める |
 | Spotify | フロー実装、実認証なし | Client ID・リダイレクト先・利用ユーザーを設定し実接続 |
 | Unsplash | フロー実装、実キーなし | サーバーにAccess Key設定、実画像切り替えとクレジット確認 |

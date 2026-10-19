@@ -8,7 +8,9 @@ const brands = new Map([
 ]);
 
 // Only the supplied Android package is used to launch; the display name selects artwork.
-export function nativeAppTile({name, packageName}) {
+// The app's own icon comes from the launcher as a PNG data URL; nothing else is accepted as an image source.
+const appIcon = icon => typeof icon === 'string' && /^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(icon) ? icon : '';
+export function nativeAppTile({name, packageName, icon: iconData}) {
   const button = document.createElement('button');
   button.type = 'button'; button.className = 'app-tile';
   button.dataset.package = packageName; button.setAttribute('aria-label', name);
@@ -20,6 +22,9 @@ export function nativeAppTile({name, packageName}) {
     icon.append(image);
   } else if (brand !== 'generic') {
     const mark = document.createElement('span'); mark.className = 'app-brand-mark'; icon.append(mark);
+  } else if (appIcon(iconData)) {
+    const image = document.createElement('img'); image.src = appIcon(iconData); image.alt = '';
+    icon.append(image); button.dataset.art = 'app';
   } else {
     icon.textContent = [...name].slice(0, 2).join('');
   }
