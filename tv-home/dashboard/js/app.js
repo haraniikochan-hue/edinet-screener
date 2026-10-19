@@ -10,7 +10,7 @@ import * as spotify from './spotify.js';
 import { mountTradingView } from './tradingview.js';
 import { getMarketSnapshot, getMarketCandles, HyperliquidStream } from './hyperliquid.js';
 import { MARKETS, MARKET_BY_SYMBOL, CHART_RANGES, marketCoins } from './market-definitions.js';
-import { drawMarketChart } from './market-chart.js';
+import { drawMarketChart, drawDetailChart } from './market-chart.js';
 import { loadNews, loadCalendar, loadPhotos } from './feeds.js';
 import { HOUR, weatherTimestamp, weatherIsStale, hourlyForecast, makeWeatherIcon, renderHourlyForecast } from './weather.js';
 
@@ -451,8 +451,10 @@ function renderNativeAdBlock(){
 }
 // Detail sheet: what OK shows for a market row, a release, a headline or the data status.
 let detailReturn=null;
-function openDetail({eyebrow='',title,subtitle='',body='',facts=[],chart=null,link=null,action=null,accent=''}){
+function openDetail({eyebrow='',title,subtitle='',body='',facts=[],chart=null,link=null,action=null,accent='',wide=false}){
   detailReturn=document.activeElement;
+  // Markets use the wide sheet with a period switch (openMarketDetail fills it in).
+  $('detail-sheet').classList.toggle('market-detail',wide);$('detail-ranges').hidden=!wide;
   $('detail-eyebrow').textContent=eyebrow;$('detail-title').textContent=title;
   $('detail-subtitle').textContent=subtitle;$('detail-subtitle').hidden=!subtitle;
   $('detail-body').textContent=body;$('detail-body').hidden=!body;
@@ -477,19 +479,103 @@ function openDetail({eyebrow='',title,subtitle='',body='',facts=[],chart=null,li
   $('close-detail').focus();
 }
 // If the row was re-rendered meanwhile (a calendar page turn), focus rests on the dock instead of nowhere.
-function closeDetail(){ $('detail-overlay').hidden=true;$('stage').inert=false;document.body.classList.remove('modal-open');if(detailReturn?.isConnected)detailReturn.focus({preventScroll:true});else navigation.focusHome(); }
-function openMarketDetail(symbol){
-  const market=MARKET_BY_SYMBOL.get(symbol),q=quotes.get(symbol),series=histories.get(`${market.coin}:${config.chartRange}`);
-  const values=series?.points?.map(point=>point.value).filter(isNumber)||[];
-  const change=q && isNumber(q.change)?`${q.change>0?'+':q.change<0?'−':''}${Math.abs(q.change).toFixed(2)}%`:'';
-  openDetail({eyebrow:market.name,title:q?`${symbol} ${money(q.price,market.digits)}`:symbol,
-    subtitle:q?`24時間 ${change}${q.stale?' · 更新待ち':''}`:(unavailable.get(symbol)||'価格を取得しています'),
-    chart:series && config.marketMode==='custom'?{series,symbol,label:`${symbol} 24時間の取引価格`,baseline:money(series.baseline,market.digits)}:null,
-    facts:[['24時間の高値・安値',values.length?`${money(Math.max(...values),market.digits)} / ${money(Math.min(...values),market.digits)}（取引価格）`:''],
-      ['契約',`${market.coin} · 無期限先物`],['単位',market.unit],['配信元',q?.source||''],
-      ['受信',q?`${stamp(q.timestamp)} JST${q.stale?'（最終取得値）':''}`:''],['注記',q && q.source!=='Hyperliquid'?q.note:'価格はマーク価格、変化率は24時間比。チャートは15分足の取引価格。']],
-    accent:q && isNumber(q.change) && q.change<0?'var(--down)':'var(--up)'});
+function closeDetail(){ detailLoad++;detailChart=null;$('detail-overlay').hidden=true;$('stage').inert=false;document.body.classList.remove('modal-open');if(detailReturn?.isConnected)detailReturn.focus({preventScroll:true});else navigation.focusHome(); }
+// A market's detail: a period switch, a large chart with price and time scales, and a cursor that
+// reads the price at any moment (← → on the chart). Longer ranges are fetched when first chosen and
+// kept for a few minutes; the 24-hour range reuses the home screen's chart data.
+const DETAIL_RANGES=['1d','1w','1m','3m','1y'],PERIOD_NAMES={'1d':'24時間','1w':'1週間','1m':'1か月','3m':'3か月','1y':'1年'};
+const detailSeries=new Map();
+let detailRange='1d',detailMarket=null,detailChart=null,detailIndex=null,detailLoad=0;
+async function marketSeries(market,range){
+  const key=`${market.coin}:${range}`,cached=detailSeries.get(key);
+  if(range===config.chartRange && histories.has(key) && !histories.get(key).stale)return histories.get(key);
+  if(cached && Date.now()-cached.fetchedAt<Math.max(5*60000,CHART_RANGES[range].intervalMs))return cached.series;
+  const series=await getMarketCandles(market.coin,range);
+  detailSeries.set(key,{series,fetchedAt:Date.now()});return series;
 }
+const ISO_DATE=day=>day.replaceAll('-','/');
+function openMarketDetail(symbol){
+  const market=MARKET_BY_SYMBOL.get(symbol),q=quotes.get(symbol);
+  detailMarket=market;detailChart=null;
+  openDetail({eyebrow:market.name,title:q?`${symbol} ${money(q.price,market.digits)}`:symbol,wide:true,
+    accent:q && isNumber(q.change) && q.change<0?'var(--down)':'var(--up)'});
+  const charts=config.marketMode==='custom' && (config.cryptoSource==='hyperliquid' || Boolean(market.dex));
+  $('detail-ranges').hidden=!charts;
+  $('detail-ranges').replaceChildren(...DETAIL_RANGES.map(range=>{
+    const button=el('button','range-option',CHART_RANGES[range].name);button.type='button';button.dataset.range=range;
+    button.onclick=()=>void showMarketRange(range);return button;
+  }));
+  if(!charts){renderMarketFacts(market,null,'1d');return;}
+  void showMarketRange(detailRange);
+  $('detail-ranges').querySelector(`[data-range="${detailRange}"]`).focus();
+}
+function renderMarketFacts(market,series,range){
+  const q=quotes.get(market.symbol),spec=CHART_RANGES[range],values=series?.points.map(p=>p.value).filter(isNumber)||[];
+  const periodChange=range==='1d' ? q?.change : series ? (series.points.at(-1).value-series.baseline)/series.baseline*100 : null;
+  const subtitle=$('detail-subtitle');subtitle.hidden=false;
+  if(!q && !series)subtitle.replaceChildren(unavailable.get(market.symbol)||'価格を取得しています');
+  else{
+    const change=el('span',`detail-change ${tone(periodChange)}`,isNumber(periodChange)?signed(periodChange):'—');
+    const period=series?.since ? `${ISO_DATE(ISO_DAY.format(series.start))}から` : PERIOD_NAMES[range];
+    subtitle.replaceChildren(`${period} `,change,range==='1d' && q?.stale?' · 更新待ち':'');
+  }
+  $('detail-sheet').style.setProperty('--sheet-accent',isNumber(periodChange) && periodChange<0?'var(--down)':'var(--up)');
+  const fact=(term,value,wide=false)=>{const item=el('div',`detail-fact${wide?' wide':''}`);item.append(el('dt','',term),el('dd','',value||'—'));return item;};
+  const price=v=>`${money(v,market.digits)}`;
+  const note=q && q.source!=='Hyperliquid' ? q.note
+    : `見出しの価格はマーク価格。チャートと高値・安値は${spec.bar}の取引価格で、点線は期間最初の足の始値${range==='1d'?'。変化率は24時間比':'。変化率はその始値との比較'}。${series?.since?`上場が新しいため、${ISO_DATE(ISO_DAY.format(series.start))}からの表示です。`:''}`;
+  $('detail-facts').replaceChildren(
+    fact('期間の高値',values.length?price(Math.max(...values)):''),fact('期間の安値',values.length?price(Math.min(...values)):''),fact('期間の始値',series?price(series.baseline):''),
+    fact('契約',`${market.coin} · 無期限先物`),fact('単位',market.unit),fact('受信',q?`${stamp(q.timestamp)} JST${q.stale?'（最終取得値）':''} · ${q.source}`:''),
+    fact('注記',note,true));
+}
+async function showMarketRange(range){
+  const market=detailMarket,load=++detailLoad,box=$('detail-chart'),spec=CHART_RANGES[range];
+  detailRange=range;detailChart=null;detailIndex=null;
+  for(const button of $('detail-ranges').children)button.setAttribute('aria-pressed',String(button.dataset.range===range));
+  box.hidden=false;box.removeAttribute('tabindex');box.removeAttribute('role');box.replaceChildren(el('p','detail-chart-status','読み込み中'));
+  renderMarketFacts(market,null,range);
+  let series=null;
+  try{series=await marketSeries(market,range);}catch{}
+  if(load!==detailLoad || $('detail-overlay').hidden)return;
+  if(!series){box.replaceChildren(el('p','detail-chart-status','この期間の価格履歴を取得できません'));return;}
+  // A market listed within the range is drawn from its first candle, and says so.
+  const since=series.points[0].start>series.start+2*spec.intervalMs;
+  const shown=since?{...series,start:series.points[0].start,since:true}:series;
+  // Each candle is named by its opening time (a round hour or day).
+  const when=range==='1y' ? p=>ISO_DATE(ISO_DAY.format(p.start)) : p=>stamp(p.start);
+  detailChart=drawDetailChart(box,shown,{label:`${market.symbol} ${PERIOD_NAMES[range]}の取引価格`,price:(v,digits=market.digits)=>money(v,digits),change:v=>signed(v),when});
+  if(!detailChart){box.replaceChildren(el('p','detail-chart-status','この期間の価格履歴が足りません'));return;}
+  box.tabIndex=0;box.setAttribute('role','slider');box.setAttribute('aria-label',`${market.symbol} ${PERIOD_NAMES[range]}のチャート。左右で時点を移動`);
+  box.setAttribute('aria-valuemin','0');box.setAttribute('aria-valuemax',String(detailChart.length-1));
+  box.dataset.hint='チャートを選んで ← → で各時点の価格';
+  renderMarketFacts(market,shown,range);
+}
+function scrubDetail(index){
+  if(!detailChart)return;
+  detailIndex=index===null ? null : Math.max(0,Math.min(detailChart.length-1,index));
+  const text=detailChart.scrub(detailIndex);
+  if(text){$('detail-chart').setAttribute('aria-valuenow',String(detailIndex));$('detail-chart').setAttribute('aria-valuetext',text);}
+}
+$('detail-chart').addEventListener('focus',()=>scrubDetail(detailChart ? detailChart.length-1 : null));
+$('detail-chart').addEventListener('blur',()=>scrubDetail(null));
+$('detail-chart').addEventListener('keydown',event=>{
+  if(!detailChart)return;
+  // Holding ← or → speeds up, so a year of daily candles crosses in a few seconds.
+  if(event.key==='ArrowLeft' || event.key==='ArrowRight'){
+    event.preventDefault();event.stopPropagation();
+    const step=(event.repeat?Math.max(1,Math.round(detailChart.length/60)):1)*(event.key==='ArrowLeft'?-1:1);
+    scrubDetail((detailIndex ?? detailChart.length-1)+step);
+  }else if(event.key==='ArrowUp'){
+    event.preventDefault();event.stopPropagation();$('detail-ranges').querySelector('[aria-pressed="true"]')?.focus();
+  }
+});
+$('detail-chart').addEventListener('pointermove',event=>{
+  if(!detailChart || event.pointerType!=='mouse')return;
+  const box=$('detail-chart'),rect=box.getBoundingClientRect();
+  if(document.activeElement!==box)box.focus({preventScroll:true});
+  scrubDetail(detailChart.nearest((event.clientX-rect.left)*box.clientWidth/rect.width));
+});
 const RELEASE_SOURCES={BLS:'米労働統計局（BLS）',BEA:'米経済分析局（BEA）',FRB:'米連邦準備制度理事会（FRB）'};
 function openEventDetail(row){
   const event=calendarInfo?.data.events.find(item=>item.id===row.dataset.eventId);if(!event)return;

@@ -425,6 +425,39 @@ details.about { padding: 16px 20px; border-radius: 22px; background: rgba(255,25
 .detail-facts dd { color: var(--label); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .detail-facts :is(dt,dd):nth-child(-n+2) { border-top: 0; }
 .detail-facts dd.tone-warn { color: var(--warn); }
+/* Market detail — a wider sheet: period switch, a large chart on the sheet itself (price scale on the
+   right, time below, a cursor that reads any moment), then the period's figures three to a row. */
+.detail-sheet.market-detail { max-width: 1040px; padding-bottom: 24px; }
+.market-detail .dialog-heading { margin-bottom: 14px; }
+.detail-change { font-weight: 600; }
+.range-picker { display: flex; gap: 4px; width: max-content; margin: 0 0 6px; padding: 4px; border-radius: 999px; background: rgba(255,255,255,.07); }
+.range-option { min-width: 84px; height: 40px; padding: 0 18px; border-radius: 20px; color: var(--label-2); font-size: 16px; font-weight: 600; transition: background .2s,color .2s,transform .3s var(--spring); }
+.range-option[aria-pressed=true] { background: rgba(255,255,255,.16); color: var(--label); }
+.detail-sheet .range-option:focus-visible { outline: none; background: #fff; color: #0b0d12; transform: scale(1.06); }
+.market-detail .detail-chart { height: 316px; margin: 0 0 14px; padding: 0; border-radius: 12px; background: none; }
+.market-detail .detail-chart:focus-visible { outline: 2px solid rgba(255,255,255,.3); outline-offset: 8px; }
+.market-detail .detail-chart::before { content: attr(data-hint); position: absolute; top: 18px; left: 0; color: var(--label-3); font-size: 14px; }
+.market-detail .detail-chart:focus::before,.market-detail .detail-chart:not([data-hint])::before { content: none; }
+.detail-chart-status { display: grid; place-items: center; height: 100%; color: var(--label-3); font-size: 16px; }
+.detail-grid { stroke: rgba(255,255,255,.08); stroke-width: 1; }
+.detail-tick { stroke: rgba(255,255,255,.22); stroke-width: 1; }
+.detail-marks { position: absolute; inset: 0; pointer-events: none; color: var(--label-3); font-size: 13px; font-variant-numeric: tabular-nums; }
+.detail-price-mark { position: absolute; transform: translateY(-50%); }
+.detail-time-mark { position: absolute; transform: translateX(-50%); white-space: nowrap; }
+.detail-cursor line { stroke: rgba(255,255,255,.6); stroke-width: 1.5; }
+.detail-cursor circle { stroke: #1b1d25; stroke-width: 2.5; }
+.detail-readout { position: absolute; top: 0; display: flex; align-items: baseline; gap: 10px; padding: 7px 14px; border-radius: 14px; background: rgba(255,255,255,.1); white-space: nowrap; font-variant-numeric: tabular-nums; pointer-events: none; }
+.detail-read-price { font-size: 22px; font-weight: 600; letter-spacing: -.01em; }
+.detail-read-change { font-size: 16px; font-weight: 600; }
+.detail-read-time { font-size: 15px; color: var(--label-2); }
+.market-detail .detail-facts { grid-template-columns: repeat(3,minmax(0,1fr)); }
+.detail-fact { min-width: 0; padding: 11px 18px; border-top: 1px solid var(--separator); }
+.detail-fact:nth-child(-n+3) { border-top: 0; }
+.detail-fact.wide { grid-column: 1/-1; }
+.market-detail .detail-facts :is(dt,dd) { padding: 0; border: 0; }
+.market-detail .detail-facts dt { font-size: 13px; }
+.market-detail .detail-facts dd { margin-top: 3px; font-size: 17px; }
+.market-detail .detail-fact.wide dd { color: var(--label-2); font-size: 14px; line-height: 1.6; }
 /* App list: every installed TV app, a grid like the iOS App Library. */
 .apps-sheet { max-width: 880px; }
 .app-grid { display: grid; grid-template-columns: repeat(6,1fr); gap: 10px 8px; }

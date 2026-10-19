@@ -18,6 +18,13 @@ export const MARKETS = Object.freeze([
 export const MARKET_BY_SYMBOL = new Map(MARKETS.map(m=>[m.symbol,m]));
 export const MARKET_BY_COIN = new Map(MARKETS.map(m=>[m.coin,m]));
 export const marketCoins = (dex, cryptoSource='hyperliquid') => MARKETS.filter(m=>m.dex===dex && (dex!=='' || cryptoSource==='hyperliquid')).map(m=>m.coin);
+// The home screen's small charts show 24 hours; a market's detail sheet can switch to the longer
+// ranges. Each range is about 100–370 Hyperliquid candles (`name` and `bar` are shown on screen).
+const HOUR = 3600000, DAY = 24 * HOUR;
 export const CHART_RANGES = Object.freeze({
-  '1d':{label:'24H',duration:86400000,interval:'15m',intervalMs:900000},
+  '1d':{label:'24H',name:'1日',bar:'15分足',duration:DAY,interval:'15m',intervalMs:15 * 60000},
+  '1w':{label:'1W',name:'1週',bar:'1時間足',duration:7 * DAY,interval:'1h',intervalMs:HOUR},
+  '1m':{label:'1M',name:'1か月',bar:'4時間足',duration:30 * DAY,interval:'4h',intervalMs:4 * HOUR},
+  '3m':{label:'3M',name:'3か月',bar:'12時間足',duration:91 * DAY,interval:'12h',intervalMs:12 * HOUR},
+  '1y':{label:'1Y',name:'1年',bar:'日足',duration:365 * DAY,interval:'1d',intervalMs:DAY},
 });
