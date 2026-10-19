@@ -710,12 +710,15 @@ function openStatusDetail(){
     facts:rows,action:{label:'今すぐ再取得',run:()=>{closeDetail();$('refresh').click();}}});
 }
 // The economic calendar behaves like a scrolling list: moving past an edge turns the page.
+// Pages turn only with the buttons at the card's lower right. Down from the last row lands on them
+// (▶, or ◀ on the last page), and Down again reaches the dock; with a single page it goes straight there.
 function calendarEdge(current,direction){
-  if(!current.classList.contains('calendar-event'))return false;
-  const rows=[...$('calendar-events').querySelectorAll('.calendar-event')],index=rows.indexOf(current);
-  if(direction==='down' && index===rows.length-1 && !$('calendar-next').disabled){calendarIndex++;showCalendar();$('calendar-events').querySelector('.calendar-event')?.focus({preventScroll:true});return true;}
-  if(direction==='up' && index===0 && calendarIndex>0){calendarIndex--;showCalendar();[...$('calendar-events').querySelectorAll('.calendar-event')].at(-1)?.focus({preventScroll:true});return true;}
-  return false;
+  if(!current.classList.contains('calendar-event') || direction!=='down')return false;
+  const rows=[...$('calendar-events').querySelectorAll('.calendar-event')];
+  if(current!==rows.at(-1))return false;
+  const button=[$('calendar-next'),$('calendar-prev')].find(item=>!item.disabled);
+  if(!button)return false;
+  button.focus({preventScroll:true});return true;
 }
 function closeSettings(){ $('settings-overlay').hidden=true;$('stage').inert=false;document.body.classList.remove('modal-open');returnFocus?.focus({preventScroll:true}); }
 function openSettings(section='general') {

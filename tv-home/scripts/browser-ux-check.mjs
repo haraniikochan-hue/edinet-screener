@@ -49,7 +49,7 @@ try {
   await page.keyboard.press('ArrowDown'); assert.equal(await focused(page), 'netflix', 'nothing below the dock');
   await page.keyboard.press('ArrowUp'); assert.equal(await focused(page), 'news-title');
   await page.keyboard.press('ArrowDown'); assert.equal(await focused(page), 'netflix', 'down returns to the app you came from');
-  await page.locator('[data-app="smarttube"]').focus(); await page.keyboard.press('ArrowUp'); assert.equal(await focused(page), 'cal5', 'SmartTube sits under the calendar');
+  await page.locator('[data-app="smarttube"]').focus(); await page.keyboard.press('ArrowUp'); assert.equal(await page.evaluate(() => document.activeElement.closest('.calendar-card') !== null), true, 'SmartTube sits under the calendar');
   await page.keyboard.press('ArrowDown'); assert.equal(await focused(page), 'smarttube', 'the opposite arrow undoes a move instead of paging the calendar');
   assert.match(await page.locator('#calendar-page').textContent(), /^1 \/ 3$/);
   await page.locator('#refresh').focus(); await page.keyboard.press('ArrowDown');
@@ -67,15 +67,24 @@ try {
   assert.equal(await page.evaluate(() => !document.getElementById('detail-overlay').hidden && document.getElementById('detail-sheet').classList.contains('weather-detail')), true, 'OK on the weather card opens the weather detail');
   await page.keyboard.press('Escape');
   assert.equal(await page.evaluate(() => document.activeElement.classList.contains('weather-section')), true, 'Back returns to the weather card');
+  // v0.24.4: Down from the last release reaches the page buttons, then the dock; only the buttons turn pages
   await page.locator('.calendar-event').last().focus(); await page.keyboard.press('ArrowDown');
-  assert.equal(await focused(page), 'cal0'); assert.match(await page.locator('#calendar-page').textContent(), /^2 \/ 3$/, 'moving past the last release turns to the earnings');
-  assert.equal(await page.locator('#calendar-title').textContent(), '主要企業の決算');
-  await page.keyboard.press('ArrowUp'); assert.equal(await focused(page), 'cal5'); assert.match(await page.locator('#calendar-page').textContent(), /^1 \/ 3$/);
-  await page.keyboard.press('Escape'); assert.equal(await focused(page), 'smarttube', 'Back returns to the last app on the dock');
+  assert.equal(await focused(page), 'calendar-next', 'the last release leads down to the page buttons');
+  assert.match(await page.locator('#calendar-page').textContent(), /^1 \/ 3$/, 'moving down never turns the page');
+  await page.keyboard.press('Enter'); assert.match(await page.locator('#calendar-page').textContent(), /^2 \/ 3$/);
+  assert.equal(await page.locator('#calendar-title').textContent(), '主要企業の決算'); assert.equal(await focused(page), 'calendar-next');
+  await page.keyboard.press('ArrowLeft'); assert.equal(await focused(page), 'calendar-prev');
+  await page.keyboard.press('Enter'); assert.match(await page.locator('#calendar-page').textContent(), /^1 \/ 3$/);
+  assert.equal(await focused(page), 'calendar-next', 'back on the first page, focus moves to the button still enabled');
+  await page.keyboard.press('ArrowDown'); const landed = await page.evaluate(() => document.activeElement.closest('#apps') ? document.activeElement.getAttribute('aria-label') : null);
+  assert.ok(landed, 'the page buttons lead down to the dock');
+  await page.keyboard.press('ArrowUp'); assert.equal(await focused(page), 'calendar-next', 'and Up retraces to the button');
+  await page.keyboard.press('ArrowUp'); assert.equal(await focused(page), 'cal5');
+  await page.keyboard.press('Escape'); assert.equal(await page.evaluate(() => document.activeElement.getAttribute('aria-label')), landed, 'Back returns to the last app on the dock');
   await page.locator('[data-brand="settings"]').focus(); await page.keyboard.press('ArrowRight');
   assert.equal(await page.evaluate(() => document.activeElement.dataset.brand), 'settings', 'credits and the hidden photo switch are not focus stops');
   assert.equal(await page.locator('#next-photo').isHidden(), true, 'no photo switch while there is one photo');
-  report.push('Remote: dock is the floor, up/down retraces to the same app (even onto the calendar, which otherwise pages past its last row), top buttons lead into the market, calendar pages by moving past its edges, Back returns to the dock, credits and the single-photo switch are skipped.');
+  report.push('Remote: dock is the floor, up/down retraces to the same app (even onto the calendar), top buttons lead into the market, the last release leads down to the page buttons and then the dock (only the buttons turn pages), Back returns to the dock, credits and the single-photo switch are skipped.');
 
   // Detail sheets instead of leaving the launcher.
   await page.locator('[data-symbol="SP500"]').focus(); await page.keyboard.press('Enter');
@@ -132,7 +141,7 @@ try {
   const box = selector => small.page.locator(selector).evaluate(async el => { await Promise.all(el.getAnimations().map(a => a.finished)); const r = el.getBoundingClientRect(); return { left:r.left, top:r.top, right:r.right, bottom:r.bottom, width:r.width }; });
   assert.deepEqual(await box('#screen'), { left:0, top:0, right:960, bottom:540, width:960 });
   assert.equal(await focused(small.page), 'smarttube');
-  await small.page.keyboard.press('ArrowUp'); assert.equal(await focused(small.page), 'cal5', 'remote moves the same way at 960×540');
+  await small.page.keyboard.press('ArrowUp'); assert.equal(await small.page.evaluate(() => document.activeElement.closest('.calendar-card') !== null), true, 'remote moves the same way at 960×540');
   await small.page.keyboard.press('ArrowDown'); assert.equal(await focused(small.page), 'smarttube');
   await small.page.keyboard.press('ArrowRight'); await small.page.keyboard.press('ArrowRight');
   await small.page.keyboard.press('ArrowUp'); assert.equal(await focused(small.page), 'news-title');
