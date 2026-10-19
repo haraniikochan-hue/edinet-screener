@@ -43,7 +43,7 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
-        <!-- The remote's settings button from any app (SettingsKeyService); enabled from the PC with adb. -->
+        <!-- Speeds up a held volume button in every app (SettingsKeyService, named for its first job); enabled from the PC with adb. -->
         <service
             android:name=".SettingsKeyService"
             android:exported="true"

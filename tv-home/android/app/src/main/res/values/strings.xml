@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="settings_key_label">TV Home 設定ボタンと音量</string>
-    <string name="settings_key_description">リモコンの設定ボタンで、どの画面からでもテレビの設定を開きます。音量ボタンは押し続けると音量が変わり続け、長く押すほど速くなります。受け取るのは設定ボタンと音量ボタンだけで、ほかのボタンや画面の内容は読み取りません。</string>
+    <string name="settings_key_label">TV Home 音量の加速</string>
+    <string name="settings_key_description">音量ボタンを押し続けたとき、長く押すほど音量が速く変わるようにします。テレビの音量の変化だけを見ていて、リモコンのボタンや画面の内容は読み取りません。</string>
 </resources>

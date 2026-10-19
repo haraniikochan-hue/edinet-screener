@@ -1,84 +1,71 @@
 package jp.tvhome
 
 import android.accessibilityservice.AccessibilityService
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.media.AudioManager
-import android.os.Handler
-import android.os.Looper
+import android.os.Build
 import android.os.SystemClock
-import android.provider.Settings
-import android.view.KeyEvent
 import android.view.accessibility.AccessibilityEvent
 
 /**
- * Two remote buttons, from any app; every other key is passed on untouched, and nothing is recorded.
+ * Speeds up a held volume button, in every app ([VolumeBoost]). It reads no keys and no screen
+ * content: it only follows the TV's own volume changes and, while a hold lasts, adds steps.
  *
- * Settings (gear): Xiaomi's system hands KEYCODE_SETTINGS to the stock home's panel, which is disabled,
- * and apps never receive it; an accessibility service sees keys first.
- *
- * Volume up/down: the TV moves the volume once per press, however long the button is held. Here a
- * press moves it at once and holding keeps moving it, faster the longer it is held ([VolumeHold]).
- * The volume itself is changed through AudioManager with the system's volume bar, as the TV does.
+ * It must not filter key events. On this TV an accessibility service that filters keys makes the
+ * system handle the volume keys before it and drop their repeats, so a held button moved the volume
+ * only once (v0.16.0–v0.26.0, when this service also caught the settings button). The settings button
+ * is now replaced by pressing Home twice (MainActivity). The class keeps its name so the accessibility
+ * permission the TV already granted stays in place.
  */
 class SettingsKeyService : AccessibilityService() {
-    private val handler = Handler(Looper.getMainLooper())
-    private var held = 0          // the volume key being held, or 0
-    private var holdStart = 0L
-    private var lastKey = 0
-    private var lastUp = 0L
-    private val repeat = object : Runnable {
-        override fun run() {
-            if (held == 0) return
-            val time = SystemClock.uptimeMillis() - holdStart
-            if (time > VolumeHold.MAX_HOLD) { held = 0; return }
-            adjust(held, time)
-            handler.postDelayed(this, VolumeHold.interval(time))
+    private val boost = VolumeBoost()
+    private var ownValue = -1
+    private var ownAt = 0L
+
+    private val volumeChanged = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            if (intent.getIntExtra(EXTRA_STREAM, -1) != AudioManager.STREAM_MUSIC) return
+            val value = intent.getIntExtra(EXTRA_VALUE, -1)
+            val previous = intent.getIntExtra(EXTRA_PREVIOUS, -1)
+            if (value < 0 || previous < 0 || value == previous) return
+            val now = SystemClock.uptimeMillis()
+            // The change this service just made comes back as a broadcast too.
+            if (value == ownValue && now - ownAt < 300) return
+            val direction = if (value > previous) 1 else -1
+            val extra = boost.onMove(now, direction)
+            if (extra == 0) return
+            val audio = getSystemService(AudioManager::class.java) ?: return
+            val target = (value + direction * extra)
+                .coerceIn(audio.getStreamMinVolume(AudioManager.STREAM_MUSIC), audio.getStreamMaxVolume(AudioManager.STREAM_MUSIC))
+            if (target == value) return
+            ownValue = target; ownAt = now
+            try { audio.setStreamVolume(AudioManager.STREAM_MUSIC, target, 0) } catch (e: Exception) { }
         }
     }
 
-    override fun onKeyEvent(event: KeyEvent): Boolean = when (event.keyCode) {
-        KeyEvent.KEYCODE_SETTINGS -> {
-            if (event.action == KeyEvent.ACTION_UP) {
-                try { startActivity(Intent(Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) } catch (e: Exception) { }
-            }
-            true
-        }
-        KeyEvent.KEYCODE_VOLUME_UP, KeyEvent.KEYCODE_VOLUME_DOWN -> volumeKey(event)
-        else -> false
+    override fun onServiceConnected() {
+        super.onServiceConnected()
+        val filter = IntentFilter(VOLUME_CHANGED)
+        if (Build.VERSION.SDK_INT >= 33) registerReceiver(volumeChanged, filter, Context.RECEIVER_NOT_EXPORTED)
+        else registerReceiver(volumeChanged, filter)
     }
 
-    private fun volumeKey(event: KeyEvent): Boolean {
-        val now = SystemClock.uptimeMillis()
-        when (event.action) {
-            KeyEvent.ACTION_DOWN -> {
-                // The system's own key repeats are ignored: the timer below sets the pace.
-                if (event.repeatCount > 0 || held == event.keyCode) return true
-                handler.removeCallbacks(repeat)
-                // A remote that repeats by sending press and release pairs keeps one hold going.
-                if (event.keyCode != lastKey || now - lastUp > VolumeHold.SAME_HOLD_GAP) holdStart = now
-                held = event.keyCode; lastKey = event.keyCode
-                adjust(held, now - holdStart)
-                handler.postDelayed(repeat, VolumeHold.FIRST_DELAY)
-            }
-            KeyEvent.ACTION_UP -> {
-                if (held == event.keyCode) { held = 0; handler.removeCallbacks(repeat) }
-                lastUp = now
-            }
-        }
-        return true
+    override fun onDestroy() {
+        try { unregisterReceiver(volumeChanged) } catch (e: Exception) { }
+        super.onDestroy()
     }
 
-    private fun adjust(key: Int, time: Long) {
-        val audio = getSystemService(AudioManager::class.java) ?: return
-        val direction = if (key == KeyEvent.KEYCODE_VOLUME_UP) AudioManager.ADJUST_RAISE else AudioManager.ADJUST_LOWER
-        try {
-            repeat(VolumeHold.steps(time, audio.getStreamMaxVolume(AudioManager.STREAM_MUSIC))) {
-                audio.adjustStreamVolume(AudioManager.STREAM_MUSIC, direction, AudioManager.FLAG_SHOW_UI)
-            }
-        } catch (e: Exception) { }
-    }
-
-    override fun onInterrupt() { held = 0; handler.removeCallbacks(repeat) }
-    override fun onDestroy() { handler.removeCallbacks(repeat); super.onDestroy() }
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {}
+    override fun onInterrupt() {}
+
+    private companion object {
+        // AudioManager's volume change broadcast (sent by the system for every change; not in the public SDK).
+        const val VOLUME_CHANGED = "android.media.VOLUME_CHANGED_ACTION"
+        const val EXTRA_STREAM = "android.media.EXTRA_VOLUME_STREAM_TYPE"
+        const val EXTRA_VALUE = "android.media.EXTRA_VOLUME_STREAM_VALUE"
+        const val EXTRA_PREVIOUS = "android.media.EXTRA_PREV_VOLUME_STREAM_VALUE"
+    }
 }

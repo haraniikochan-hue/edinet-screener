@@ -279,10 +279,14 @@ class MainActivity : Activity() {
         web.requestFocus(View.FOCUS_DOWN)
     }
 
-    // Home pressed while the dashboard is showing: close any sheet and return to the dock.
+    // Home pressed: close any sheet and return to the dock. Pressed twice quickly, from any app, it
+    // opens the TV's settings instead (the remote's settings button cannot be caught without breaking
+    // a held volume button; see SettingsKeyService).
+    private val homePresses = DoublePress()
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        if (Intent.ACTION_MAIN == intent.action) { closeLogin(); sendEscape() }
+        if (Intent.ACTION_MAIN != intent.action) return
+        if (homePresses.press(SystemClock.uptimeMillis())) openTvSettings() else { closeLogin(); sendEscape() }
     }
 
     // BACK reaches the page as Escape (HANDOFF 3.2); a home screen never closes itself.
