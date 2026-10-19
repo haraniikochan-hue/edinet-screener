@@ -305,7 +305,13 @@ a.news-title[href]:hover { background: rgba(255,255,255,.07); }
 .dock:has(.native-apps) { grid-column: 1; justify-self: start; padding: 14px 0; }
 /* The scroller's own padding keeps lifted icons and names unclipped; its side padding is the shelf's inset */
 .native-apps { min-width: 0; justify-content: flex-start; overflow-x: auto; overflow-y: hidden; padding: 44px 14px 14px; margin: -44px 0 -14px; scrollbar-width: none; overscroll-behavior-x: contain; }
-.native-apps .app-label { max-width: calc(var(--app-size) + 72px); }.launcher-footer:has(.native-apps) .photo-caption { grid-column: 2; }
+/* Scrolling to a focused app keeps it clear of the shelf's edge: room for the shelf inset plus the
+   overhang of its name (at most 36px each side), so neither the lifted icon nor the name is cut. */
+.native-apps { scroll-padding-inline: 50px; }
+.native-apps .app-label { max-width: calc(var(--app-size) + 72px); }
+/* The first app can't scroll further in; its name overhangs the icon by at most 10px. */
+.native-apps .app-tile:first-child .app-label { transform: translate(max(-50%,-46px),6px) scale(.9); }
+.native-apps .app-tile:first-child:focus .app-label { transform: translate(max(-50%,-46px),0) scale(1); }.launcher-footer:has(.native-apps) .photo-caption { grid-column: 2; }
 
 /* Remote focus: tvOS-like white platter for controls, a lifted glass row for list items */
 #stage :is(.glass-button,.round-button,.tinted-button,.text-button,.status-pill):focus-visible { outline: none; background: #fff; color: #0b0d12; box-shadow: 0 10px 24px -8px rgba(0,0,0,.7); transform: scale(1.08); }
