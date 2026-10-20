@@ -2,6 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- To tell an app's screen from a dialog or the keyboard when it comes to the front (AppRedirect). -->
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
     <uses-feature android:name="android.software.leanback" android:required="false" />
     <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
 
@@ -43,7 +45,7 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
-        <!-- Speeds up a held volume button in every app (SettingsKeyService, named for its first job); enabled from the PC with adb. -->
+        <!-- Speeds up a held volume button in every app and turns the Prime Video button into Spotify (SettingsKeyService, named for its first job); enabled from the PC with adb. -->
         <service
             android:name=".SettingsKeyService"
             android:exported="true"

@@ -465,6 +465,8 @@ class MainActivity : Activity() {
             runOnUiThread {
                 val intent = packageManager.getLeanbackLaunchIntentForPackage(packageName)
                     ?: packageManager.getLaunchIntentForPackage(packageName)
+                // Prime Video opened here stays Prime Video; only the remote's button opens Spotify (AppRedirect).
+                primeVideoButton.launching(packageName, SystemClock.uptimeMillis())
                 // A system screen may refuse other apps; the tile then simply does nothing.
                 try { intent?.let { startActivity(it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) } } catch (e: Exception) { }
             }

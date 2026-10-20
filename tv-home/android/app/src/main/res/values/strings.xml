@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="settings_key_label">TV Home 音量の加速</string>
-    <string name="settings_key_description">音量ボタンを押し続けたとき、長く押すほど音量が速く変わるようにします。テレビの音量の変化だけを見ていて、リモコンのボタンや画面の内容は読み取りません。</string>
+    <string name="settings_key_label">TV Home 音量とボタン</string>
+    <string name="settings_key_description">音量ボタンを押し続けたとき、長く押すほど音量が速く変わるようにします。また、リモコンのプライムビデオのボタンでSpotifyを開きます。テレビの音量の変化と、前に出たアプリの名前だけを見ていて、リモコンのボタンや画面の内容は読み取りません。</string>
 </resources>

@@ -34,8 +34,8 @@ android {
         applicationId = "jp.tvhome.launcher"
         minSdk = 28
         targetSdk = 35
-        versionCode = 26
-        versionName = "0.29.0"
+        versionCode = 27
+        versionName = "0.30.0"
         buildConfigField("String", "SPOTIFY_CLIENT_ID", "\"$spotifyClientId\"")
         buildConfigField("String", "UNSPLASH_ACCESS_KEY", "\"$unsplashAccessKey\"")
     }

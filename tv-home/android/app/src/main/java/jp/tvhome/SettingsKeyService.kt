@@ -2,17 +2,21 @@ package jp.tvhome
 
 import android.accessibilityservice.AccessibilityService
 import android.content.BroadcastReceiver
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.pm.PackageManager
 import android.media.AudioManager
 import android.os.Build
 import android.os.SystemClock
 import android.view.accessibility.AccessibilityEvent
 
 /**
- * Speeds up a held volume button, in every app ([VolumeBoost]). It reads no keys and no screen
- * content: it only follows the TV's own volume changes and, while a hold lasts, adds steps.
+ * Speeds up a held volume button, in every app ([VolumeBoost]), and turns the remote's Prime Video
+ * button into a Spotify button ([AppRedirect]). It reads no keys and no screen content: it follows the
+ * TV's own volume changes and, while a hold lasts, adds steps; and it notes which app's screen comes to
+ * the front (the package and activity names of window changes, nothing inside them).
  *
  * It must not filter key events. On this TV an accessibility service that filters keys makes the
  * system handle the volume keys before it and drop their repeats, so a held button moved the volume
@@ -58,7 +62,18 @@ class SettingsKeyService : AccessibilityService() {
         super.onDestroy()
     }
 
-    override fun onAccessibilityEvent(event: AccessibilityEvent?) {}
+    override fun onAccessibilityEvent(event: AccessibilityEvent?) {
+        if (event?.eventType != AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) return
+        val app = event.packageName?.toString() ?: return
+        val window = event.className?.toString() ?: return
+        // Only an activity is an app coming to the front: dialogs, the keyboard and the volume bar are not.
+        try { packageManager.getActivityInfo(ComponentName(app, window), 0) } catch (e: PackageManager.NameNotFoundException) { return }
+        if (!primeVideoButton.onFront(app, SystemClock.uptimeMillis())) return
+        val open = packageManager.getLeanbackLaunchIntentForPackage(primeVideoButton.to)
+            ?: packageManager.getLaunchIntentForPackage(primeVideoButton.to) ?: return
+        // Back from Spotify returns home, not to the Prime Video left behind it.
+        try { startActivity(open.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_TASK_ON_HOME)) } catch (e: Exception) { }
+    }
     override fun onInterrupt() {}
 
     private companion object {
