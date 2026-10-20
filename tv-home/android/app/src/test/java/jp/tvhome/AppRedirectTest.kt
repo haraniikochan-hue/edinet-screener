@@ -42,8 +42,10 @@ class AppRedirectTest {
         assertFalse(redirect.onFront(prime, 30_000))
     }
 
-    @Test fun `nothing is replaced before the app in front is known`() {
-        assertFalse(AppRedirect().onFront(prime, 0))
+    @Test fun `the first press after the service restarts under another app is replaced too`() {
+        val redirect = AppRedirect()
+        assertTrue(redirect.onFront(prime, 0))
+        assertFalse(redirect.onFront(prime, 1_000))
     }
 
     @Test fun `other apps are never replaced`() {

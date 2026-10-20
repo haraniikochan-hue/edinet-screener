@@ -25,12 +25,13 @@ class AppRedirect(
     /**
      * An app's activity came to the front at [now] (ms). True when it is [from] arriving from another app
      * without this launcher having just opened it — the button — and [to] should be opened instead.
-     * Until the app in front is known (just after the service starts), nothing is replaced.
+     * Before any app has been seen (the service restarts after an update, usually under another app),
+     * the first Prime Video is taken as a button press too.
      */
     fun onFront(packageName: String, now: Long): Boolean {
         val previous = front
         front = packageName
-        if (packageName != from || previous == null || previous == from) return false
+        if (packageName != from || previous == from) return false
         val ours = now - ownLaunchAt <= ownWindow
         ownLaunchAt = NEVER
         return !ours
