@@ -460,7 +460,8 @@ function restartJobs() {
     if(!JIKKA)jobs.push(makeJob('calendar',6*3600000,cachedTask('economic-calendar',()=>apiForJob('calendar'),renderCalendar,{server:true,maxAge:7*86400000}),()=>{if(calendarInfo)renderCalendar({...calendarInfo,stale:true});else void loadCalendarSnapshot();}));
     if(!JIKKA)jobs.push(makeJob('earnings',12*3600000,cachedTask('earnings',()=>apiForJob('earnings'),renderEarnings,{server:true,maxAge:3*86400000}),()=>{if(earningsInfo)renderEarnings({...earningsInfo,stale:true});}));
     jobs.push(makeJob('news',15*60000,cachedTask('news',()=>apiForJob('news'),renderNews,{server:true}),()=>{news=[];$('news-title').textContent='ニュースを取得できません';$('news-title').removeAttribute('href');$('news-source').textContent='NHK · しばらくして再取得します';$('next-news').setAttribute('aria-label','次のニュース');$('news-dots').replaceChildren();}));
-    if(config.photoMode==='unsplash')jobs.push(photosJob=makeJob('photos',3600000,async current=>{
+    // The parents' TV starts on Unsplash, so it waits quietly on the bundled photo until a key is built in.
+    if(config.photoMode==='unsplash' && (backend.unsplash || !JIKKA))jobs.push(photosJob=makeJob('photos',3600000,async current=>{
       // New York at this time of day; each period keeps its own saved set for a quick switch.
       const part=photoPart,result=await cachedLoad({key:photoCacheKey(part),storage,maxAge:7*86400000,load:()=>apiForJob(`photos/${part}`)});
       if(!current() || part!==photoPart)return;

@@ -2,6 +2,7 @@
 // Both pass a fetchText(url) that reaches the upstream feed: Node fetches it directly,
 // the TV app goes through its native proxy because the feeds send no CORS headers.
 import { CALENDAR_FEEDS, parseEconomicICS, mergeCalendar } from './economic-calendar.js';
+import { JIKKA } from './profile.js';
 
 // NHK ONE (news.web.nhk) replaced the www3.nhk.or.jp feeds, which stopped updating in August 2026.
 export const NHK_RSS = 'https://news.web.nhk/n-data/conf/na/rss/cat5.xml';
@@ -28,12 +29,20 @@ export function parseRSS(xml) {
 // Background photos: New York's downtown at the time of day (js/daypart.js) — by day, at sunset, by
 // night — from two searches each, a few random photos per search each hour. The Access Key stays with
 // the server or the TV app; the page only names the search (the TV app allows exactly these).
-export const PHOTO_PERIODS = Object.freeze({
+const NEW_YORK = Object.freeze({
   day: { title:'ニューヨーク · 日中', queries:['new york city skyline daytime', 'manhattan skyline blue sky'] },
   dusk: { title:'ニューヨーク · 夕暮れ', queries:['new york city skyline sunset', 'manhattan skyline golden hour'] },
   night: { title:'ニューヨーク · 夜景', queries:['new york city skyline night', 'manhattan skyline night lights'] },
 });
-export const PHOTO_QUERIES = Object.freeze(Object.values(PHOTO_PERIODS).flatMap(period => period.queries));
+// The parents' TV (js/profile.js) shows nature instead: mountains, lakes and sea by day, at sunset, under the stars.
+const NATURE = Object.freeze({
+  day: { title:'自然の風景 · 日中', queries:['mountain lake landscape', 'green forest sunlight'] },
+  dusk: { title:'自然の風景 · 夕暮れ', queries:['mountain sunset landscape', 'ocean sunset'] },
+  night: { title:'自然の風景 · 星空', queries:['starry night mountains', 'milky way landscape'] },
+});
+export const PHOTO_PERIODS = JIKKA ? NATURE : NEW_YORK;
+// Every search either TV may make, so one server or app allows both.
+export const PHOTO_QUERIES = Object.freeze([NEW_YORK, NATURE].flatMap(set => Object.values(set).flatMap(period => period.queries)));
 export const PHOTOS_PER_QUERY = 8;
 export const unsplashRandom = query => `https://api.unsplash.com/photos/random?query=${encodeURIComponent(query)}&count=${PHOTOS_PER_QUERY}&orientation=landscape&content_filter=high`;
 export const validPhotoQuery = query => PHOTO_QUERIES.includes(query);

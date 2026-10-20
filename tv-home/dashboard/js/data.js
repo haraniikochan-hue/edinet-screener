@@ -6,7 +6,7 @@ export const SYMBOLS = MARKETS.map(m=>[m.symbol,m.name,m.symbol]);
 export const DEFAULT_CONFIG = {
   // The parents' TV is in Kunitachi (js/profile.js).
   location: JIKKA ? { name: '国立市', latitude: 35.6839, longitude: 139.4414 } : { name: '渋谷区', latitude: 35.6589, longitude: 139.70665 },
-  timeZone: 'Asia/Tokyo', marketMode: 'custom', cryptoSource: 'hyperliquid', photoMode: 'sample',
+  timeZone: 'Asia/Tokyo', marketMode: 'custom', cryptoSource: 'hyperliquid', photoMode: JIKKA ? 'unsplash' : 'sample',
   photoInterval: 60, motion: false, apiBase: '', spotifyClientId: '', chartRange: '1d', adblockDns: DEFAULT_ADBLOCK_DNS,
 };
 export const isNumber = n => typeof n === 'number' && Number.isFinite(n);

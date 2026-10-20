@@ -262,6 +262,7 @@ adb install -r app/build/outputs/apk/home/release/app-home-release.apk
 実家のXiaomi TV（MiTV MZTU0、Android 14、`vendor.mitv.hardware.no.tuner=true` のチューナーなし機。HDMI 1にPanasonicのレコーダー＝HDMI-CEC vendor 0x008045、HDMI 3の表示名は「ケーブル」）用に、ビルドの種類 `jikka` を分けた。自宅のテレビは `home`。どちらもアプリIDは `jp.tvhome.launcher` なので、**テレビごとに正しい方を入れる**（`app-home-release.apk` / `app-jikka-release.apk`）。ページは `Android.profile()`（ブラウザでは `?profile=jikka`）で `js/profile.js` が切り替える。
 
 - 天気の初期地域は国立市。相場・米国経済指標・決算・Spotifyのカードとそのデータ取得はない。プライムビデオのボタンをSpotifyにする切り替え（`AppRedirect`）は無効。
+- 背景はUnsplashの自然の風景（日中・夕暮れ・星空、`js/feeds.js` NATURE）。初期設定でUnsplashになり、キーがないビルドでは同梱写真のまま。
 - 天気のカードがいちばん大きい（幅740px、中身1.35倍）。右上「続きから見る」：最近使ったアプリ6件を、各アプリのTVバナーで（`js/jikka.js`）。Google TVの「続きを見る」は、このテレビではWatch Nextの表が空で（`content://android.media.tv/watch_next_program`）、残りはGoogleのサーバーから来るため、他のランチャーからは読めない。使用状況へのアクセスが必要（`appops set jp.tvhome.launcher GET_USAGE_STATS allow`、戻し方は `deny`）。読み取りはアプリ側の別スレッドで、ホームに戻るたび。バナーは表示する分だけ読む（全アプリ分を起動時に読むと約20秒画面が出なかった）。
 - 右下「入力切り替え」：全入力を1列に、HDMI 1とテレビ（XiaomiのTVアプリ `com.mitv.livetv`）を先頭に。HDMIは `TvContract.buildChannelUriForPassthroughInput` をTVアプリで開く。左下はニュース（見出しと要約）。
 - ドックは実家のテレビにあるアプリ全部（YouTube・TVer・NHKプラス・NHK ONE・ABEMA・U-NEXT・Netflix・Prime Video・Hulu・Lemino・Disney+・DAZN・Apple TVの順、残りは名前順）。YouTubeはYouTubeの絵。

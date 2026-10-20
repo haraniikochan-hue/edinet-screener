@@ -82,11 +82,14 @@ private val UPSTREAM = setOf(
 // Nasdaq's earnings calendar, one US date per request (dashboard/js/earnings.js EARNINGS_URL).
 private val EARNINGS = Regex("^https://api\\.nasdaq\\.com/api/calendar/earnings\\?date=\\d{4}-\\d{2}-\\d{2}$")
 
-// The searches the page may ask Unsplash for: New York by day, at sunset, by night (dashboard/js/feeds.js PHOTO_PERIODS).
+// The searches the page may ask Unsplash for: New York, or nature on the parents' TV, by day, at sunset, by night
+// (dashboard/js/feeds.js PHOTO_QUERIES).
 private val PHOTO_QUERIES = setOf(
     "new york city skyline daytime", "manhattan skyline blue sky",
     "new york city skyline sunset", "manhattan skyline golden hour",
     "new york city skyline night", "manhattan skyline night lights",
+    "mountain lake landscape", "green forest sunlight", "mountain sunset landscape", "ocean sunset",
+    "starry night mountains", "milky way landscape",
 )
 // Photos per search (dashboard/js/feeds.js PHOTOS_PER_QUERY).
 private const val PHOTOS_PER_QUERY = "8"

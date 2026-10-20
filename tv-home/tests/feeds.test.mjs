@@ -49,7 +49,10 @@ test('a failing search is skipped, every search refused reports the limit, and a
 });
 
 test('only the listed searches build a random-photo URL', () => {
-  assert.equal(PHOTO_QUERIES.length, 6); assert.ok(PHOTO_QUERIES.every(q => /new york|manhattan/.test(q)));
+  // Six New York searches for the user's TV, six nature searches for the parents' TV (js/profile.js).
+  assert.equal(PHOTO_QUERIES.length, 12); assert.equal(PHOTO_QUERIES.filter(q => /new york|manhattan/.test(q)).length, 6);
+  assert.ok(Object.values(PHOTO_PERIODS).flatMap(p => p.queries).every(q => /new york|manhattan/.test(q)));
+  assert.ok(validPhotoQuery('starry night mountains'));
   assert.ok(validPhotoQuery('new york city skyline night')); assert.ok(!validPhotoQuery('paris city'));
   assert.equal(unsplashRandom('new york city skyline night'), `https://api.unsplash.com/photos/random?query=new%20york%20city%20skyline%20night&count=${PHOTOS_PER_QUERY}&orientation=landscape&content_filter=high`);
 });
