@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- To tell an app's screen from a dialog or the keyboard when it comes to the front (AppRedirect). -->
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
+    <!-- The parents' TV lists the apps opened most recently; usage access is granted from the PC with adb (HANDOFF 3.4). -->
+    <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS" tools:ignore="ProtectedPermissions" />
     <uses-feature android:name="android.software.leanback" android:required="false" />
     <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
 

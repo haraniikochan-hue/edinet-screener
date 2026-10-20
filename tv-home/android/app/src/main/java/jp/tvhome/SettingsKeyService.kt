@@ -64,6 +64,8 @@ class SettingsKeyService : AccessibilityService() {
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         if (event?.eventType != AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) return
+        // Only the user's own TV turns the Prime Video button into Spotify; the parents' TV keeps Prime Video.
+        if (BuildConfig.PROFILE != "home") return
         val app = event.packageName?.toString() ?: return
         val window = event.className?.toString() ?: return
         // Only an activity is an app coming to the front: dialogs, the keyboard and the volume bar are not.

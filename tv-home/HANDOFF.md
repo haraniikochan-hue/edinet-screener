@@ -69,8 +69,8 @@
 5. **ビルドと入れ替え**：
    ```sh
    cd android
-   ./gradlew assembleRelease    # 確認用は assembleDebug（WebViewのDevToolsがADB経由で開く）
-   adb install -r app/build/outputs/apk/release/app-release.apk
+   ./gradlew assembleHomeRelease    # 実家のテレビは assembleJikkaRelease（第3.5節）。確認用は assembleHomeDebug（WebViewのDevToolsがADB経由で開く）
+   adb install -r app/build/outputs/apk/home/release/app-home-release.apk
    ```
    `dashboard/` を直したら、そのままAPKに入る（`dist/` は使わない）。確認でデバッグ版を入れたら、最後に必ずリリース版に戻す。並び順などの保存データは入れ直しても残る。
 6. **テレビで確認するときの注意**：
@@ -251,11 +251,22 @@ Xiaomi TVのGPU・CPUで滑らかに動くよう最適化した。見た目はv0
 
 ```sh
 cd android
-JAVA_HOME=<JDK17> ANDROID_HOME=<Android SDK> ./gradlew assembleRelease
-adb install -r app/build/outputs/apk/release/app-release.apk
+JAVA_HOME=<JDK17> ANDROID_HOME=<Android SDK> ./gradlew assembleHomeRelease
+adb install -r app/build/outputs/apk/home/release/app-home-release.apk
 ```
 
 テレビのIPアドレスはDHCPで変わる（2026-10-20の昼は `192.168.0.178`）。`adb mdns services` で今のアドレスを確認する。このPCでは JDK 17 が `~/.local/jdk17/Contents/Home`、Android SDK が `~/.local/android-sdk`、adb が `~/.local/android-sdk/platform-tools/adb`。テレビとはワイヤレスデバッグでペア設定済み（`adb mdns services` で接続ポートが分かる。`192.168.0.178:5555` のADBも出ている）。
+
+## 3.5 実家のテレビ（jikka、2026-10-20）
+
+実家のXiaomi TV（MiTV MZTU0、Android 14、`vendor.mitv.hardware.no.tuner=true` のチューナーなし機。HDMI 1にPanasonicのレコーダー＝HDMI-CEC vendor 0x008045、HDMI 3の表示名は「ケーブル」）用に、ビルドの種類 `jikka` を分けた。自宅のテレビは `home`。どちらもアプリIDは `jp.tvhome.launcher` なので、**テレビごとに正しい方を入れる**（`app-home-release.apk` / `app-jikka-release.apk`）。ページは `Android.profile()`（ブラウザでは `?profile=jikka`）で `js/profile.js` が切り替える。
+
+- 天気の初期地域は国立市。相場・米国経済指標・決算・Spotifyのカードとそのデータ取得はない。プライムビデオのボタンをSpotifyにする切り替え（`AppRedirect`）は無効。
+- 天気のカードがいちばん大きい（幅740px、中身1.35倍）。右上「続きから見る」：最近使ったアプリ6件を、各アプリのTVバナーで（`js/jikka.js`）。Google TVの「続きを見る」は、このテレビではWatch Nextの表が空で（`content://android.media.tv/watch_next_program`）、残りはGoogleのサーバーから来るため、他のランチャーからは読めない。使用状況へのアクセスが必要（`appops set jp.tvhome.launcher GET_USAGE_STATS allow`、戻し方は `deny`）。読み取りはアプリ側の別スレッドで、ホームに戻るたび。バナーは表示する分だけ読む（全アプリ分を起動時に読むと約20秒画面が出なかった）。
+- 右下「入力切り替え」：全入力を1列に、HDMI 1とテレビ（XiaomiのTVアプリ `com.mitv.livetv`）を先頭に。HDMIは `TvContract.buildChannelUriForPassthroughInput` をTVアプリで開く。左下はニュース（見出しと要約）。
+- ドックは実家のテレビにあるアプリ全部（YouTube・TVer・NHKプラス・NHK ONE・ABEMA・U-NEXT・Netflix・Prime Video・Hulu・Lemino・Disney+・DAZN・Apple TVの順、残りは名前順）。YouTubeはYouTubeの絵。
+- テレビに加えた変更（2026-10-20、ユーザー確認済み）：TV Homeのインストール、Google TV標準ホーム（`launcherx`）と `setupwraith` の無効化（戻し方は第3.4節と同じ）、使用状況へのアクセス。通知へのアクセス・ユーザー補助（音量の加速）は入れていない（ユーザー：「音量は標準で長押しで加速する」）。
+- **注意：HDMI 1への勝手な切り替え**。TV Homeのプロセスが強制終了されると（`adb install -r`・`am force-stop`）、裏にいたTVアプリが一瞬前に出て、テレビがHDMI-CECで <Set Stream Path> を送り、レコーダーの <Active Source> でHDMI 1に切り替わる（ログ：送り主はuid 1000の `HdmiInputService`）。ホームボタンで普通に戻ったときは起きない。入れ替えの前に `adb shell am force-stop com.mitv.livetv` をしておく。`tv_auto_play_input=0` では止まらなかった（1に戻してある）。
 
 ## 4. 12銘柄と価格の意味
 

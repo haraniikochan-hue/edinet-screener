@@ -2,6 +2,12 @@ package jp.tvhome
 
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.app.AppOpsManager
+import android.app.usage.UsageEvents
+import android.app.usage.UsageStatsManager
+import android.media.tv.TvContract
+import android.media.tv.TvInputInfo
+import android.media.tv.TvInputManager
 import android.content.BroadcastReceiver
 import android.content.ComponentName
 import android.content.Context
@@ -53,8 +59,19 @@ private val PINNED = listOf(
     "com.disney.disneyplus" to "Disney+",
     "com.spotify.tv.android" to "Spotify",
 )
-// Left out of the dock: the terrestrial TV shortcut the user removed, and Xiaomi's system tools.
+// The parents' TV (jikka flavor) has its own apps; these lead its dock under their own names, the rest follow by name.
+private val PINNED_JIKKA = listOf(
+    "com.google.android.youtube.tv", "jp.co.tver.tvapp", "jp.nhk.plus.tv", "nhk.app.screen", "tv.abema",
+    "jp.unext.tv.player", "com.netflix.ninja", "com.amazon.amazonvideo.livingroom", "jp.happyon.android",
+    "jp.ne.docomo.lemino.androidtv", "com.disney.disneyplus", "com.dazn", "com.apple.atve.androidtv.appletv",
+)
+private val JIKKA = BuildConfig.PROFILE == "jikka"
+// Left out of the dock: the terrestrial TV shortcut the user removed (on the parents' TV it is the
+// input card's "テレビ" button instead), and Xiaomi's system tools.
 private val HIDDEN = Regex("^(com\\.mitv\\.livetv|com\\.xiaomi\\.mitv\\..*)$")
+// Xiaomi's TV app: it shows the HDMI and AV inputs, and on a TV with a tuner, broadcasts.
+private const val LIVE_TV = "com.mitv.livetv"
+private const val LIVE_TV_INPUT = "tv"
 
 // The only feeds the page may fetch through the native proxy (dashboard/js/feeds.js UPSTREAM_FEEDS).
 private val UPSTREAM = setOf(
@@ -105,7 +122,7 @@ class MainActivity : Activity() {
             .setDomain(HOST)
             .addPathHandler("/", WwwHandler(WebViewAssetLoader.AssetsPathHandler(this)))
             .build()
-        Thread { installedApps() }.start()
+        Thread { installedApps(); if (JIKKA) refreshRecent() }.start()
         registerReceiver(packagesChanged, IntentFilter().apply {
             addAction(Intent.ACTION_PACKAGE_ADDED); addAction(Intent.ACTION_PACKAGE_REMOVED)
             addAction(Intent.ACTION_PACKAGE_CHANGED); addDataScheme("package")
@@ -167,6 +184,7 @@ class MainActivity : Activity() {
     }
     override fun onStart() {
         super.onStart()
+        if (JIKKA) refreshRecent()
         if (unloaded) { unloaded = false; showDashboard("$HOME_URL?instant") }
         web.resumeTimers()
     }
@@ -413,8 +431,8 @@ class MainActivity : Activity() {
             val pm = packageManager
             val found = launchableActivities().associateBy { it.activityInfo.packageName }
             val labels = found.mapValues { it.value.loadLabel(pm).toString() }
-            val pinned = PINNED.filter { it.first in found }
-            val others = labels.filterKeys { key -> PINNED.none { it.first == key } }.toList().sortedBy { it.second }
+            val pinned = if (JIKKA) PINNED_JIKKA.filter { it in found }.map { it to labels.getValue(it) } else PINNED.filter { it.first in found }
+            val others = labels.filterKeys { key -> pinned.none { it.first == key } }.toList().sortedBy { it.second }
             (pinned + others).map { (pkg, name) ->
                 TvApp(pkg, name, try { iconDataUrl(found.getValue(pkg).loadIcon(pm)) } catch (e: Exception) { null })
             }.also { list ->
@@ -428,9 +446,11 @@ class MainActivity : Activity() {
     private val packagesChanged = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             synchronized(appsLock) { apps = null; appsJson = null }
+            banners.clear()
             Thread {
                 installedApps()
-                runOnUiThread { web.evaluateJavascript("window.tvHomeAppsChanged&&window.tvHomeAppsChanged()", null) }
+                if (JIKKA) refreshRecent()
+                runOnUiThread { if (!unloaded) web.evaluateJavascript("window.tvHomeAppsChanged&&window.tvHomeAppsChanged()", null) }
             }.start()
         }
     }
@@ -440,7 +460,100 @@ class MainActivity : Activity() {
     ).filter { it.activityInfo.packageName != packageName && !HIDDEN.matches(it.activityInfo.packageName) }
 
 
+    /**
+     * The TV's external inputs (HDMI, AV) as [{id, label, kind, connected}], plus Xiaomi's TV app as
+     * "テレビ" first. A device behind an HDMI port (HDMI-CEC) is listed as its own input with a parent; only
+     * the ports are shown.
+     */
+    private fun tvInputs(): String {
+        val list = JSONArray()
+        if (packageManager.getLeanbackLaunchIntentForPackage(LIVE_TV) != null) {
+            list.put(JSONObject().put("id", LIVE_TV_INPUT).put("label", "テレビ").put("kind", "tv").put("connected", true))
+        }
+        val manager = getSystemService(TvInputManager::class.java) ?: return list.toString()
+        for (info in passthroughInputs(manager)) {
+            val label = (info.loadCustomLabel(this) ?: info.loadLabel(this))?.toString()?.trim().orEmpty()
+            if (label.isEmpty()) continue
+            val kind = when (info.type) { TvInputInfo.TYPE_HDMI -> "hdmi"; TvInputInfo.TYPE_COMPOSITE, TvInputInfo.TYPE_COMPONENT -> "av"; else -> "other" }
+            list.put(JSONObject().put("id", info.id).put("label", label).put("kind", kind)
+                .put("connected", manager.getInputState(info.id) != TvInputManager.INPUT_STATE_DISCONNECTED))
+        }
+        return list.toString()
+    }
+    private fun passthroughInputs(manager: TvInputManager) = manager.tvInputList.filter { it.isPassthroughInput && it.parentId == null }
+
+    /** Shows an input full screen, as the TV's own input list does: Xiaomi's TV app plays the passthrough channel. */
+    /** False when there is no such input or nothing on the TV can show it; the page then says so. */
+    private fun switchInput(id: String): Boolean {
+        val intent = if (id == LIVE_TV_INPUT) packageManager.getLeanbackLaunchIntentForPackage(LIVE_TV) else {
+            val manager = getSystemService(TvInputManager::class.java) ?: return false
+            if (passthroughInputs(manager).none { it.id == id }) return false
+            Intent(Intent.ACTION_VIEW).setDataAndType(TvContract.buildChannelUriForPassthroughInput(id), TvContract.Channels.CONTENT_ITEM_TYPE)
+        } ?: return false
+        if (intent.resolveActivity(packageManager) == null) return false
+        runOnUiThread { try { startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) } catch (e: Exception) { } }
+        return true
+    }
+
+    /**
+     * The apps opened most recently in the last 30 days, newest first: {"granted":false} until usage access
+     * is granted from the PC (HANDOFF 3.4), then {"granted":true,"apps":[{packageName, lastUsed, banner}]} for apps on the
+     * dock list, or {"granted":true,"pending":true} while that list is still being read at start-up (the page asks again).
+     * Google TV's own "continue watching" is not readable by other launchers on this TV, so this stands in for it.
+     */
+    private fun recentApps(): String {
+        val ops = getSystemService(AppOpsManager::class.java)
+        val mode = if (Build.VERSION.SDK_INT >= 29) ops?.unsafeCheckOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, android.os.Process.myUid(), packageName)
+            else @Suppress("DEPRECATION") ops?.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, android.os.Process.myUid(), packageName)
+        val usage = getSystemService(UsageStatsManager::class.java)
+        if (mode != AppOpsManager.MODE_ALLOWED || usage == null) return JSONObject().put("granted", false).toString()
+        // Never builds the app list here: that takes seconds and the page waits on this call.
+        val listed = (apps ?: return JSONObject().put("granted", true).put("pending", true).toString()).map { it.packageName }.toSet()
+        val last = HashMap<String, Long>()
+        val now = System.currentTimeMillis()
+        val events = usage.queryEvents(now - 30L * 24 * 3600 * 1000, now)
+        val event = UsageEvents.Event()
+        while (events.getNextEvent(event)) {
+            if (event.eventType == UsageEvents.Event.ACTIVITY_RESUMED && event.packageName in listed) last[event.packageName] = event.timeStamp
+        }
+        val recent = last.entries.sortedByDescending { it.value }.take(8)
+            .map { JSONObject().put("packageName", it.key).put("lastUsed", it.value).put("banner", banner(it.key) ?: JSONObject.NULL) }
+        return JSONObject().put("granted", true).put("apps", JSONArray(recent)).toString()
+    }
+
+    // Coming back home (from HDMI 1, say) must show the screen at once, so the recent apps are read on their own
+    // thread when TV Home comes to the front, and the page is told when the row has changed.
+    @Volatile private var recentJson: String? = null
+    private fun refreshRecent() = Thread {
+        val json = recentApps()
+        if (json == recentJson) return@Thread
+        recentJson = json
+        runOnUiThread { if (!unloaded) web.evaluateJavascript("window.tvHomeRecentChanged&&window.tvHomeRecentChanged()", null) }
+    }.start()
+
+    // Each app's 16:9 TV banner, read only for the apps in the recently used row and kept: reading all of
+    // them at start-up kept the screen blank for about 20 seconds on the parents' TV.
+    private val banners = java.util.concurrent.ConcurrentHashMap<String, String>()
+    private fun banner(pkg: String): String? = banners[pkg] ?: try {
+        launchableActivities().firstOrNull { it.activityInfo.packageName == pkg }?.activityInfo?.loadBanner(packageManager)
+            ?.let { bannerDataUrl(it) }?.also { banners[pkg] = it }
+    } catch (e: Exception) { null }
+
     inner class Bridge {
+        /** Which TV this build is for: "home" or "jikka" (dashboard/js/profile.js). */
+        @JavascriptInterface
+        fun profile(): String = BuildConfig.PROFILE
+
+        @JavascriptInterface
+        fun inputs(): String = if (JIKKA) tvInputs() else "[]"
+
+        @JavascriptInterface
+        fun switchInput(id: String): Boolean = JIKKA && this@MainActivity.switchInput(id)
+
+        @JavascriptInterface
+        fun recentApps(): String = if (!JIKKA) JSONObject().put("granted", false).toString()
+            else recentJson ?: JSONObject().put("granted", true).put("pending", true).toString()
+
         @JavascriptInterface
         fun spotifyClientId(): String = BuildConfig.SPOTIFY_CLIENT_ID
 
@@ -488,6 +601,17 @@ private fun iconDataUrl(drawable: Drawable, size: Int = 160): String {
     } else {
         drawable.setBounds(0, 0, size, size); drawable.draw(canvas)
     }
+    val out = ByteArrayOutputStream()
+    @Suppress("DEPRECATION")
+    val format = if (Build.VERSION.SDK_INT >= 30) Bitmap.CompressFormat.WEBP_LOSSY else Bitmap.CompressFormat.WEBP
+    bitmap.compress(format, 90, out)
+    return "data:image/webp;base64," + Base64.encodeToString(out.toByteArray(), Base64.NO_WRAP)
+}
+
+// A TV banner (320×180dp, 16:9) for the parents' recently used row, drawn at 320×180 px.
+private fun bannerDataUrl(drawable: Drawable): String {
+    val bitmap = Bitmap.createBitmap(320, 180, Bitmap.Config.ARGB_8888)
+    drawable.setBounds(0, 0, 320, 180); drawable.draw(Canvas(bitmap))
     val out = ByteArrayOutputStream()
     @Suppress("DEPRECATION")
     val format = if (Build.VERSION.SDK_INT >= 30) Bitmap.CompressFormat.WEBP_LOSSY else Bitmap.CompressFormat.WEBP

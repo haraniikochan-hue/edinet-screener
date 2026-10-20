@@ -10,6 +10,10 @@ TV Home は、自宅の Xiaomi TV（65インチ、Google TV／Android 14）用�
 2. そのフォルダでセッションを開き、[NEXT_SESSION_PROMPT.txt](NEXT_SESSION_PROMPT.txt) の文章を貼る。
 3. やりたいことを伝える。
 
+## 実家のテレビ（jikka）
+
+実家のXiaomi TV（同じMZTU0、チューナーなし、HDMI 1にPanasonicのレコーダー）には、実家用のビルド `jikka` が入っています（2026-10-20）。違いと手順は [HANDOFF.md](HANDOFF.md) の第3.5節。
+
 ## 別のPC・別のテレビに入れる
 
 [SETUP_ANOTHER_TV.md](SETUP_ANOTHER_TV.md) の手順で、同じTV Homeを別のテレビに入れられます。新しいPCのClaudeには [NEW_TV_SETUP_PROMPT.txt](NEW_TV_SETUP_PROMPT.txt) の文章を貼ります。前のMacから、キーのファイルと署名の鍵の2つを移しておきます。
@@ -29,7 +33,7 @@ TV Home は、自宅の Xiaomi TV（65インチ、Google TV／Android 14）用�
 ```sh
 PATH=~/.local/node/bin:$PATH npm test      # 単体テスト（79件）
 PATH=~/.local/node/bin:$PATH npm run dev   # PCのブラウザで http://127.0.0.1:4173/
-cd android && ./gradlew assembleRelease    # テレビ用APK（JAVA_HOME・ANDROID_HOMEは第1.1節）
+cd android && ./gradlew assembleHomeRelease    # 自宅のテレビ用APK（実家用は assembleJikkaRelease。JAVA_HOME・ANDROID_HOMEは第1.1節）
 ```
 
 テレビへの入れ替えは `adb install -r` です。テレビのIPアドレスは変わるので、`adb mdns services` で確認します。テレビを変更する操作は、ユーザーの確認を取ってから行います。

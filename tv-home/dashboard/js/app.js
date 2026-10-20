@@ -14,6 +14,8 @@ import { getMarketSnapshot, getMarketCandles, HyperliquidStream } from './hyperl
 import { MARKETS, MARKET_BY_SYMBOL, CHART_RANGES, marketCoins } from './market-definitions.js';
 import { drawMarketChart, drawDetailChart } from './market-chart.js';
 import { loadNews, loadCalendar, loadPhotos } from './feeds.js';
+import { JIKKA } from './profile.js';
+import { renderInputs, renderRecent, switchInput } from './jikka.js';
 import { HOUR, weatherTimestamp, weatherIsStale, hourlyForecast, makeWeatherIcon, renderHourlyForecast, dailyForecast, temperatureColor, windDirection, uvLabel } from './weather.js';
 
 const $ = id => document.getElementById(id);
@@ -115,7 +117,7 @@ function tick() {
   updateDayPart(now.getTime());
   if(calendarNextTime && now.getTime()>=calendarNextTime)showCalendar();
   if(weatherResult && (now.getTime()>=nextForecastHour || (!weatherWasStale && weatherIsStale(weatherResult,now.getTime()))))renderWeather(weatherResult);
-  updateCryptoStatus();
+  if(!JIKKA)updateCryptoStatus();
   if(music?.item && isNumber(music.progress_ms) && isNumber(music.item.duration_ms)){
     const progress=Math.min(music.item.duration_ms,music.progress_ms+(music.is_playing?Date.now()-music.fetchedAt:0));
     // A transform update is composited only: no layout or repaint of the card each second.
@@ -254,6 +256,7 @@ function showNews() {
   const current=news[newsIndex],title=$('news-title'),changed=title.textContent!==current.title;title.textContent=current.title;
   if(changed && !reducedMotion())title.animate?.([{opacity:0,transform:'translateY(8px)'},{opacity:1,transform:'none'}],{duration:600,easing:EASE});
   const url=safeUrl(current.url);if(url)title.href=url;else title.removeAttribute('href');
+  if(JIKKA)setText($('news-summary'),current.summary||'');
   const old=Date.now()-Date.parse(current.publishedAt)>2*86400000;
   $('news-source').textContent=`${current.source} · ${stamp(Date.parse(current.publishedAt))}${old?' · 過去の配信':''}`;
   $('next-news').setAttribute('aria-label',`次のニュース（${newsIndex+1} / ${news.length}）`);
@@ -417,7 +420,7 @@ function restartJobs() {
   const sameLocation=()=>location.latitude===config.location.latitude && location.longitude===config.location.longitude;
   jobs.push(makeJob('weather',15*60000,cachedTask('weather',()=>getWeather(location),result=>{if(sameLocation())renderWeather(result);}),error=>{if(sameLocation())clearWeather(error);}));
   jobs.push(makeJob('air',30*60000,cachedTask('air',()=>getAir(location),renderAir),()=>{$('air').textContent='空気 未取得';}));
-  if(config.marketMode==='custom'){
+  if(!JIKKA && config.marketMode==='custom'){
     const myGeneration=generation;
     cryptoStream=new HyperliquidStream({coins:[],onQuotes:rows=>{
       if(myGeneration!==generation)return;
@@ -454,8 +457,8 @@ function restartJobs() {
     jobs.push(makeJob('charts',5*60000,async()=>{await queueCharts();}));
   }
   if(backend.backend || config.apiBase){
-    jobs.push(makeJob('calendar',6*3600000,cachedTask('economic-calendar',()=>apiForJob('calendar'),renderCalendar,{server:true,maxAge:7*86400000}),()=>{if(calendarInfo)renderCalendar({...calendarInfo,stale:true});else void loadCalendarSnapshot();}));
-    jobs.push(makeJob('earnings',12*3600000,cachedTask('earnings',()=>apiForJob('earnings'),renderEarnings,{server:true,maxAge:3*86400000}),()=>{if(earningsInfo)renderEarnings({...earningsInfo,stale:true});}));
+    if(!JIKKA)jobs.push(makeJob('calendar',6*3600000,cachedTask('economic-calendar',()=>apiForJob('calendar'),renderCalendar,{server:true,maxAge:7*86400000}),()=>{if(calendarInfo)renderCalendar({...calendarInfo,stale:true});else void loadCalendarSnapshot();}));
+    if(!JIKKA)jobs.push(makeJob('earnings',12*3600000,cachedTask('earnings',()=>apiForJob('earnings'),renderEarnings,{server:true,maxAge:3*86400000}),()=>{if(earningsInfo)renderEarnings({...earningsInfo,stale:true});}));
     jobs.push(makeJob('news',15*60000,cachedTask('news',()=>apiForJob('news'),renderNews,{server:true}),()=>{news=[];$('news-title').textContent='ニュースを取得できません';$('news-title').removeAttribute('href');$('news-source').textContent='NHK · しばらくして再取得します';$('next-news').setAttribute('aria-label','次のニュース');$('news-dots').replaceChildren();}));
     if(config.photoMode==='unsplash')jobs.push(photosJob=makeJob('photos',3600000,async current=>{
       // New York at this time of day; each period keeps its own saved set for a quick switch.
@@ -470,9 +473,12 @@ function restartJobs() {
     $('news-title').textContent='ニュースはサーバー接続後に表示';$('news-source').textContent='設定でデータサーバーを指定できます';
     if(config.photoMode==='unsplash')toast('Unsplashの自動取得にはAPIサーバーが必要です');
   }
+  // The parents' TV: the recent apps change whenever an app is used, so they are re-read on every return home.
+  if(JIKKA){jobs.push(makeJob('recent',60000,async()=>{showJikka();setFeed('recent','ok');}));return;}
   jobs.push(makeJob('spotify',30000,async current=>{const data=tvNowPlaying() ?? await spotify.currentlyPlaying();if(current())renderMusic(data);},error=>{$('artist-name').textContent=errorText(error);$('music-state').dataset.state='error';music=null;$('music-progress').hidden=true;$('spotify-connect').hidden=false;}));
 }
 function configureMarket() {
+  if(JIKKA)return;
   // A legacy Android JavascriptInterface is injected into every frame, even
   // cross-origin frames. Do not load vendor frames when that bridge is present.
   if(window.Android && config.marketMode==='tradingview')config.marketMode='custom';
@@ -712,7 +718,7 @@ function openNewsDetail(){
   const item=news[newsIndex];if(!item)return;
   openDetail({eyebrow:item.source,title:item.title,body:item.summary||'',facts:[['配信',`${stamp(Date.parse(item.publishedAt))} JST`]],link:{href:item.url,label:'NHKで続きを読む'}});
 }
-const FEEDS={connection:'ネットワーク',weather:'天気',air:'空気の状態',markets:'相場（12銘柄）','market:':'Hyperliquid','market:xyz':'trade.xyz','market:para':'para',charts:'チャート',crypto:'CoinGecko',calendar:'米国経済指標',earnings:'主要企業の決算',news:'ニュース',spotify:'Spotify',photos:'背景写真'};
+const FEEDS={connection:'ネットワーク',weather:'天気',air:'空気の状態',markets:'相場（12銘柄）','market:':'Hyperliquid','market:xyz':'trade.xyz','market:para':'para',charts:'チャート',crypto:'CoinGecko',calendar:'米国経済指標',earnings:'主要企業の決算',news:'ニュース',spotify:'Spotify',recent:'最近使ったアプリ',photos:'背景写真'};
 const FEED_STATES={ok:'最新',stale:'更新待ち（保存済みの値を表示）',error:'取得できません'};
 function openStatusDetail(){
   const rows=Object.entries(FEEDS).filter(([key])=>feedState.has(key)).map(([key,label])=>[label,FEED_STATES[feedState.get(key)]||feedState.get(key),feedState.get(key)==='ok'?'':'warn']);
@@ -813,7 +819,7 @@ function initializeBridge() {
   }catch{toast('アプリ一覧を取得できません。Web版の一覧を表示します。');}
 }
 // The app calls this when an app is installed, updated or removed.
-window.tvHomeAppsChanged=()=>initializeBridge();
+window.tvHomeAppsChanged=()=>{initializeBridge();if(JIKKA)showJikka();};
 // App list: every installed TV app by name. OK opens it; a long press adds it to or takes it off the dock.
 let appsReturn=null;
 function openAppList(){
@@ -991,6 +997,10 @@ document.addEventListener('transitionend',event=>{
 addEventListener('resize',fit);addEventListener('online',()=>{setFeed('connection','ok');jobs.forEach(job=>void job.run());});addEventListener('offline',()=>{setFeed('connection','error');});
 // Coming back home must feel instant: the clock updates at once, refreshes follow a little later and one at a time.
 document.addEventListener('visibilitychange',()=>{if(document.hidden)cryptoStream?.stop();else{tick();setTimeout(()=>cryptoStream?.start(),300);jobs.forEach((job,i)=>setTimeout(()=>{if(!document.hidden)void job.run();},600+i*200));}});
+// The parents' TV: the screen comes back first; the inputs are checked just after, and the app tells the page
+// when the recent apps (read on its own thread) have changed.
+document.addEventListener('visibilitychange',()=>{if(JIKKA && !document.hidden)setTimeout(()=>{if(!document.hidden)renderInputs($('inputs'));},400);});
+window.tvHomeRecentChanged=()=>{if(JIKKA)renderRecent($('recent-apps'),nativeApps);};
 addEventListener('pagehide',()=>cryptoStream?.stop());
 addEventListener('pageshow',event=>{if(event.persisted && !document.hidden)cryptoStream?.start();});
 setInterval(()=>{if(!document.hidden)tick();},1000);
@@ -1000,9 +1010,30 @@ function scheduleNews(){clearInterval(newsTimer);newsTimer=setInterval(()=>{if(!
 scheduleNews();
 // Loaded as a print sheet so it never blocks the first paint; the CSP forbids an inline onload.
 function enableJapaneseFont(){const link=$('font-ja');if(!link)return;const on=()=>{link.media='all';};if(link.sheet)on();else link.addEventListener('load',on,{once:true});}
+// The parents' TV (js/profile.js): continue watching and the inputs in place of the market, calendar and Spotify.
+function showJikka(){renderInputs($('inputs'));renderRecent($('recent-apps'),nativeApps);}
+function setUpJikka(){
+  document.body.classList.add('jikka');
+  for(const id of ['recent-card','inputs-card'])$(id).hidden=false;
+  // The market, calendar and Spotify cards stay in the page but hidden, so nothing navigates to them.
+  for(const card of document.querySelectorAll('.market-card,.calendar-card,.music-card'))card.hidden=true;
+  document.querySelector('.weather-section').dataset.navDown='news';
+  $('recent-card').dataset.navDown='inputs';
+  Object.assign(document.querySelector('.news-card').dataset,{navUp:'weather',navLeft:'none',navRight:'inputs',navDown:'dock'});
+  $('news-summary').hidden=false;
+  for(const control of [$('market-mode'),$('spotify-client-id')])control.closest('fieldset').hidden=true;
+  $('photo-title').closest('.photo-caption').dataset.navDown='recent';$('connection-status').closest('.utility').dataset.navDown='recent';
+  // The recent row waits for the app list (initializeBridge); its job fills it right after.
+  renderInputs($('inputs'));
+  $('inputs-card').addEventListener('click',event=>{
+    const input=event.target.closest('[data-input]');if(!input)return;
+    if(!switchInput(input.dataset.input))toast('入力を切り替えられませんでした');
+  });
+}
 async function start(){
   enableJapaneseFont();
-  fit();buildStocks();photoPart=currentDayPart();tick();setPhotos(startingPhotos());initializeBridge();void loadCalendarSnapshot();
+  if(JIKKA)setUpJikka();
+  fit();if(!JIKKA)buildStocks();photoPart=currentDayPart();tick();setPhotos(startingPhotos());initializeBridge();if(!JIKKA)void loadCalendarSnapshot();
   // The TV app already runs full screen; the button only helps in a desktop browser.
   $('fullscreen').hidden=Boolean(window.Android) || !document.fullscreenEnabled;
   // The TV app rebuilds the page after freeing memory; coming back home must not replay the entrance.

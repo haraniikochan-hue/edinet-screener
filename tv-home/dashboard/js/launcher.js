@@ -1,5 +1,7 @@
 const brands = new Map([
   ['smarttube', 'smarttube'], ['smarttubenext', 'smarttube'],
+  // The parents' TV runs YouTube itself: the same artwork, launching YouTube.
+  ['youtube', 'smarttube'],
   ['unext', 'unext'], ['ユーネクスト', 'unext'],
   ['netflix', 'netflix'], ['ネットフリックス', 'netflix'],
   ['primevideo', 'prime'], ['amazonprimevideo', 'prime'], ['プライムビデオ', 'prime'],

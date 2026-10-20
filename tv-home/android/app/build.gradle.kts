@@ -39,6 +39,13 @@ android {
         buildConfigField("String", "SPOTIFY_CLIENT_ID", "\"$spotifyClientId\"")
         buildConfigField("String", "UNSPLASH_ACCESS_KEY", "\"$unsplashAccessKey\"")
     }
+    // One APK per TV: "home" is the user's own TV, "jikka" their parents' TV (dashboard/js/profile.js).
+    // Both keep the same application ID, so each TV simply runs the flavor built for it.
+    flavorDimensions += "tv"
+    productFlavors {
+        create("home") { dimension = "tv"; buildConfigField("String", "PROFILE", "\"home\"") }
+        create("jikka") { dimension = "tv"; buildConfigField("String", "PROFILE", "\"jikka\"") }
+    }
     sourceSets["main"].assets.srcDir(webAssets)
     buildTypes {
         release {

@@ -702,3 +702,42 @@ body:not(.ready) #stage { opacity: 0; animation: reveal 0s 1.6s forwards; }
   :root[data-theme=light] :is(.card,.dock) { background: #ececf1; }
   :root[data-theme=light] :is(.app-label,.status-pill,.glass-button,.toast) { background: #fff; }
 }
+
+/* The parents' TV (js/profile.js): continue watching in the market's place, inputs under the weather,
+   the news across the foot. No market, calendar or Spotify. */
+.jikka :is(.market-card,.calendar-card,.music-card) { display: none; }
+.jikka .side-stack { grid-template-columns: minmax(0,1fr); }
+.recent-card { width: 100%; height: 100%; display: flex; flex-direction: column; min-height: 0; padding: 18px 26px 20px; }
+.recent-grid { display: grid; flex: 1; min-height: 0; grid-template-columns: repeat(3,minmax(0,1fr)); grid-template-rows: repeat(2,minmax(0,1fr)); gap: 14px 18px; margin-top: 14px; }
+.recent-empty { grid-column: 1/-1; align-self: center; margin: 0; color: var(--label-3); font-size: 16px; text-align: center; }
+.recent-app { display: flex; flex-direction: column; gap: 7px; min-width: 0; padding: 0; border: 0; border-radius: 16px; background: none; color: var(--label); font: inherit; text-align: left; cursor: pointer; }
+.recent-banner { position: relative; display: grid; place-items: center; width: 100%; aspect-ratio: 16/9; overflow: hidden; border-radius: 16px; background: var(--cell-2); box-shadow: inset 0 0 0 .5px var(--logo-edge),0 12px 24px -12px var(--icon-shadow); transition: transform .35s var(--spring),box-shadow .3s; }
+.recent-banner>img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.recent-banner .app-icon { width: 72px; height: 72px; }
+.recent-meta { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; min-width: 0; padding: 0 4px; }
+.recent-name { overflow: hidden; font-size: 15px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.recent-when { flex-shrink: 0; color: var(--label-3); font-size: 12px; }
+.recent-app:focus-visible { outline: none; }
+.recent-app:focus-visible .recent-banner { transform: scale(1.05); box-shadow: 0 0 0 3px var(--platter),0 18px 34px -12px rgba(0,0,0,.8); }
+.inputs-card { display: flex; flex-direction: column; min-height: 0; padding: 18px 24px; }
+.input-row { display: flex; flex: 1; gap: 12px; min-height: 0; margin-top: 12px; }
+.input-button { display: flex; flex: 1; align-items: center; justify-content: center; gap: 10px; min-width: 0; padding: 0 14px; border: 0; border-radius: 18px; background: var(--cell-2); color: var(--label); font: inherit; font-size: 18px; font-weight: 700; white-space: nowrap; cursor: pointer; transition: background .2s,color .2s,transform .35s var(--spring),box-shadow .3s; }
+.input-button[data-main] { flex: 1.35; font-size: 21px; }
+.input-button .icon { flex-shrink: 0; font-size: 26px; color: var(--label-2); transition: color .2s; }
+.input-button[data-connected=false] { color: var(--label-4); }
+#stage .input-button:focus-visible { outline: none; background: var(--platter); color: var(--on-platter); box-shadow: 0 14px 30px -10px rgba(0,0,0,.7); transform: scale(1.05); }
+#stage .input-button:focus-visible .icon { color: var(--on-platter); }
+/* The news takes the calendar's place: the headline and its lead, large enough to read from the sofa */
+.jikka .side-stack { display: contents; }
+.jikka .news-card { grid-area: calendar; padding: 18px 24px 16px; }
+.jikka .inputs-card { grid-area: extras; }
+.jikka .news-title { margin: 16px -8px 0; font-size: 23px; line-height: 1.45; -webkit-line-clamp: 3; }
+.news-summary { display: -webkit-box; flex: 1; margin: 10px 0 0; color: var(--label-2); font-size: 16px; line-height: 1.6; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+/* Until the TV's own app list arrives, the web dock's placeholder apps (not on this TV) stay out of sight */
+.jikka #apps:not(.native-apps) .app-tile:not([data-open-settings]) { visibility: hidden; }
+/* The parents' TV: the weather card is the largest, its contents drawn 1.35× to read from the sofa; continue
+   watching gives up width for it. The news below keeps the headline and two lines of its lead. */
+.jikka .dashboard-grid { grid-template-columns: 740px 700px; grid-template-rows: 142px 380px minmax(0,1fr) 162px; }
+.jikka .weather-section>* { zoom: 1.35; }
+.jikka .news-title { -webkit-line-clamp: 2; margin-top: 12px; }
+.jikka .news-summary { -webkit-line-clamp: 2; margin-top: 8px; }

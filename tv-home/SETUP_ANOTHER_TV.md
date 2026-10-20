@@ -70,8 +70,9 @@ unsplash.accessKey=<UnsplashのAccess Key>
 
 ```sh
 cd android
-JAVA_HOME=~/.local/jdk17/Contents/Home ANDROID_HOME=~/.local/android-sdk ./gradlew testReleaseUnitTest assembleRelease
-# できるもの：app/build/outputs/apk/release/app-release.apk
+JAVA_HOME=~/.local/jdk17/Contents/Home ANDROID_HOME=~/.local/android-sdk ./gradlew testHomeReleaseUnitTest assembleHomeRelease
+# できるもの：app/build/outputs/apk/home/release/app-home-release.apk
+# 実家のテレビ用は assembleJikkaRelease → app/build/outputs/apk/jikka/release/app-jikka-release.apk（HANDOFF第3.5節）
 ```
 
 ## 4. テレビとつなぐ
@@ -89,7 +90,7 @@ $ADB shell getprop ro.build.version.release       # Android 9以上が必要（m
 ## 5. TV Homeを入れる（テレビの変更）
 
 ```sh
-$ADB install -r app/build/outputs/apk/release/app-release.apk
+$ADB install -r app/build/outputs/apk/home/release/app-home-release.apk
 $ADB shell am start -n jp.tvhome.launcher/jp.tvhome.MainActivity    # 開くことを確かめる
 ```
 
