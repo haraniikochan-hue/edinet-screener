@@ -91,9 +91,10 @@
   --spring: cubic-bezier(.25,1.25,.4,1);
   --app-size: 72px;
 }
-/* Light theme — over daytime photos (js/daypart.js). iOS light mode: a pale frosted glass that keeps the
-   photo's tint (js/frost.js lifts it towards white), dark text, and system colours deepened until they
-   read on the glass from the sofa. The text on the bare photo (clock, credit) stays white. */
+/* Light theme — over daytime photos (js/daypart.js). iOS light mode: a clear frosted glass — the sky and
+   the city show through, only their darks are lifted (js/frost.js) — under a thin white veil, with a
+   specular rim lit from the upper left; dark text, and system colours deepened until they read on the
+   glass from the sofa. The text on the bare photo (clock, credit) stays white. */
 :root[data-theme=light] {
   color-scheme: light;
   --label: #16171a;
@@ -103,14 +104,14 @@
   --separator: rgba(0,0,0,.09);
   --fill: rgba(118,118,128,.14);
   --fill-2: rgba(0,0,0,.05);
-  --up: #0a6a2e;
-  --down: #b0101f;
-  --rain: #005bb0;
-  --warn: #9a4300;
+  --up: #0a612a;
+  --down: #a90f1d;
+  --rain: #0054a8;
+  --warn: #913c00;
   --accent: #0a6ce0;
-  --glass: rgba(255,255,255,.4);
-  --glass-shadow: 0 26px 52px -30px rgba(0,0,0,.4),0 0 0 .5px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.05);
-  --rim: linear-gradient(rgba(255,255,255,.7),rgba(255,255,255,.7));
+  --glass: rgba(255,255,255,.24);
+  --glass-shadow: 0 26px 52px -30px rgba(0,0,0,.4),0 0 0 .5px rgba(0,0,0,.1),0 1px 2px rgba(0,0,0,.06);
+  --rim: linear-gradient(135deg,rgba(255,255,255,.95),rgba(255,255,255,.45) 30%,rgba(255,255,255,.2) 55%,rgba(255,255,255,.6));
   --hover: rgba(0,0,0,.05);
   --hover-strong: rgba(0,0,0,.07);
   --track: rgba(0,0,0,.09);
@@ -156,7 +157,7 @@
   --progress: #16171a;
   --progress-track: rgba(0,0,0,.12);
   --album-fg: rgba(0,0,0,.5);
-  --spotify-ink: #0b6b30;
+  --spotify-ink: #0a622b;
   --spotify-fill: rgba(30,185,84,.16);
   --glyph-sun: #ff9f0a;
   --glyph-moon: #6e6e78;

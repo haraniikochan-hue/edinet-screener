@@ -6,7 +6,7 @@ import { nativeAppTile, pressApp } from './launcher.js';
 import { DOCK_KEY, arrangeDock, moveInDock, setOnDock, normalizeDock } from './dock.js';
 import { Slideshow, SAMPLE_PHOTOS } from './slideshow.js';
 import { Frost, frostSupported } from './frost.js';
-import { dayPart } from './daypart.js';
+import { dayPart, photoRetryDelay, photosPart } from './daypart.js';
 import { DEFAULT_ADBLOCK_DNS, adBlockStatus, nativePrivateDns, setNativePrivateDns, validDnsHost } from './adblock.js';
 import * as spotify from './spotify.js';
 import { mountTradingView } from './tradingview.js';
@@ -21,7 +21,7 @@ const CALENDAR_PAGE_SIZE = 6, NEWS_INTERVAL = 20000, CARD_RADIUS = 32, IDLE_HOME
 const storage = { getItem:key => { try{return localStorage.getItem(key);}catch{return null;} }, setItem:(key,value) => localStorage.setItem(key,value) };
 let config = normalizeConfig(readStorage(storage,'tv-home-config',DEFAULT_CONFIG));
 let backend = {backend:false,market:false,unsplash:false};
-let photoPart='night', photosJob=null, themeTimer=0;
+let photoPart='night', photosJob=null, themeTimer=0, photoRetry={at:0,attempt:0}, photoToastAt=0;
 let generation=0, jobs=[], news=[], newsIndex=0, music=null, toastTimer, returnFocus, selectedLocation=config.location;
 let calendarInfo=null, calendarIndex=0, calendarNextTime=0, earningsInfo=null, calendarSource={text:'',title:''};
 let weatherResult=null, airResult=null, nextForecastHour=0, weatherWasStale=false;
@@ -462,7 +462,10 @@ function restartJobs() {
       const part=photoPart,result=await cachedLoad({key:photoCacheKey(part),storage,maxAge:7*86400000,load:()=>apiForJob(`photos/${part}`)});
       if(!current() || part!==photoPart)return;
       setPhotos(result.data.data);setFeed('photos',result.stale || result.data.stale?'stale':'ok');
-    },()=>{toast('Unsplashを取得できません。同梱写真を表示しています。');}));
+    },()=>{
+      // Retries keep coming while offline; one note an hour is enough.
+      if(Date.now()-photoToastAt>3600000){photoToastAt=Date.now();toast('Unsplashを取得できません。同梱写真を表示しています。');}
+    }));
   }else{
     $('news-title').textContent='ニュースはサーバー接続後に表示';$('news-source').textContent='設定でデータサーバーを指定できます';
     if(config.photoMode==='unsplash')toast('Unsplashの自動取得にはAPIサーバーが必要です');
@@ -897,12 +900,17 @@ function sunTimes(){
   return index<0 ? [NaN,NaN] : [weatherTimestamp(daily.sunrise?.[index]),weatherTimestamp(daily.sunset?.[index])];
 }
 function currentDayPart(now=Date.now()){return dayPart(now,...sunTimes());}
+// Checked every second the screen is on, and at once when it comes back from sleep or the screensaver.
 function updateDayPart(now){
-  const part=currentDayPart(now);if(part===photoPart)return;
-  photoPart=part;if(config.photoMode!=='unsplash')return;
-  const saved=readStorage(storage,`tv-cache:${photoCacheKey(part)}`,null)?.data?.data;
-  if(Array.isArray(saved) && saved.length)setPhotos(saved);
-  void photosJob?.run(true);
+  const part=currentDayPart(now),changed=part!==photoPart;
+  if(changed){photoPart=part;photoRetry={at:0,attempt:0};}
+  if(config.photoMode!=='unsplash')return;
+  if(changed){const saved=readStorage(storage,`tv-cache:${photoCacheKey(part)}`,null)?.data?.data;if(Array.isArray(saved) && saved.length)setPhotos(saved);}
+  // A fetch skipped while the screen was off, or failed while Wi-Fi was coming back, is retried
+  // until photos for this time of day are on screen (js/daypart.js photoRetryDelay).
+  if(!photosJob || (!changed && photosPart(slideshow.photos)===part) || now<photoRetry.at)return;
+  photoRetry={at:now+photoRetryDelay(photoRetry.attempt),attempt:photoRetry.attempt+1};
+  void photosJob.run(true);
 }
 const photoCacheKey=part=>`${config.apiBase || 'local'}:photos:${part}`;
 function startingPhotos(){
@@ -971,6 +979,15 @@ $('open-tv-settings').onclick=()=>{try{window.Android?.openTvSettings?.();}catch
 let lastInput=Date.now();
 for(const type of ['keydown','pointerdown'])addEventListener(type,()=>{lastInput=Date.now();},{capture:true,passive:true});
 setInterval(()=>{if(!document.hidden && Date.now()-lastInput>IDLE_HOME && $('settings-overlay').hidden && $('detail-overlay').hidden)navigation.focusHome();},10000);
+// A layer kept for a smooth lift (will-change: transform in styles.css) is drawn once, at rest, and the TV's
+// WebView then magnifies that bitmap: a lifted dock icon or row looked soft. When a lift settles, its layers
+// are dropped for a frame and drawn again at their new size.
+document.addEventListener('transitionend',event=>{
+  const lifted=event.target;if(event.propertyName!=='transform' || !lifted.matches?.('.app-icon,.stock-row,.calendar-event'))return;
+  const layers=[lifted,...lifted.querySelectorAll('.stock-price-row')];
+  for(const layer of layers)layer.style.willChange='auto';
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{for(const layer of layers)layer.style.removeProperty('will-change');}));
+});
 addEventListener('resize',fit);addEventListener('online',()=>{setFeed('connection','ok');jobs.forEach(job=>void job.run());});addEventListener('offline',()=>{setFeed('connection','error');});
 // Coming back home must feel instant: the clock updates at once, refreshes follow a little later and one at a time.
 document.addEventListener('visibilitychange',()=>{if(document.hidden)cryptoStream?.stop();else{tick();setTimeout(()=>cryptoStream?.start(),300);jobs.forEach((job,i)=>setTimeout(()=>{if(!document.hidden)void job.run();},600+i*200));}});

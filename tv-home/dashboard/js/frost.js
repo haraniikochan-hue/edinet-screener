@@ -10,9 +10,11 @@ const FILTER = 'blur(6px) saturate(1.5)';
 // towards CAP, scaling red, green and blue together so the photo keeps its colours. A bright sky becomes
 // dim, tinted glass under white text; a night photo, mostly below the knee, stays clear.
 const KNEE = 34, CAP = 60;
-// Light: the photo is lifted towards white — every channel moves into LIGHT_FLOOR–255 — so dark buildings
-// and bright sky alike become a pale glass that keeps the photo's tint, under dark text (iOS light mode).
-const LIGHT_FLOOR = 160, LIGHT_SPAN = .36;
+// Light: clear glass, not milk. How far a pixel is from white (its depth, 255 − luma) passes unchanged up
+// to DEPTH_KNEE, so sky and clouds show through as they are, and rolls off smoothly towards DEPTH_CAP
+// beyond it, so buildings become soft mid-tones that dark text still reads on. Every channel's distance
+// from white is scaled alike, keeping the photo's tint (iOS light mode).
+const DEPTH_KNEE = 24, DEPTH_CAP = 80;
 // Used instead when the photo cannot be read (a host without CORS): a flat ceiling or floor, which greys colours.
 const CEILING = 'rgb(70,74,84)', FLOOR = 'rgb(196,198,204)';
 
@@ -64,18 +66,25 @@ export const looksLike = (period, median) => !Number.isFinite(median) || period 
 // The text on the bare photo, in stage pixels.
 const TEXT_ON_PHOTO = { clock: { x:216, y:96, width:500, height:160 }, caption: { x:1040, y:40, width:600, height:44 } };
 
-function tone(context, width, height, theme) {
-  const image = context.getImageData(0, 0, width, height), d = image.data, span = CAP - KNEE;
-  for (let i = 0; i < d.length; i += 4) {
-    if (theme === 'light') {
-      d[i] = LIGHT_FLOOR + d[i] * LIGHT_SPAN; d[i + 1] = LIGHT_FLOOR + d[i + 1] * LIGHT_SPAN; d[i + 2] = LIGHT_FLOOR + d[i + 2] * LIGHT_SPAN;
-      continue;
-    }
-    const luma = .2126 * d[i] + .7152 * d[i + 1] + .0722 * d[i + 2];
-    if (luma <= KNEE) continue;
-    const scale = (KNEE + span * (1 - Math.exp((KNEE - luma) / span))) / luma;
-    d[i] *= scale; d[i + 1] *= scale; d[i + 2] *= scale;
+// A soft limit: values up to knee pass, beyond it they approach cap without reaching it.
+const soften = (value, knee, cap) => value <= knee ? value : knee + (cap - knee) * (1 - Math.exp((knee - value) / (cap - knee)));
+
+// One pixel of the glass in the theme's material, from the blurred photo's red, green and blue.
+export function toneGlass(r, g, b, theme = 'dark') {
+  const luma = .2126 * r + .7152 * g + .0722 * b;
+  if (theme === 'light') {
+    const depth = 255 - luma; if (depth <= DEPTH_KNEE) return [r, g, b];
+    const scale = soften(depth, DEPTH_KNEE, DEPTH_CAP) / depth;
+    return [255 - (255 - r) * scale, 255 - (255 - g) * scale, 255 - (255 - b) * scale];
   }
+  if (luma <= KNEE) return [r, g, b];
+  const scale = soften(luma, KNEE, CAP) / luma;
+  return [r * scale, g * scale, b * scale];
+}
+
+function tone(context, width, height, theme) {
+  const image = context.getImageData(0, 0, width, height), d = image.data;
+  for (let i = 0; i < d.length; i += 4) [d[i], d[i + 1], d[i + 2]] = toneGlass(d[i], d[i + 1], d[i + 2], theme);
   context.putImageData(image, 0, 0);
 }
 

@@ -19,3 +19,11 @@ function fallbackSun(now) {
 
 // Light glass with dark text over daytime photos, the dark smoke glass over sunset and night ones.
 export const themeFor = part => part === 'day' ? 'light' : 'dark';
+
+// The photos on screen catch up with the time of day even when it changed while the TV was off, in the
+// screensaver or offline, so the fetch was skipped or failed: until a set for now arrives it is fetched
+// again after 30 s, then 1, 2, 4 and 8 minutes, then every 10 minutes.
+export const photoRetryDelay = attempt => Math.min(30000 * 2 ** attempt, 10 * MINUTE);
+
+// The time of day a set of photos was found for (a saved set from before v0.28.0, or the bundled photo, is night).
+export const photosPart = photos => photos[0]?.period || 'night';

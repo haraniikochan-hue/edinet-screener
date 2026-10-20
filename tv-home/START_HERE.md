@@ -1,6 +1,6 @@
 # TV Home — 最初に読むファイル
 
-TV Home は、自宅の Xiaomi TV（65インチ、Google TV／Android 14）用に作った自作のホーム画面です。**v0.28.0のAndroidアプリとして、テレビのホーム画面になっています**（未解決：昼でも夜景・ダークのままになることがある。HANDOFF第1節の先頭。ライト・ダークの2テーマと、時間帯ごとのニューヨークの写真。HANDOFF第1節）（2026-10-19、標準ホームは無効化済み）。中身は `dashboard/` のダッシュボード（Apple／iOS風、TV専用）を、`android/` のアプリがWebViewで表示する作りです。
+TV Home は、自宅の Xiaomi TV（65インチ、Google TV／Android 14）用に作った自作のホーム画面です。**v0.28.0のAndroidアプリとして、テレビのホーム画面になっています**（v0.29.0はビルド済み・未インストール：テレビをつけたら時間帯に合う写真とテーマに、ライトテーマのガラスを透ける素材に。HANDOFF第1節の先頭。ライト・ダークの2テーマと、時間帯ごとのニューヨークの写真）（2026-10-19、標準ホームは無効化済み）。中身は `dashboard/` のダッシュボード（Apple／iOS風、TV専用）を、`android/` のアプリがWebViewで表示する作りです。
 
 ## 次のセッションへ渡す方法
 
@@ -23,7 +23,7 @@ TV Home は、自宅の Xiaomi TV（65インチ、Google TV／Android 14）用�
 ユーザーのMacには、Node.js・JDK・Android SDK・GitHub CLIが `~/.local` に入っています（HANDOFF第1.1節）。
 
 ```sh
-PATH=~/.local/node/bin:$PATH npm test      # 単体テスト（57件）
+PATH=~/.local/node/bin:$PATH npm test      # 単体テスト（79件）
 PATH=~/.local/node/bin:$PATH npm run dev   # PCのブラウザで http://127.0.0.1:4173/
 cd android && ./gradlew assembleRelease    # テレビ用APK（JAVA_HOME・ANDROID_HOMEは第1.1節）
 ```
