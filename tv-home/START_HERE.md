@@ -10,6 +10,10 @@ TV Home は、自宅の Xiaomi TV（65インチ、Google TV／Android 14）用�
 2. そのフォルダでセッションを開き、[NEXT_SESSION_PROMPT.txt](NEXT_SESSION_PROMPT.txt) の文章を貼る。
 3. やりたいことを伝える。
 
+## 別のPC・別のテレビに入れる
+
+[SETUP_ANOTHER_TV.md](SETUP_ANOTHER_TV.md) の手順で、同じTV Homeを別のテレビに入れられます。新しいPCのClaudeには [NEW_TV_SETUP_PROMPT.txt](NEW_TV_SETUP_PROMPT.txt) の文章を貼ります。前のMacから、キーのファイルと署名の鍵の2つを移しておきます。
+
 ## 読む順番
 
 - [HANDOFF.md](HANDOFF.md)：現在の仕様、確定事項、テレビに加えた変更と戻し方、未対応。**第1節（現在地）・第1.1節（始め方）・第3.4節（TVアプリ）を最初に読む。**
