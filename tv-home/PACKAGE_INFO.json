@@ -1,6 +1,6 @@
 {
   "project": "TV Home",
-  "appVersion": "0.31.0",
+  "appVersion": "0.32.0",
   "handoffRevision": "2026-10-19.7",
   "createdAt": "2026-10-19",
   "source": {
@@ -9,7 +9,7 @@
     "folder": "tv-home"
   },
   "nextSession": "Runs on the user's PC (Claude Desktop or claude remote-control) so it can reach the home Wi-Fi and TV; see HANDOFF.md section 1.1.",
-  "userStatus": "v0.31.0 source only (input switch on the home dock; not built or installed); v0.30.1 built (not installed); v0.30.0: running on the Xiaomi TV as its home screen (Android app in android/, stock Google TV home disabled); see HANDOFF sections 1 and 3.4",
+  "userStatus": "v0.32.0 built, not installed (home dock: HDMI 3 in one press; includes v0.30.1 and v0.31.0); v0.30.0: running on the Xiaomi TV as its home screen (Android app in android/, stock Google TV home disabled); see HANDOFF sections 1 and 3.4",
   "entryPoint": "START_HERE.md",
   "currentSpecification": "HANDOFF.md",
   "nextSessionPrompt": "NEXT_SESSION_PROMPT.txt",

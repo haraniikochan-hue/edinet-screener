@@ -444,8 +444,9 @@ a.news-title[href]:hover { background: var(--hover); }
 [data-brand=spotify] .app-brand-mark { width: 66%; height: 66%; }
 [data-brand=settings] .app-icon { background: linear-gradient(180deg,#9a9ca6,#5f616b); }
 [data-brand=applist] .app-icon { background: linear-gradient(180deg,#4a5062,#2a2e3a); }
-[data-brand=inputs] .app-icon { background: linear-gradient(180deg,#6b77f6,#3c43c8); }
-[data-brand=inputs] .app-icon svg { width: 56%; height: 56%; color: #fff; stroke-width: 2; }
+/* The HDMI input: an HDMI port in white on iOS indigo, lit from the top like the system icons. */
+[data-brand=input] .app-icon { background: radial-gradient(120% 90% at 50% 0%,rgba(255,255,255,.22),rgba(255,255,255,0) 60%),linear-gradient(180deg,#6d6bf2,#3b39b8); color: #fff; --app-logo: url('assets/apps/hdmi.svg'); }
+[data-brand=input] .app-brand-mark { width: 64%; height: 64%; }
 [data-brand=applist] .app-icon svg { width: 50%; height: 50%; color: #f2f3f6; }
 /* Reordering the dock: the chosen app floats above the others, which recede. */
 .dock-editing .app-tile:not(.moving) { opacity: .5; transition: opacity .25s var(--ease); }
@@ -647,19 +648,6 @@ details.about { padding: 16px 20px; border-radius: 22px; background: var(--cell)
 .grid-name { max-width: 112px; overflow: hidden; color: var(--label-2); font-size: 14px; font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
 .grid-app:focus .grid-name { color: var(--label); }
 /* Long-press menu: an iOS action sheet whose focused row is the tvOS white platter. */
-/* Input switch (home): one row per external input */
-.inputs-sheet { max-width: 560px; }
-.input-list { display: flex; flex-direction: column; gap: 8px; }
-.input-list:empty { display: none; }
-.input-choice { display: grid; grid-template-columns: 32px minmax(0,1fr) auto; align-items: center; gap: 14px; height: 60px; padding: 0 20px 0 16px; border-radius: 16px; background: var(--fill); color: var(--label); text-align: left; transition: background .2s,color .2s,transform .3s var(--spring); }
-.input-icon { display: grid; place-items: center; font-size: 28px; color: var(--label-2); }
-.input-label { font-size: 19px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.input-state { font-size: 14px; font-weight: 500; color: var(--label-3); }
-.input-choice[data-connected=false] .input-label { color: var(--label-3); }
-.inputs-sheet .input-choice:focus-visible { outline: none; background: var(--platter); color: var(--on-platter); transform: scale(1.03); }
-.input-choice:focus-visible :is(.input-icon,.input-label,.input-state) { color: var(--on-platter); }
-.inputs-help { margin-top: 14px; font-size: 15px; line-height: 1.7; color: var(--label-3); }
-.input-list:empty+.inputs-help { margin-top: 0; }
 .menu-sheet { width: 100%; max-width: 400px; padding: 22px 20px 20px; border-radius: 30px; background: var(--sheet); box-shadow: var(--sheet-edge),var(--sheet-shadow); animation: sheet .4s var(--spring); }
 .menu-sheet h2 { margin: 2px 8px 16px; font-size: 19px; font-weight: 700; text-align: center; }
 .menu-actions { display: flex; flex-direction: column; gap: 8px; }
