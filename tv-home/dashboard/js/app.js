@@ -15,7 +15,7 @@ import { MARKETS, MARKET_BY_SYMBOL, CHART_RANGES, marketCoins } from './market-d
 import { drawMarketChart, drawDetailChart } from './market-chart.js';
 import { loadNews, loadCalendar, loadPhotos } from './feeds.js';
 import { JIKKA } from './profile.js';
-import { renderInputs, renderRecent, switchInput } from './jikka.js';
+import { arrangeInputs, readInputs, renderInputs, renderRecent, switchInput } from './jikka.js';
 import { HOUR, weatherTimestamp, weatherIsStale, hourlyForecast, makeWeatherIcon, renderHourlyForecast, dailyForecast, temperatureColor, windDirection, uvLabel } from './weather.js';
 
 const $ = id => document.getElementById(id);
@@ -793,10 +793,17 @@ const appListTile=(()=>{
   icon.innerHTML='<svg viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="2.4" fill="currentColor"/><rect x="13" y="3" width="8" height="8" rx="2.4" fill="currentColor"/><rect x="3" y="13" width="8" height="8" rx="2.4" fill="currentColor"/><rect x="13" y="13" width="8" height="8" rx="2.4" fill="currentColor"/></svg>';
   const label=el('span','app-label','アプリ');label.setAttribute('aria-hidden','true');button.append(icon,label);return button;
 })();
+// Input switch (home): the standard Google TV home, with its inputs entry, is disabled, so the dock has one.
+const inputsTile=(()=>{
+  const button=el('button','app-tile');button.type='button';button.dataset.brand='inputs';button.dataset.openInputs='';button.setAttribute('aria-label','入力切替');
+  const icon=el('span','app-icon');icon.setAttribute('aria-hidden','true');icon.innerHTML='<svg class="icon" viewBox="0 0 24 24"><use href="#i-input"/></svg>';
+  const label=el('span','app-label','入力切替');label.setAttribute('aria-hidden','true');button.append(icon,label);return button;
+})();
+const hasInputs=()=>!JIKKA && typeof window.Android?.inputs==='function' && typeof window.Android?.switchInput==='function';
 const dockPackages=()=>[...$('apps').querySelectorAll('[data-package]')].map(tile=>tile.dataset.package);
 function renderDock(focusPackage){
   const {dock}=arrangeDock(nativeApps,dockPrefs);
-  $('apps').replaceChildren(...dock.map(app=>nativeAppTile(app)),appListTile,settingsTile);fitDock();updateFrost();
+  $('apps').replaceChildren(...dock.map(app=>nativeAppTile(app)),...(hasInputs()?[inputsTile]:[]),appListTile,settingsTile);fitDock();updateFrost();
   const tile=focusPackage && $('apps').querySelector(`[data-package="${CSS.escape(focusPackage)}"]`);
   if(tile){tile.focus({preventScroll:true});tile.scrollIntoView({block:'nearest',inline:'nearest'});}
   return tile;
@@ -821,6 +828,22 @@ function initializeBridge() {
 }
 // The app calls this when an app is installed, updated or removed.
 window.tvHomeAppsChanged=()=>{initializeBridge();if(JIKKA)showJikka();};
+let inputsReturn=null;
+function openInputs(){
+  inputsReturn=document.activeElement;
+  const {main,others}=arrangeInputs(readInputs()),list=[...main,...others];
+  $('input-list').replaceChildren(...list.map(input=>{
+    const row=el('button','input-choice');row.type='button';row.dataset.input=input.id;row.dataset.connected=String(input.connected!==false);
+    row.setAttribute('aria-label',`${input.label}${input.connected===false?' 未接続':''}に切り替え`);
+    const icon=el('span','input-icon');icon.innerHTML='<svg class="icon" aria-hidden="true"><use href="#i-hdmi"/></svg>';
+    row.append(icon,el('span','input-label',input.label),el('span','input-state',input.connected===false?'未接続':''));
+    return row;
+  }));
+  $('inputs-help').textContent=list.length?'選ぶとその入力に切り替わります。TV Homeにはリモコンのホームボタンで戻れます。':'入力を確認できません。テレビをつけた直後は、少し待ってから開き直してください。';
+  $('inputs-overlay').hidden=false;$('stage').inert=true;document.body.classList.add('modal-open');
+  ($('input-list').querySelector('.input-choice')||$('close-inputs')).focus();
+}
+function closeInputs(){ $('inputs-overlay').hidden=true;$('stage').inert=false;document.body.classList.remove('modal-open');(inputsReturn?.isConnected?inputsReturn:inputsTile).focus({preventScroll:true}); }
 // App list: every installed TV app by name. OK opens it; a long press adds it to or takes it off the dock.
 let appsReturn=null;
 function openAppList(){
@@ -937,6 +960,9 @@ function setPhotos(photos){slideshow.setPhotos(photos);$('next-photo').hidden=sl
 document.addEventListener('click',event=>{
   const open=event.target.closest('[data-open-settings]');if(open){openSettings(open.dataset.openSettings);return;}
   if(event.target.closest('[data-open-apps]')){openAppList();return;}
+  if(event.target.closest('[data-open-inputs]')){openInputs();return;}
+  const input=event.target.closest('#input-list .input-choice');
+  if(input){const label=input.querySelector('.input-label').textContent;if(switchInput(input.dataset.input)){closeInputs();toast(`${label}に切り替えます`);}else toast('入力を切り替えられませんでした');return;}
   // Opening an app from the list leaves the list closed behind it.
   if(event.target.closest('#app-grid [data-package]'))closeAppList();
   // OK on a row or headline shows details in place: following a link would leave the launcher.
@@ -977,15 +1003,16 @@ $('adblock-toggle').onchange=()=>{
 };
 $('connect-in-settings').onclick=async()=>{try{await saveSettings({close:false});await spotify.connect(config.spotifyClientId || backend.spotifyClientId);}catch(error){$('spotify-message').textContent=errorText(error);}};
 $('disconnect-spotify').onclick=()=>{spotify.disconnect();renderMusic({connected:false});$('spotify-message').textContent='このブラウザの連携情報を削除しました';};
-const navigation=installNavigation({modals:[{element:$('menu-overlay'),close:closeMenu},{element:$('apps-overlay'),close:closeAppList},{element:$('settings-overlay'),close:closeSettings},{element:$('detail-overlay'),close:closeDetail}],home:()=>$('apps'),onEdge:calendarEdge});
-$('close-apps').onclick=closeAppList;
+const navigation=installNavigation({modals:[{element:$('menu-overlay'),close:closeMenu},{element:$('apps-overlay'),close:closeAppList},{element:$('inputs-overlay'),close:closeInputs},{element:$('settings-overlay'),close:closeSettings},{element:$('detail-overlay'),close:closeDetail}],home:()=>$('apps'),onEdge:calendarEdge});
+$('close-apps').onclick=closeAppList;$('close-inputs').onclick=closeInputs;
+$('inputs-overlay').addEventListener('click',event=>{if(event.target===$('inputs-overlay'))closeInputs();});
 $('apps-overlay').addEventListener('click',event=>{if(event.target===$('apps-overlay'))closeAppList();});
 $('menu-overlay').addEventListener('click',event=>{if(event.target===$('menu-overlay'))closeMenu();});
 $('open-tv-settings').onclick=()=>{try{window.Android?.openTvSettings?.();}catch{toast('テレビの設定を開けませんでした');}};
 // A passive dashboard rests with focus on the dock, so a forgotten highlight never lingers on a card.
 let lastInput=Date.now();
 for(const type of ['keydown','pointerdown'])addEventListener(type,()=>{lastInput=Date.now();},{capture:true,passive:true});
-setInterval(()=>{if(!document.hidden && Date.now()-lastInput>IDLE_HOME && $('settings-overlay').hidden && $('detail-overlay').hidden)navigation.focusHome();},10000);
+setInterval(()=>{if(!document.hidden && Date.now()-lastInput>IDLE_HOME && !document.querySelector('.modal-overlay:not([hidden])'))navigation.focusHome();},10000);
 // A layer kept for a smooth lift (will-change: transform in styles.css) is drawn once, at rest, and the TV's
 // WebView then magnifies that bitmap: a lifted dock icon or row looked soft. When a lift settles, its layers
 // are dropped for a frame and drawn again at their new size.

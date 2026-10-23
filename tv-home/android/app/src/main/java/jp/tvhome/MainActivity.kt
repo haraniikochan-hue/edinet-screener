@@ -464,13 +464,13 @@ class MainActivity : Activity() {
 
 
     /**
-     * The TV's external inputs (HDMI, AV) as [{id, label, kind, connected}], plus Xiaomi's TV app as
-     * "テレビ" first. A device behind an HDMI port (HDMI-CEC) is listed as its own input with a parent; only
+     * The TV's external inputs (HDMI, AV) as [{id, label, kind, connected}], plus, on the parents' TV, Xiaomi's
+     * TV app as "テレビ" first (at home the terrestrial TV is not used). A device behind an HDMI port (HDMI-CEC) is listed as its own input with a parent; only
      * the ports are shown.
      */
     private fun tvInputs(): String {
         val list = JSONArray()
-        if (packageManager.getLeanbackLaunchIntentForPackage(LIVE_TV) != null) {
+        if (JIKKA && packageManager.getLeanbackLaunchIntentForPackage(LIVE_TV) != null) {
             list.put(JSONObject().put("id", LIVE_TV_INPUT).put("label", "テレビ").put("kind", "tv").put("connected", true))
         }
         val manager = getSystemService(TvInputManager::class.java) ?: return list.toString()
@@ -548,10 +548,11 @@ class MainActivity : Activity() {
         fun profile(): String = BuildConfig.PROFILE
 
         @JavascriptInterface
-        fun inputs(): String = if (JIKKA) tvInputs() else "[]"
+        fun inputs(): String = tvInputs()
 
+        // At home the dock's input switch lists only the external inputs, so the TV app is not opened from it.
         @JavascriptInterface
-        fun switchInput(id: String): Boolean = JIKKA && this@MainActivity.switchInput(id)
+        fun switchInput(id: String): Boolean = (JIKKA || id != LIVE_TV_INPUT) && this@MainActivity.switchInput(id)
 
         @JavascriptInterface
         fun recentApps(): String = if (!JIKKA) JSONObject().put("granted", false).toString()

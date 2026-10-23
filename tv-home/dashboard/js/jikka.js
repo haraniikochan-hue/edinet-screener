@@ -32,10 +32,13 @@ export function arrangeInputs(inputs) {
   return { main, others:list.filter(i => !main.includes(i)) };
 }
 
+// The TV's inputs from the app ([] in a browser); the dock's input switch at home reads them too.
+export const readInputs = () => call('inputs', []);
+
 // Every input on one row, HDMI 1 and the TV app first and a little wider. Re-read on every return home: the
 // inputs register a little after the TV starts, and a recorder may be switched on later.
 export function renderInputs(row) {
-  const inputs = call('inputs', []);
+  const inputs = readInputs();
   const key = JSON.stringify(inputs);
   if (row.dataset.key === key) return;
   row.dataset.key = key;
