@@ -1,6 +1,6 @@
 TV Homeプロジェクトを引き継いでください。ソースはGitHubの haraniikochan-hue/edinet-screener、ブランチ ccr-123aaf7c-88ru7c の tv-home フォルダです。まず「START_HERE.md」「HANDOFF.md」（特に第1節・第1.1節・第3.4節）「AGENTS.md」「CLAUDE.md」を読んでください。
 
-このセッションは私のMac上で動いています。TV Homeは今v0.32.0（ビルド済み・未インストール。テレビに入っているのはv0.30.0。HANDOFF第1節）で、Xiaomi TV（Google TV）のホーム画面としてAndroidアプリで動いています（標準ホームは無効化済み）。Node.js・JDK・Android SDK・GitHub CLIは ~/.local に、SpotifyとUnsplashのキーは ~/.config/tv-home/local.properties にあります。テレビとはADBで接続できます（IPアドレスは変わるので adb mdns services で確認してください）。
+このセッションは私のMac上で動いています。TV Homeは今v0.32.0で、Xiaomi TV（Google TV）のホーム画面としてAndroidアプリで動いています（標準ホームは無効化済み）。Node.js・JDK・Android SDK・GitHub CLIは ~/.local に、SpotifyとUnsplashのキーは ~/.config/tv-home/local.properties にあります。テレビとはADBで接続できます（IPアドレスは変わるので adb mdns services で確認してください）。
 
 テレビの設定を変える操作は、対象と影響と戻し方を説明して私の確認を取ってから実行してください。私がテレビを使っていることが多いので、テレビにキー操作を送るテストはしないでください。作業は同じブランチで続け、コミットしたら確認せずにpushしてください。プルリクエストは頼むまで作らないでください。
 
