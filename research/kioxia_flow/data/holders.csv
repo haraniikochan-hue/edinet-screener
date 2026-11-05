@@ -1,0 +1,12 @@
+calc_date,entity,kind,shares,pct,source,note
+2026-03-31,Toshiba,major_holder,,18.52,note.com/hero_as_a_hobbty (secondary),
+2026-09-30,Toshiba,major_holder,,11.80,Nikkei (12.84%->11.80% report),
+2026-10-23,Toshiba,market_sale,2123500,,X @AbaneChan (unverified),daily sale
+2026-10-26,Toshiba,market_sale,4554600,,X @AbaneChan (unverified),daily sale
+2026-10-27,Toshiba,market_sale,11243300,,X @AbaneChan (unverified),daily sale
+2026-10-27,Toshiba,major_holder,172007400,10.46,EDINET change report filed 2026-11-04,sold ~22.19M sh 10/2-10/27
+2026-07-09,Bain Capital,major_holder,0,0.00,Japan Times,full exit
+2026-07-09,SK hynix,major_holder,,14.00,Moomoo/SEC F-1 (approx via Bain vehicle),potential overhang
+2026-09-30,Nomura International,short_report,383152,0.02,kabu365,closed
+2026-10-29,JPM Securities Japan,short_report,12360975,0.75,kabu365/karauri,re-entry
+2026-11-02,JPM Securities Japan,short_report,14184194,0.86,kabu365,increase

@@ -1,0 +1,3 @@
+made_on,target_date,metric,predicted_median,predicted_low,predicted_high,actual,note
+2026-11-05,2026-11-05,buy_shares,54560143,52975295,55935990,,"asof 2026-11-05, now 8100"
+2026-11-05,2026-11-05,avg_cost,15913,15789,16091,,"asof 2026-11-05, now 8100"
